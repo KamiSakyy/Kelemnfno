@@ -103,7 +103,7 @@ public class HistoryActivity extends AppCompatActivity {
                 b.actionPrimary.setOnClickListener(v ->
                         DetailActivity.open(HistoryActivity.this, h.slug, h.episode, h.dubbing));
                 b.actionSecondary.setText("Открыть");
-                b.actionSecondary.setOnClickListener(v -> DetailActivity.open(HistoryActivity.this, h.slug, h.title, h.poster));
+                b.actionSecondary.setOnClickListener(v -> DetailActivity.openWith(HistoryActivity.this, h.slug, h.title, h.poster));
                 b.actionDelete.setOnClickListener(v -> AppExecutors.get().io().execute(
                         () -> AppDatabase.get(HistoryActivity.this).historyDao().deleteBySlug(h.slug)));
             }

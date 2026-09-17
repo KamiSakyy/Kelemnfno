@@ -64,12 +64,12 @@ public final class Ui {
         RequestOptions opts = new RequestOptions()
                 .transform(new CenterCrop(), new RoundedCorners(dp(view.getContext(), radiusDp)))
                 .diskCacheStrategy(DiskCacheStrategy.ALL)
-                .thumbnail(0.15f)
                 .format(DecodeFormat.PREFER_RGB_565)
                 .placeholder(R.drawable.ph_poster)
                 .error(R.drawable.ph_poster);
         view.setTag(url);
         Glide.with(view.getContext()).load(withHeaders(url)).apply(opts)
+                .thumbnail(0.15f)
                 .listener(new HttpFallback(view, url, radiusDp))
                 .into(view);
     }
@@ -84,8 +84,8 @@ public final class Ui {
         Glide.with(view.getContext()).load(withHeaders(url))
                 .apply(new RequestOptions()
                         .diskCacheStrategy(DiskCacheStrategy.ALL)
-                        .thumbnail(0.15f)
                         .placeholder(R.drawable.ph_poster).error(R.drawable.ph_poster))
+                .thumbnail(0.15f)
                 .listener(new HttpFallback(view, url, 0))
                 .into(view);
     }

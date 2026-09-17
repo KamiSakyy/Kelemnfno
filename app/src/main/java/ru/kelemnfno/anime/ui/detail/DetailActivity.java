@@ -88,7 +88,7 @@ public class DetailActivity extends AppCompatActivity {
     }
 
     /** То же, но с уже известными названием и постером — шапка рисуется мгновенно, без ожидания сети. */
-    public static void open(Context context, String slug, String title, String poster) {
+    public static void openWith(Context context, String slug, String title, String poster) {
         context.startActivity(new Intent(context, DetailActivity.class)
                 .putExtra(EXTRA_SLUG, slug)
                 .putExtra(EXTRA_TITLE, title)
