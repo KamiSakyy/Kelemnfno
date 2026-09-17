@@ -3,6 +3,8 @@ package ru.kelemnfno.anime.util;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.view.View;
 import android.view.animation.AnimationUtils;
@@ -10,14 +12,24 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.load.model.GlideUrl;
 import com.bumptech.glide.load.model.LazyHeaders;
 import com.bumptech.glide.load.resource.bitmap.CenterCrop;
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
+import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.RequestOptions;
+import com.bumptech.glide.request.target.Target;
 import com.google.android.material.snackbar.Snackbar;
 
 import ru.kelemnfno.anime.R;
+import ru.kelemnfno.anime.data.tsuyu.Net;
+
+import android.graphics.drawable.Drawable;
+
+import okhttp3.Request;
+import okhttp3.Response;
 
 /** Мелкие UI-хелперы: Glide с фирменным скруглением, тосты, анимации. */
 public final class Ui {
@@ -51,7 +63,10 @@ public final class Ui {
                 .transform(new CenterCrop(), new RoundedCorners(dp(view.getContext(), radiusDp)))
                 .placeholder(R.drawable.ph_poster)
                 .error(R.drawable.ph_poster);
-        Glide.with(view.getContext()).load(withHeaders(url)).apply(opts).into(view);
+        view.setTag(url);
+        Glide.with(view.getContext()).load(withHeaders(url)).apply(opts)
+                .listener(new HttpFallback(view, url, radiusDp))
+                .into(view);
     }
 
     public static void image(ImageView view, String url) {
@@ -60,9 +75,86 @@ public final class Ui {
             view.setImageResource(R.drawable.ph_poster);
             return;
         }
+        view.setTag(url);
         Glide.with(view.getContext()).load(withHeaders(url))
                 .apply(new RequestOptions().placeholder(R.drawable.ph_poster).error(R.drawable.ph_poster))
+                .listener(new HttpFallback(view, url, 0))
                 .into(view);
+    }
+
+    /**
+     * Запасной путь: если Glide не смог получить картинку, тянем её тем же OkHttp,
+     * которым приложение получает данные (он точно ходит в сеть).
+     */
+    private static final class HttpFallback implements RequestListener<Drawable> {
+        private final ImageView view;
+        private final String url;
+        private final int radius;
+
+        HttpFallback(ImageView view, String url, int radius) {
+            this.view = view;
+            this.url = url;
+            this.radius = radius;
+        }
+
+        @Override
+        public boolean onLoadFailed(GlideException e, Object model, Target<Drawable> target, boolean isFirst) {
+            load();
+            return false;
+        }
+
+        @Override
+        public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target,
+                                       DataSource dataSource, boolean isFirst) {
+            return false;
+        }
+
+        private void load() {
+            AppExecutors.get().io().execute(() -> {
+                try {
+                    Request req = new Request.Builder()
+                            .url(url)
+                            .header("User-Agent", Net.CHROME)
+                            .header("Referer", "https://yani.tv/")
+                            .header("Accept", "image/avif,image/webp,image/apng,image/*,*/*;q=0.8")
+                            .build();
+                    try (Response resp = Net.client().newCall(req).execute()) {
+                        if (!resp.isSuccessful() || resp.body() == null) return;
+                        byte[] data = resp.body().bytes();
+                        Bitmap bmp = decode(data);
+                        if (bmp == null) return;
+                        view.post(() -> {
+                            if (!url.equals(view.getTag())) return;
+                            if (radius > 0) {
+                                Glide.with(view.getContext()).load(bmp).apply(new RequestOptions()
+                                        .transform(new CenterCrop(),
+                                                new RoundedCorners(dp(view.getContext(), radius))))
+                                        .into(view);
+                            } else {
+                                view.setImageBitmap(bmp);
+                            }
+                        });
+                    }
+                } catch (Throwable ignored) {
+                    // картинка просто останется на заглушке
+                }
+            });
+        }
+
+        private Bitmap decode(byte[] data) {
+            BitmapFactory.Options probe = new BitmapFactory.Options();
+            probe.inJustDecodeBounds = true;
+            BitmapFactory.decodeByteArray(data, 0, data.length, probe);
+            int wantW = view.getWidth() > 0 ? view.getWidth() : 512;
+            int wantH = view.getHeight() > 0 ? view.getHeight() : 768;
+            int sample = 1;
+            while (probe.outWidth / (sample * 2) >= wantW && probe.outHeight / (sample * 2) >= wantH) {
+                sample *= 2;
+            }
+            BitmapFactory.Options opts = new BitmapFactory.Options();
+            opts.inSampleSize = sample;
+            return BitmapFactory.decodeByteArray(data, 0, data.length, opts);
+        }
     }
 
     public static void fadeIn(View v, int durationMs) {

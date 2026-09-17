@@ -155,9 +155,19 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set +e
+          publish() {
+            gh release create nightly out/Kelemnfno-release.apk out/Kelemnfno-debug.apk \
+              --title "Kelemnfno nightly build" \
+              --target "${GITHUB_REF_NAME}" \
+              --notes "Сборка ветки ${GITHUB_REF_NAME}, commit ${GITHUB_SHA}. Kelemnfno-release.apk — подписанный релиз."
+          }
           gh release delete nightly --yes --cleanup-tag
-          gh release create nightly out/Kelemnfno-release.apk out/Kelemnfno-debug.apk \
-            --title "Kelemnfno nightly build" \
-            --target "${GITHUB_REF_NAME}" \
-            --notes "Сборка ветки ${GITHUB_REF_NAME}, commit ${GITHUB_SHA}. Kelemnfno-release.apk — подписанный релиз."
+          sleep 5
+          for i in 1 2 3; do
+            publish && break
+            echo "::notice::Публикация релиза не удалась с раза $i, повтор"
+            sleep 15
+            gh release delete nightly --yes --cleanup-tag 2>/dev/null
+            sleep 5
+          done
           gh release view nightly --json assets --jq '.assets[] | "release asset: \(.name) \(.size) байт"'
