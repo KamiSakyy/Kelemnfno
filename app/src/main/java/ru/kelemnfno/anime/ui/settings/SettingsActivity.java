@@ -127,8 +127,8 @@ public class SettingsActivity extends AppCompatActivity {
         section(c, "О приложении");
         info(c, "Kelemnfno 1.2.0 · Android-порт сайта\n"
                 + "Экраны, анимации, скачивание, уведомления и собственный плеер на ExoPlayer (Media3).");
-        button(c, "Открыть сайт", () -> Ui.openUrl(this, "https://yani.tv"));
-        button(c, "Очистить кэш изображений", () -> new Thread(() -> {
+        button(c, "Открыть сайт", v -> Ui.openUrl(this, "https://yani.tv"));
+        button(c, "Очистить кэш изображений", v -> new Thread(() -> {
             com.bumptech.glide.Glide.get(this).clearDiskCache();
             Ui.post(() -> Ui.toast(this, "Кэш очищен"));
         }).start());
