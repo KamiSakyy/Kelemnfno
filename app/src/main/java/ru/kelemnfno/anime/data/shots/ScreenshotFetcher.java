@@ -51,6 +51,7 @@ public final class ScreenshotFetcher {
 
         List<String> shots = new ArrayList<>();
 
+        String encoded = "https%3A%2F%2Fshikimori.one%2Fanimes%2F" + shikimoriId + ".json%3Flang%3Dru";
         if (shikimoriId > 0) {
             shots = shikimori("https://shikimori.one/animes/" + shikimoriId + ".json?lang=ru");
             if (shots.isEmpty()) {
@@ -63,8 +64,10 @@ public final class ScreenshotFetcher {
                 shots = shikimori("https://api.shikimori.me/animes/" + shikimoriId + "?lang=ru");
             }
             if (shots.isEmpty()) {
-                shots = shikimori("https://api.allorigins.win/raw?url="
-                        + "https%3A%2F%2Fshikimori.one%2Fanimes%2F" + shikimoriId + ".json%3Flang%3Dru");
+                shots = shikimori("https://api.allorigins.win/raw?url=" + encoded);
+            }
+            if (shots.isEmpty()) {
+                shots = shikimori("https://corsproxy.io/?url=" + encoded);
             }
         }
 
@@ -141,7 +144,10 @@ public final class ScreenshotFetcher {
                     .build();
             try (Response response = Net.client().newCall(request).execute()) {
                 if (!response.isSuccessful() || response.body() == null) return out;
-                JsonObject media = J.obj(J.obj(Net.parse(response.body().string()), "data"), "Media");
+                JsonObject root = J.obj(Net.parse(response.body().string()), "data");
+                JsonObject media = J.obj(root, "Media");
+                // Прокси-обёртки кладут ответ на уровень глубже — как в коде сайта.
+                if (media.size() == 0) media = J.obj(J.obj(root, "data"), "Media");
                 add(out, J.str(media, "bannerImage"));
                 JsonObject cover = J.obj(media, "coverImage");
                 add(out, J.str(cover, "extraLarge"));

@@ -279,6 +279,70 @@
                 android:paddingTop="10dp"
                 android:paddingEnd="16dp" />
 
+            <LinearLayout
+                android:id="@+id/player_block"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <TextView
+                    style="@style/Widget.Kelemnfno.SectionTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingStart="16dp"
+                    android:paddingTop="20dp"
+                    android:paddingEnd="16dp"
+                    android:text="@string/watch_now" />
+
+                <ru.kelemnfno.anime.ui.widget.RatioFrameLayout
+                    android:id="@+id/player_frame"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginEnd="16dp"
+                    android:background="@drawable/bg_player_frame">
+
+                    <androidx.media3.ui.PlayerView
+                        android:id="@+id/inline_player"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="#FF000000"
+                        app:resize_mode="fit"
+                        app:show_buffering="when_playing"
+                        app:use_controller="true" />
+
+                    <ImageView
+                        android:id="@+id/inline_poster"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:contentDescription="@null"
+                        android:scaleType="centerCrop" />
+
+                    <ImageView
+                        android:id="@+id/inline_play"
+                        android:layout_width="66dp"
+                        android:layout_height="66dp"
+                        android:layout_gravity="center"
+                        android:background="@drawable/bg_circle_dark"
+                        android:contentDescription="@null"
+                        android:padding="18dp"
+                        android:src="@drawable/ic_play" />
+
+                    <ImageView
+                        android:id="@+id/inline_fullscreen"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:layout_gravity="top|end"
+                        android:layout_margin="8dp"
+                        android:background="@drawable/bg_circle_dark"
+                        android:contentDescription="@null"
+                        android:padding="10dp"
+                        android:src="@drawable/ic_expand" />
+                </ru.kelemnfno.anime.ui.widget.RatioFrameLayout>
+            </LinearLayout>
+
             <TextView
                 style="@style/Widget.Kelemnfno.Label"
                 android:layout_width="wrap_content"

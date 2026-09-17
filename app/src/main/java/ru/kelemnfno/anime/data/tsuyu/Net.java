@@ -50,6 +50,7 @@ public final class Net {
             synchronized (Net.class) {
                 if (client == null) {
                     client = new OkHttpClient.Builder()
+                            .cache(diskCache())
                             .connectTimeout(12, TimeUnit.SECONDS)
                             .readTimeout(20, TimeUnit.SECONDS)
                             .writeTimeout(20, TimeUnit.SECONDS)
@@ -62,6 +63,17 @@ public final class Net {
             }
         }
         return client;
+    }
+
+    /** Дисковый кэш ответов: повторные открытия экранов не ходят в сеть. */
+    private static okhttp3.Cache diskCache() {
+        try {
+            java.io.File dir = new java.io.File(
+                    ru.kelemnfno.anime.AnimeApp.get().getCacheDir(), "http");
+            return new okhttp3.Cache(dir, 30L * 1024L * 1024L);
+        } catch (Throwable t) {
+            return null;
+        }
     }
 
     public static Map<String, String> baseHeaders(String origin, String referer) {

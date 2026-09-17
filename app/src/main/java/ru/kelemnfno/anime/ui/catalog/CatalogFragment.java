@@ -89,7 +89,7 @@ public class CatalogFragment extends Fragment {
         adapter.setListener(new AnimeCardAdapter.OnCardClick() {
             @Override
             public void onClick(CardModel model) {
-                DetailActivity.open(requireContext(), model.slug);
+                DetailActivity.open(requireContext(), model.slug, model.title, model.poster);
             }
 
             @Override

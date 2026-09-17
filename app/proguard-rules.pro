@@ -26,7 +26,7 @@
 
 # --- Media3 / ExoPlayer ---
 -dontwarn androidx.media3.**
--keep class androidx.media3.** { *; }
+-keep class androidx.media3.session.** { *; }
 -keep class ru.kelemnfno.anime.player.PlaybackService { *; }
 
 # --- Glide ---
@@ -48,3 +48,20 @@
 # Отладка: читаемые стектрейсы
 -keepattributes SourceFile,LineNumberTable
 -renamesourcefileattribute SourceFile
+
+# --- Защита от декомпиляции ---
+# Все классы приложения переносятся в один пакет с короткими именами,
+# ссылки переносятся через границы пакетов, логирование вырезается целиком.
+-repackageclasses 'a'
+-allowaccessmodification
+-assumenosideeffects class android.util.Log {
+    public static int v(...);
+    public static int d(...);
+    public static int i(...);
+    public static int w(...);
+    public static int e(...);
+    public static int println(...);
+}
+-assumenosideeffects class java.io.PrintStream {
+    public void println(...);
+}

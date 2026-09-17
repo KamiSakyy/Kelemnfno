@@ -12,6 +12,8 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.DecodeFormat;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.load.model.GlideUrl;
@@ -61,6 +63,9 @@ public final class Ui {
         }
         RequestOptions opts = new RequestOptions()
                 .transform(new CenterCrop(), new RoundedCorners(dp(view.getContext(), radiusDp)))
+                .diskCacheStrategy(DiskCacheStrategy.ALL)
+                .thumbnail(0.15f)
+                .format(DecodeFormat.PREFER_RGB_565)
                 .placeholder(R.drawable.ph_poster)
                 .error(R.drawable.ph_poster);
         view.setTag(url);
@@ -77,7 +82,10 @@ public final class Ui {
         }
         view.setTag(url);
         Glide.with(view.getContext()).load(withHeaders(url))
-                .apply(new RequestOptions().placeholder(R.drawable.ph_poster).error(R.drawable.ph_poster))
+                .apply(new RequestOptions()
+                        .diskCacheStrategy(DiskCacheStrategy.ALL)
+                        .thumbnail(0.15f)
+                        .placeholder(R.drawable.ph_poster).error(R.drawable.ph_poster))
                 .listener(new HttpFallback(view, url, 0))
                 .into(view);
     }

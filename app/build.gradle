@@ -41,9 +41,9 @@ android {
             versionNameSuffix "-debug"
         }
         release {
-            // R8 не включаем: подписанный релиз должен вести себя ровно как проверенный debug
-            minifyEnabled false
-            shrinkResources false
+            // R8 в полном режиме: имена классов и методов заменяются, лишнее вырезается
+            minifyEnabled true
+            shrinkResources true
             signingConfig signingConfigs.release
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }

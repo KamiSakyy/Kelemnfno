@@ -36,7 +36,7 @@ public final class TsuyuEngine {
     public static final String PREFIX = "tsuyu:";
 
     /** Общий дедлайн опроса источников. */
-    private static final long DEADLINE_MS = 26_000L;
+    private static final long DEADLINE_MS = 14_000L;
     /** Источники с точным матчингом по ID — их маршруты надёжнее. */
     private static final Set<String> ID_SOURCES = new LinkedHashSet<>(
             java.util.Arrays.asList("yummy", "anilibria", "animelib", "animelib4k"));

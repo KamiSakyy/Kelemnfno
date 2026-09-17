@@ -23,6 +23,17 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
+import androidx.media3.common.MediaItem;
+import androidx.media3.datasource.DefaultDataSource;
+import androidx.media3.datasource.DefaultHttpDataSource;
+import androidx.media3.exoplayer.ExoPlayer;
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+import ru.kelemnfno.anime.data.model.StreamSource;
+import ru.kelemnfno.anime.data.tsuyu.Net;
 import ru.kelemnfno.anime.R;
 import ru.kelemnfno.anime.data.db.AppDatabase;
 import ru.kelemnfno.anime.data.db.DownloadEntity;
@@ -69,8 +80,19 @@ public class DetailActivity extends AppCompatActivity {
     private long nextEpisodeTs;
     private int nextEpisodeNumber;
 
+    private static final String EXTRA_TITLE = "title";
+    private static final String EXTRA_POSTER = "poster";
+
     public static void open(Context context, String slug) {
         context.startActivity(new Intent(context, DetailActivity.class).putExtra(EXTRA_SLUG, slug));
+    }
+
+    /** То же, но с уже известными названием и постером — шапка рисуется мгновенно, без ожидания сети. */
+    public static void open(Context context, String slug, String title, String poster) {
+        context.startActivity(new Intent(context, DetailActivity.class)
+                .putExtra(EXTRA_SLUG, slug)
+                .putExtra(EXTRA_TITLE, title)
+                .putExtra(EXTRA_POSTER, poster));
     }
 
     public static void open(Context context, String slug, String episode, String dubbing) {
@@ -86,6 +108,14 @@ public class DetailActivity extends AppCompatActivity {
         b = ActivityDetailBinding.inflate(getLayoutInflater());
         setContentView(b.getRoot());
         slug = getIntent().getStringExtra(EXTRA_SLUG);
+
+        // Пока грузится полная карточка, показываем то, что уже известно из каталога.
+        String knownTitle = getIntent().getStringExtra(EXTRA_TITLE);
+        String knownPoster = getIntent().getStringExtra(EXTRA_POSTER);
+        if (knownTitle != null && !knownTitle.isEmpty()) {
+            b.title.setText(knownTitle);
+            Ui.poster(b.poster, knownPoster, 12);
+        }
 
         b.back.setOnClickListener(v -> finish());
         b.fav.setOnClickListener(v -> toggleFavorite());
@@ -173,6 +203,7 @@ public class DetailActivity extends AppCompatActivity {
         }
 
         renderGenres();
+        setupInlinePlayer();
         renderInfo();
         renderFavoriteState();
         renderViewingOrder();
@@ -544,6 +575,118 @@ public class DetailActivity extends AppCompatActivity {
                 });
             }
         }
+    }
+
+    /* ---------------- Встроенный плеер (как на сайте, прямо в карточке тайтла) ---------------- */
+
+    private ExoPlayer inlinePlayer;
+    private String inlineReferer = "";
+    private int inlineEpisode = 1;
+
+    private void setupInlinePlayer() {
+        b.playerBlock.setVisibility(View.VISIBLE);
+        Ui.image(b.inlinePoster, Fmt.posterUrl(anime, "fullsize"));
+        b.inlinePlay.setOnClickListener(v -> playInline(defaultEpisode()));
+        b.inlineFullscreen.setOnClickListener(v -> {
+            if (currentTrack == null) {
+                Ui.toast(this, getString(R.string.sources_pending));
+                return;
+            }
+            play(currentTrack, inlineEpisode);
+        });
+    }
+
+    private int defaultEpisode() {
+        if (currentTrack == null || currentTrack.episodes.isEmpty()) return 1;
+        List<Integer> eps = new ArrayList<>(currentTrack.episodes);
+        java.util.Collections.sort(eps);
+        return eps.get(0);
+    }
+
+    private void playInline(final int episode) {
+        if (currentTrack == null) {
+            Ui.toast(this, getString(R.string.sources_pending));
+            return;
+        }
+        final Track track = currentTrack;
+        b.inlinePlay.setAlpha(0.4f);
+        AppExecutors.get().heavy().execute(() -> {
+            List<StreamSource> found;
+            try {
+                found = TsuyuEngine.streams(track.id, episode, false);
+            } catch (Throwable t) {
+                found = new ArrayList<>();
+            }
+            final List<StreamSource> sources = found == null ? new ArrayList<>() : found;
+            AppExecutors.get().post(() -> {
+                if (b == null || isFinishing()) return;
+                b.inlinePlay.setAlpha(1f);
+                if (sources.isEmpty()) {
+                    Ui.toast(this, "Не удалось подобрать поток");
+                    return;
+                }
+                inlineEpisode = episode;
+                startInline(sources.get(0), episode);
+            });
+        });
+    }
+
+    private void startInline(StreamSource source, int episode) {
+        String referer = source.referer == null ? "" : source.referer;
+        if (inlinePlayer == null || !referer.equals(inlineReferer)) {
+            releaseInline();
+            DefaultHttpDataSource.Factory http = new DefaultHttpDataSource.Factory()
+                    .setUserAgent(Net.CHROME)
+                    .setAllowCrossProtocolRedirects(true)
+                    .setConnectTimeoutMs(12_000)
+                    .setReadTimeoutMs(20_000);
+            Map<String, String> headers = new LinkedHashMap<>();
+            if (!referer.isEmpty()) {
+                headers.put("Referer", referer);
+                headers.put("Origin", originOf(referer));
+            }
+            http.setDefaultRequestProperties(headers);
+            inlinePlayer = new ExoPlayer.Builder(this)
+                    .setMediaSourceFactory(new DefaultMediaSourceFactory(
+                            new DefaultDataSource.Factory(this, http)))
+                    .build();
+            b.inlinePlayer.setPlayer(inlinePlayer);
+            inlineReferer = referer;
+        }
+        b.inlinePoster.setVisibility(View.GONE);
+        b.inlinePlay.setVisibility(View.GONE);
+        saveHistory(String.valueOf(episode));
+        inlinePlayer.setMediaItem(new MediaItem.Builder()
+                .setUri(source.url)
+                .setMediaId(slug + ":" + episode)
+                .build());
+        inlinePlayer.prepare();
+        inlinePlayer.play();
+    }
+
+    private String originOf(String referer) {
+        int i = referer.indexOf('/', 8);
+        return i > 8 ? referer.substring(0, i) : referer;
+    }
+
+    private void releaseInline() {
+        if (inlinePlayer != null) {
+            inlinePlayer.release();
+            inlinePlayer = null;
+        }
+        inlineReferer = "";
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (inlinePlayer != null) inlinePlayer.pause();
+    }
+
+    @Override
+    protected void onDestroy() {
+        releaseInline();
+        super.onDestroy();
     }
 
     private class ScreenshotAdapter extends RecyclerView.Adapter<ScreenshotAdapter.Holder> {
