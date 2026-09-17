@@ -118,15 +118,15 @@ public final class HlsDownloader {
         ExecutorService pool = Executors.newFixedThreadPool(CONCURRENCY);
         List<Future<?>> futures = new ArrayList<>();
         for (final Segment seg : segments) {
-            futures.add(pool.submit(() -> {
-                if (cancel.isCancelled()) return;
+            futures.add(pool.submit((java.util.concurrent.Callable<Void>) () -> {
+                if (cancel.isCancelled()) return null;
                 File out = new File(parts, String.format("seg_%06d.ts", seg.index));
                 if (out.exists() && out.length() > 0) {
                     report(listener, total, done, bytes);
-                    return;
+                    return null;
                 }
                 byte[] data = fetchBytes(client, seg.url, referer);
-                if (cancel.isCancelled()) return;
+                if (cancel.isCancelled()) return null;
                 if (seg.keyUri != null && !"NONE".equals(seg.keyUri)) {
                     data = decrypt(client, seg, referer, data);
                 }
@@ -135,6 +135,7 @@ public final class HlsDownloader {
                 if (!tmp.renameTo(out)) throw new IOException("Не удалось сохранить сегмент");
                 bytes.addAndGet(data.length);
                 report(listener, total, done, bytes);
+                return null;
             }));
         }
 
