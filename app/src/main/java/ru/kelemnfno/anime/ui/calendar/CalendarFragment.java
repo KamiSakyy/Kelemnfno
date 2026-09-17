@@ -125,10 +125,11 @@ public class CalendarFragment extends Fragment {
             return;
         }
         b.nextRelease.setVisibility(View.VISIBLE);
-        int number = best.episodes.aired + 1;
-        b.nextReleaseText.setText("Следующий релиз: " + best.title + " · серия " + number
+        final ScheduleItem target = best;
+        int number = target.episodes.aired + 1;
+        b.nextReleaseText.setText("Следующий релиз: " + target.title + " · серия " + number
                 + " — " + Countdown.format(bestTs, now));
-        b.nextRelease.setOnClickListener(v -> DetailActivity.open(requireContext(), best.animeUrl));
+        b.nextRelease.setOnClickListener(v -> DetailActivity.open(requireContext(), target.animeUrl));
     }
 
     private long nextTs(ScheduleItem it) {

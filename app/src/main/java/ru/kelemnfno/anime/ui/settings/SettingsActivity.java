@@ -149,8 +149,13 @@ public class SettingsActivity extends AppCompatActivity {
         parent.addView(tv, lp);
     }
 
+    /** Колбэк переключателя: один boolean, чтобы лямбды на месте вызова были однозначны. */
+    public interface Toggle {
+        void onChange(boolean on);
+    }
+
     private void toggle(LinearLayout parent, String title, String subtitle, boolean value,
-                        android.widget.CompoundButton.OnCheckedChangeListener listener) {
+                        Toggle listener) {
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(android.view.Gravity.CENTER_VERTICAL);
@@ -175,7 +180,7 @@ public class SettingsActivity extends AppCompatActivity {
 
         MaterialSwitch sw = new MaterialSwitch(this);
         sw.setChecked(value);
-        sw.setOnCheckedChangeListener(listener);
+        sw.setOnCheckedChangeListener((button, on) -> listener.onChange(on));
         row.addView(sw);
         parent.addView(row);
     }
