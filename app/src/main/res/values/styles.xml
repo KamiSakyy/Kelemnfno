@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
+    <!-- База семейства: у Widget.Kelemnfno.* без явного parent AAPT ищет именно её. -->
+    <style name="Widget.Kelemnfno" parent="" />
+
     <!-- Заголовок секции: «Топ аниме» -->
     <style name="Widget.Kelemnfno.SectionTitle">
         <item name="android:textSize">18sp</item>
