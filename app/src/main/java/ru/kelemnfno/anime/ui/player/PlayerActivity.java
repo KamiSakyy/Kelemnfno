@@ -349,10 +349,7 @@ public class PlayerActivity extends AppCompatActivity {
         b.playerView.setOnClickListener(v -> toggleControls());
         b.ctrlLock.setOnClickListener(v -> {
             locked = !locked;
-            b.ctrlLock.setImageResource(locked ? R.drawable.ic_lock : R.drawable.ic_unlock);
-            if (locked) hideNow();
-            else showControls();
-            Ui.toast(this, locked ? "Управление заблокировано" : "Управление разблокировано");
+            applyLockUi();
         });
         b.ctrlPip.setOnClickListener(v -> enterPip());
         b.ctrlVoice.setOnClickListener(v -> voiceSheet());
@@ -431,6 +428,34 @@ public class PlayerActivity extends AppCompatActivity {
 
     private final Runnable hideControls = this::hideNow;
 
+    /**
+     * В режиме блокировки панель управления не прячем: на экране остаётся
+     * только кнопка разблокировки, иначе вернуться в обычный режим нельзя.
+     */
+    private void applyLockUi() {
+        handler.removeCallbacks(hideControls);
+        if (locked) {
+            b.controls.setVisibility(View.VISIBLE);
+            b.controls.setAlpha(1f);
+            b.topBar.setVisibility(View.VISIBLE);
+            b.ctrlBack.setVisibility(View.GONE);
+            b.ctrlTitles.setVisibility(View.GONE);
+            b.ctrlPip.setVisibility(View.GONE);
+            b.ctrlLock.setVisibility(View.VISIBLE);
+            b.ctrlLock.setImageResource(R.drawable.ic_unlock);
+            b.centerBar.setVisibility(View.GONE);
+            b.bottomBar.setVisibility(View.GONE);
+            return;
+        }
+        b.ctrlBack.setVisibility(View.VISIBLE);
+        b.ctrlTitles.setVisibility(View.VISIBLE);
+        b.ctrlPip.setVisibility(View.VISIBLE);
+        b.ctrlLock.setImageResource(R.drawable.ic_lock);
+        b.centerBar.setVisibility(View.VISIBLE);
+        b.bottomBar.setVisibility(View.VISIBLE);
+        showControls();
+    }
+
     private void showControls() {
         if (locked) return;
         b.controls.setVisibility(View.VISIBLE);
@@ -445,6 +470,7 @@ public class PlayerActivity extends AppCompatActivity {
     }
 
     private void hideNow() {
+        if (locked) return;
         b.controls.animate().alpha(0f).setDuration(180).withEndAction(() -> {
             b.controls.setVisibility(View.GONE);
             b.controls.setAlpha(1f);
@@ -452,6 +478,7 @@ public class PlayerActivity extends AppCompatActivity {
     }
 
     private void toggleControls() {
+        if (locked) return;
         if (b.controls.getVisibility() == View.VISIBLE) hideNow();
         else showControls();
     }
@@ -771,8 +798,8 @@ public class PlayerActivity extends AppCompatActivity {
     @Override
     public void onPictureInPictureModeChanged(boolean inPip, @NonNull Configuration newConfig) {
         super.onPictureInPictureModeChanged(inPip, newConfig);
-        if (inPip) hideNow();
-        else showControls();
+        if (inPip && !locked) hideNow();
+        else if (!locked) showControls();
     }
 
     @Override

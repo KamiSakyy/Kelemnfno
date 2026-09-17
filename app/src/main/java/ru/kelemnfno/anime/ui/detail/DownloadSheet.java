@@ -22,27 +22,33 @@ import ru.kelemnfno.anime.util.AppExecutors;
 import ru.kelemnfno.anime.util.Fmt;
 import ru.kelemnfno.anime.util.Ui;
 
-/** Лист скачивания: подбор прямых потоков, выбор качества, старт загрузки серии. */
+/**
+ * Лист скачивания: выбор озвучки и качества.
+ * Потоки берутся перехватом (TsuyuEngine.streams), файл пишется в папку приложения.
+ */
 public final class DownloadSheet {
 
     private DownloadSheet() {
     }
 
-    public static void show(final DetailActivity host, final AnimeFull anime, final Track track,
-                            final int episode) {
+    public static void show(DetailActivity host, AnimeFull anime, Track track, int episode) {
+        List<Track> one = new ArrayList<>();
+        one.add(track);
+        show(host, anime, one, track, episode);
+    }
+
+    public static void show(final DetailActivity host, final AnimeFull anime, final List<Track> allTracks,
+                            Track initial, final int episode) {
         final SheetDownloadBinding b = SheetDownloadBinding.inflate(host.getLayoutInflater());
         final BottomSheetDialog dialog = new BottomSheetDialog(host, R.style.Theme_Kelemnfno_BottomSheet);
         dialog.setContentView(b.getRoot());
 
         final List<StreamSource> sources = new ArrayList<>();
         final int[] chosen = {Prefs.get(host).settings().downloadQuality};
+        final Track[] current = {initial};
 
         b.title.setText("Серия " + episode + " · " + anime.title);
-        b.subtitle.setText(track.voice);
         b.close.setOnClickListener(v -> dialog.dismiss());
-        b.stateResolving.setVisibility(View.VISIBLE);
-        b.stateReady.setVisibility(View.GONE);
-        b.stateError.setVisibility(View.GONE);
 
         b.start.setOnClickListener(v -> {
             StreamSource picked = pick(sources, chosen[0]);
@@ -50,21 +56,39 @@ public final class DownloadSheet {
                 showError(b, "Нет потока в этом качестве");
                 return;
             }
-            DownloadEntity entity = entity(anime, track, episode, picked);
-            DownloadService.add(host, entity);
+            DownloadService.add(host, entity(anime, current[0], episode, picked));
             dialog.dismiss();
             Ui.toast(host, "Серия " + episode + " · " + picked.label + " — в загрузках");
         });
-        b.retry.setOnClickListener(v -> resolve(host, b, track, episode, sources, chosen));
+        b.retry.setOnClickListener(v -> resolve(host, b, current[0], episode, sources, chosen));
 
-        resolve(host, b, track, episode, sources, chosen);
+        renderVoices(b, allTracks, current, host, anime, episode, sources, chosen);
+        expand(dialog);
         dialog.show();
         Ui.fadeIn(b.getRoot(), 160);
+        resolve(host, b, current[0], episode, sources, chosen);
+    }
+
+    private static void renderVoices(final SheetDownloadBinding b, final List<Track> allTracks,
+                                     final Track[] current, final DetailActivity host,
+                                     final AnimeFull anime, final int episode,
+                                     final List<StreamSource> sources, final int[] chosen) {
+        b.voices.removeAllViews();
+        for (Track t : allTracks) {
+            final Track track = t;
+            Chips.add(b.voices, track.voice, track.id.equals(current[0].id), v -> {
+                current[0] = track;
+                renderVoices(b, allTracks, current, host, anime, episode, sources, chosen);
+                resolve(host, b, track, episode, sources, chosen);
+            });
+        }
+        if (allTracks.size() < 2) b.voices.setVisibility(View.GONE);
     }
 
     /** Подбирает прямые потоки серии и показывает доступные качества. */
     private static void resolve(final DetailActivity host, final SheetDownloadBinding b, final Track track,
                                 final int episode, final List<StreamSource> sources, final int[] chosen) {
+        b.subtitle.setText(track.voice);
         b.stateError.setVisibility(View.GONE);
         b.stateReady.setVisibility(View.GONE);
         b.stateResolving.setVisibility(View.VISIBLE);
@@ -80,7 +104,7 @@ public final class DownloadSheet {
             final List<StreamSource> result = found;
             final String message = error;
             AppExecutors.get().post(() -> {
-                if (host.isFinishing() || b.getRoot().getWindowToken() == null) return;
+                if (host.isFinishing()) return;
                 sources.clear();
                 sources.addAll(result);
                 if (sources.isEmpty()) {
@@ -90,9 +114,8 @@ public final class DownloadSheet {
                 chosen[0] = clamp(chosen[0], availableQualities(sources));
                 b.stateResolving.setVisibility(View.GONE);
                 b.stateReady.setVisibility(View.VISIBLE);
-                StreamSource first = sources.get(0);
-                b.sourceInfo.setText(first.label + " · " + (first.kind == null ? "hls" : first.kind)
-                        + " · " + track.voice);
+                StreamSource first = pick(sources, chosen[0]);
+                b.sourceInfo.setText((first == null ? "" : first.label) + " · " + track.voice);
                 renderQualities(b, sources, chosen);
             });
         });
@@ -165,5 +188,15 @@ public final class DownloadSheet {
         e.createdAt = System.currentTimeMillis();
         e.updatedAt = e.createdAt;
         return e;
+    }
+
+    /** Лист раскрываем, чтобы озвучки и качества помещались на экран. */
+    private static void expand(BottomSheetDialog dialog) {
+        View sheet = dialog.findViewById(com.google.android.material.R.id.design_bottom_sheet);
+        if (sheet == null) return;
+        com.google.android.material.bottomsheet.BottomSheetBehavior<View> behavior =
+                com.google.android.material.bottomsheet.BottomSheetBehavior.from(sheet);
+        behavior.setSkipCollapsed(true);
+        behavior.setState(com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED);
     }
 }

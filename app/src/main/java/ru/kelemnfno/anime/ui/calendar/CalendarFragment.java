@@ -216,7 +216,7 @@ public class CalendarFragment extends Fragment {
 
             void bind(Row r) {
                 ScheduleItem it = r.item;
-                Ui.poster(b.poster, Fmt.posterUrl(it.poster, "small"), 10);
+                Ui.poster(b.poster, Fmt.posterUrl(it.poster, "huge"), 10);
                 b.title.setText(it.title);
                 String time = new java.text.SimpleDateFormat("HH:mm", new Locale("ru")).format(new java.util.Date(r.at));
                 b.meta.setText("Серия " + (it.episodes.aired + 1)

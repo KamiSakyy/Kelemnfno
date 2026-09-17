@@ -19,6 +19,7 @@ import ru.kelemnfno.anime.databinding.ActivitySettingsBinding;
 import ru.kelemnfno.anime.download.DownloadStore;
 import ru.kelemnfno.anime.notify.NewEpisodeWorker;
 import ru.kelemnfno.anime.ui.Chips;
+import ru.kelemnfno.anime.util.CrashGuard;
 import ru.kelemnfno.anime.util.Fmt;
 import ru.kelemnfno.anime.util.Ui;
 
@@ -125,8 +126,12 @@ public class SettingsActivity extends AppCompatActivity {
                 });
 
         section(c, "О приложении");
-        info(c, "Kelemnfno 1.2.0 · Android-порт сайта\n"
+        TextView about = info(c, "Kelemnfno 1.2.0 · Android-порт сайта\n"
                 + "Экраны, анимации, скачивание, уведомления и собственный плеер на ExoPlayer (Media3).");
+        about.setOnLongClickListener(v -> {
+            showLastCrash();
+            return true;
+        });
         button(c, "Открыть сайт", v -> Ui.openUrl(this, "https://yani.tv"));
         button(c, "Очистить кэш изображений", v -> new Thread(() -> {
             com.bumptech.glide.Glide.get(this).clearDiskCache();
@@ -210,7 +215,7 @@ public class SettingsActivity extends AppCompatActivity {
         }
     }
 
-    private void info(LinearLayout parent, String text) {
+    private TextView info(LinearLayout parent, String text) {
         TextView tv = new TextView(this);
         tv.setText(text);
         tv.setTextColor(getColor(R.color.text_mute));
@@ -218,6 +223,27 @@ public class SettingsActivity extends AppCompatActivity {
         tv.setBackgroundResource(R.drawable.bg_surface_block);
         tv.setPadding(Ui.dp(this, 14), Ui.dp(this, 12), Ui.dp(this, 14), Ui.dp(this, 12));
         parent.addView(tv);
+        return tv;
+    }
+
+    /** Скрытая диагностика: долгое нажатие на блоке «О приложении». */
+    private void showLastCrash() {
+        String report = CrashGuard.readAndClear(this);
+        String text = report == null ? "Сбоев не зафиксировано"
+                : (report.length() > 4000 ? report.substring(0, 4000) + "…" : report);
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("Техническая информация")
+                .setMessage(text)
+                .setPositiveButton(R.string.copy_crash, (d, w) -> {
+                    android.content.ClipboardManager cm = (android.content.ClipboardManager)
+                            getSystemService(android.content.Context.CLIPBOARD_SERVICE);
+                    if (cm != null) {
+                        cm.setPrimaryClip(android.content.ClipData.newPlainText("Kelemnfno", text));
+                        Ui.toast(this, "Скопировано");
+                    }
+                })
+                .setNegativeButton(R.string.close, null)
+                .show();
     }
 
     private void button(LinearLayout parent, String title, View.OnClickListener listener) {

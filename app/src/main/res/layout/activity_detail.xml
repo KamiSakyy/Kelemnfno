@@ -68,22 +68,6 @@
                         android:layout_height="44dp"
                         android:contentDescription="@string/to_favorites"
                         android:src="@drawable/ic_heart" />
-
-                    <ImageView
-                        android:id="@+id/share"
-                        style="@style/Widget.Kelemnfno.IconButton"
-                        android:layout_width="44dp"
-                        android:layout_height="44dp"
-                        android:contentDescription="@string/share"
-                        android:src="@drawable/ic_share" />
-
-                    <ImageView
-                        android:id="@+id/open_site"
-                        style="@style/Widget.Kelemnfno.IconButton"
-                        android:layout_width="44dp"
-                        android:layout_height="44dp"
-                        android:contentDescription="@string/external"
-                        android:src="@drawable/ic_external" />
                 </LinearLayout>
 
                 <LinearLayout

@@ -86,8 +86,6 @@ public class DetailActivity extends AppCompatActivity {
         slug = getIntent().getStringExtra(EXTRA_SLUG);
 
         b.back.setOnClickListener(v -> finish());
-        b.share.setOnClickListener(v -> share());
-        b.openSite.setOnClickListener(v -> Ui.openUrl(this, "https://yani.tv/anime/" + slug));
         b.fav.setOnClickListener(v -> toggleFavorite());
         b.favButton.setOnClickListener(v -> toggleFavorite());
 
@@ -385,15 +383,6 @@ public class DetailActivity extends AppCompatActivity {
         });
     }
 
-    private void share() {
-        if (anime == null) return;
-        Intent intent = new Intent(Intent.ACTION_SEND);
-        intent.setType("text/plain");
-        intent.putExtra(Intent.EXTRA_SUBJECT, anime.title);
-        intent.putExtra(Intent.EXTRA_TEXT, anime.title + " — смотреть в Kelemnfno");
-        startActivity(Intent.createChooser(intent, "Поделиться"));
-    }
-
     /* ---------------- Следующая серия ---------------- */
 
     private void loadNextEpisode() {
@@ -431,7 +420,9 @@ public class DetailActivity extends AppCompatActivity {
             b.screenshotsBlock.setVisibility(View.VISIBLE);
             b.screenshots.setLayoutManager(
                     new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
-            b.screenshots.setAdapter(new ScreenshotAdapter(value));
+            b.screenshots.addItemDecoration(new ru.kelemnfno.anime.ui.CardSpacing(this, 0));
+            List<String> six = value.size() > 6 ? new ArrayList<>(value.subList(0, 6)) : value;
+            b.screenshots.setAdapter(new ScreenshotAdapter(six));
         });
     }
 
@@ -544,7 +535,7 @@ public class DetailActivity extends AppCompatActivity {
                 });
                 b.getRoot().setOnLongClickListener(v -> {
                     if (currentTrack != null) {
-                        DownloadSheet.show(DetailActivity.this, anime, currentTrack, episode);
+                        DownloadSheet.show(DetailActivity.this, anime, tracks, currentTrack, episode);
                         return true;
                     }
                     return false;
@@ -570,7 +561,6 @@ public class DetailActivity extends AppCompatActivity {
         public void onBindViewHolder(@NonNull Holder holder, int position) {
             String url = urls.get(position);
             Ui.image(holder.b.image, url);
-            holder.b.image.setOnClickListener(v -> Ui.openUrl(DetailActivity.this, url));
         }
 
         @Override

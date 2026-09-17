@@ -73,6 +73,16 @@ public class DownloadsActivity extends AppCompatActivity {
         DownloadBus.events().observe(this, event -> adapter.notifyDataSetChanged());
     }
 
+    /** Просмотр скачанного файла во встроенном плеере. */
+    private void watch(DownloadEntity d) {
+        if (d.path == null || d.path.isEmpty() || !new File(d.path).exists()) {
+            Ui.toast(this, "Файл не найден");
+            return;
+        }
+        ru.kelemnfno.anime.ui.player.PlayerActivity.startFile(this,
+                d.title + " · серия " + d.episode, d.path);
+    }
+
     private void open(DownloadEntity d) {
         if (d.path == null || d.path.isEmpty()) return;
         File file = new File(d.path);
@@ -159,8 +169,8 @@ public class DownloadsActivity extends AppCompatActivity {
 
                 switch (d.status) {
                     case DownloadEntity.DONE:
-                        b.actionPrimary.setText(R.string.open_file);
-                        b.actionPrimary.setOnClickListener(v -> open(d));
+                        b.actionPrimary.setText(R.string.watch);
+                        b.actionPrimary.setOnClickListener(v -> watch(d));
                         b.actionSecondary.setText(R.string.share);
                         b.actionSecondary.setOnClickListener(v -> share(d));
                         break;

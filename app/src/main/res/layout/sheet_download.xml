@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -79,12 +80,33 @@
         android:paddingStart="20dp"
         android:paddingTop="18dp"
         android:paddingEnd="20dp"
+        android:text="@string/voice" />
+
+    <com.google.android.flexbox.FlexboxLayout
+        android:id="@+id/voices"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="20dp"
+        android:paddingTop="10dp"
+        android:paddingEnd="20dp"
+        app:flexWrap="wrap"
+        app:justifyContent="flex_start" />
+
+    <TextView
+        style="@style/Widget.Kelemnfno.Label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingStart="20dp"
+        android:paddingTop="18dp"
+        android:paddingEnd="20dp"
         android:text="@string/quality" />
 
     <com.google.android.flexbox.FlexboxLayout
         android:id="@+id/qualities"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        app:flexWrap="wrap"
+        app:justifyContent="flex_start"
         android:paddingStart="20dp"
         android:paddingTop="10dp"
         android:paddingEnd="20dp" />

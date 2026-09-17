@@ -259,8 +259,17 @@ public class CatalogFragment extends Fragment {
         b.activeFilters.addView(reset);
     }
 
+    /** Чип активного фильтра. Важно: НЕ добавляем его в контейнер здесь —
+     *  это делает вызывающий код, иначе view получает второго родителя и падает. */
     private TextView activeChip(String text, Runnable onRemove) {
-        return Chips.add(b.activeFilters, text + "  ✕", true, v -> onRemove.run());
+        TextView chip = Chips.chip(requireContext(), text + "  ✕", true, v -> onRemove.run());
+        android.view.ViewGroup.MarginLayoutParams lp = new android.view.ViewGroup.MarginLayoutParams(
+                android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
+                android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+        int gap = ru.kelemnfno.anime.util.Ui.dp(requireContext(), 8);
+        lp.setMargins(0, 0, gap, gap);
+        chip.setLayoutParams(lp);
+        return chip;
     }
 
     private void restart() {
@@ -349,10 +358,25 @@ public class CatalogFragment extends Fragment {
 
     /* ---------------- Bottom sheet с фильтрами ---------------- */
 
+    /** Лист фильтров как на сайте: тёмный, 88% высоты, раскрыт сразу, контент скроллится. */
+    private void expandSheet(BottomSheetDialog dialog) {
+        View sheet = dialog.findViewById(com.google.android.material.R.id.design_bottom_sheet);
+        if (sheet == null) return;
+        int max = Math.round(getResources().getDisplayMetrics().heightPixels * 0.88f);
+        android.view.ViewGroup.LayoutParams lp = sheet.getLayoutParams();
+        lp.height = max;
+        sheet.setLayoutParams(lp);
+        com.google.android.material.bottomsheet.BottomSheetBehavior<View> behavior =
+                com.google.android.material.bottomsheet.BottomSheetBehavior.from(sheet);
+        behavior.setSkipCollapsed(true);
+        behavior.setState(com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED);
+    }
+
     private void openFilters() {
-        BottomSheetDialog dialog = new BottomSheetDialog(requireContext());
+        BottomSheetDialog dialog = new BottomSheetDialog(requireContext(), R.style.Theme_Kelemnfno_BottomSheet);
         SheetFiltersBinding s = SheetFiltersBinding.inflate(getLayoutInflater());
         dialog.setContentView(s.getRoot());
+        expandSheet(dialog);
 
         s.statusGroup.removeAllViews();
         for (int i = 0; i < STATUSES.length; i++) {
