@@ -37,10 +37,10 @@ jobs:
           ls "$ANDROID_HOME/build-tools" || true
           ls "$ANDROID_HOME/cmdline-tools" || true
           command -v sdkmanager || true
-          echo "sdk-info=ANDROID_HOME=$ANDROID_HOME platforms=[$(ls "$ANDROID_HOME/platforms" 2>/dev/null | tr '\n' ' ')] build-tools=[$(ls "$ANDROID_HOME/build-tools" 2>/dev/null | tr '\n' ' ')] cmdline=[$(ls "$ANDROID_HOME/cmdline-tools" 2>/dev/null | tr '\n' ' ')]" >> "$GITHUB_ENV"
+          echo "sdkinfo=ANDROID_HOME=$ANDROID_HOME platforms=[$(ls "$ANDROID_HOME/platforms" 2>/dev/null | tr '\n' ' ')] build-tools=[$(ls "$ANDROID_HOME/build-tools" 2>/dev/null | tr '\n' ' ')] cmdline=[$(ls "$ANDROID_HOME/cmdline-tools" 2>/dev/null | tr '\n' ' ')]" >> "$GITHUB_ENV"
 
       - name: Report SDK info
-        run: echo "::notice::$sdk_info"
+        run: echo "::notice::$sdkinfo"
 
       - name: Accept licenses and install SDK packages
         run: |
@@ -78,20 +78,24 @@ jobs:
       - name: Build debug APK
         id: build
         continue-on-error: true
-        run: ./gradlew --no-daemon --stacktrace assembleDebug 2>&1 | tee build.log
+        run: |
+          set -o pipefail
+          ./gradlew --no-daemon --stacktrace assembleDebug 2>&1 | tee build.log
 
       # Логи джоба снаружи не всегда доступны, поэтому дублируем ошибки в аннотации.
       - name: Publish build errors as annotations
-        if: steps.build.outcome == 'failure'
+        if: always()
         run: |
-          echo "===== tail ====="
-          tail -n 120 build.log
-          grep -nE "error:|FAILURE:|What went wrong|Caused by:|Execution failed|AAPT:|Exception|\.java:[0-9]+" build.log \
-            | head -n 40 \
-            | while IFS= read -r line; do
-                printf '::error::%s\n' "${line:0:900}"
-              done
-          echo "::error::Сборка упала — см. аннотации выше (build.log в артефакте лога)"
+          set +e
+          APK=app/build/outputs/apk/debug/app-debug.apk
+          if [ -f "$APK" ]; then
+            echo "::notice::APK собран: $(stat -c%s "$APK") байт"
+            exit 0
+          fi
+          echo "::error::APK не собран, outcome сборки: ${{ steps.build.outcome }}"
+          tail -n 70 build.log 2>/dev/null | tr '\n' '|' | cut -c1-6000 | sed 's|^|::error::TAIL: |'
+          grep -nE "error:|FAILURE|Caused by|What went wrong|Execution failed|AAPT|\.java:[0-9]+" build.log 2>/dev/null \
+            | head -n 25 | while IFS= read -r l; do printf '::error::%s\n' "${l:0:800}"; done
           exit 1
 
       - name: Rename artifact
