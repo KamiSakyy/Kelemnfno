@@ -218,7 +218,7 @@ public final class Sources {
 
         if (id.isEmpty() && shiki > 0) {
             try {
-                JsonObject found = Net.getJson("https://api.yani.tv/anime?shikimori_ids=" + shiki + "&limit=20", json);
+                JsonObject found = Net.getJson(Secrets.apiBase() + "anime?shikimori_ids=" + shiki + "&limit=20", json);
                 for (JsonObject r : J.list(found, "response")) {
                     if (num(J.obj(r, "remote_ids"), "shikimori_id") == shiki) {
                         id = str(r, "anime_id");
@@ -230,7 +230,7 @@ public final class Sources {
         }
         if (id.isEmpty()) {
             try {
-                JsonObject found = Net.getJson("https://api.yani.tv/anime?q=" + Net.enc(l.title) + "&limit=20", json);
+                JsonObject found = Net.getJson(Secrets.apiBase() + "anime?q=" + Net.enc(l.title) + "&limit=20", json);
                 JsonObject best = choose(J.list(found, "response"), l, row -> {
                     Match.Candidate c = new Match.Candidate(str(row, "title"));
                     for (JsonElement t : J.arr(row, "other_titles")) c.titles.add(J.str(t));
@@ -242,7 +242,7 @@ public final class Sources {
         }
         if (id.isEmpty()) return done("yummy", map);
 
-        JsonObject detail = Net.getJson("https://api.yani.tv/anime/" + Net.enc(id) + "?need_videos=true", json);
+        JsonObject detail = Net.getJson(Secrets.apiBase() + "anime/" + Net.enc(id) + "?need_videos=true", json);
         for (JsonObject v : J.list(J.obj(detail, "response"), "videos")) {
             String iframe = embed(str(v, "iframe_url"));
             if (iframe.isEmpty()) continue;

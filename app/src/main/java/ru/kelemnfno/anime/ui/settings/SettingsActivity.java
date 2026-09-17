@@ -133,7 +133,6 @@ public class SettingsActivity extends AppCompatActivity {
             showLastCrash();
             return true;
         });
-        button(c, "Открыть сайт", v -> Ui.openUrl(this, "https://yani.tv"));
         button(c, "Очистить кэш изображений", v -> new Thread(() -> {
             com.bumptech.glide.Glide.get(this).clearDiskCache();
             Ui.post(() -> Ui.toast(this, "Кэш очищен"));

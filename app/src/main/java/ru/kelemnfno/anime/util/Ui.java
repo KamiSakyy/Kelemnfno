@@ -50,7 +50,7 @@ public final class Ui {
     private static GlideUrl withHeaders(String url) {
         return new GlideUrl(url, new LazyHeaders.Builder()
                 .addHeader("User-Agent", ru.kelemnfno.anime.data.tsuyu.Net.CHROME)
-                .addHeader("Referer", "https://yani.tv/")
+                .addHeader("Referer", ru.kelemnfno.anime.data.tsuyu.Secrets.referer())
                 .addHeader("Accept", "image/avif,image/webp,image/apng,image/*,*/*;q=0.8")
                 .build());
     }
@@ -123,7 +123,7 @@ public final class Ui {
                     Request req = new Request.Builder()
                             .url(url)
                             .header("User-Agent", Net.CHROME)
-                            .header("Referer", "https://yani.tv/")
+                            .header("Referer", ru.kelemnfno.anime.data.tsuyu.Secrets.referer())
                             .header("Accept", "image/avif,image/webp,image/apng,image/*,*/*;q=0.8")
                             .build();
                     try (Response resp = Net.client().newCall(req).execute()) {
