@@ -94,7 +94,7 @@ public class PlaybackService extends MediaSessionService {
         props.put("User-Agent", userAgent == null || userAgent.isEmpty() ? Net.CHROME : userAgent);
         if (referer != null && !referer.isEmpty()) props.put("Referer", referer);
         props.put("Origin", originOf(referer));
-        httpFactory.setDefaultRequestProperties(props);
+        HTTP.setDefaultRequestProperties(props);
     }
 
     private static String originOf(String referer) {

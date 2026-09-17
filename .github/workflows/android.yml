@@ -93,7 +93,8 @@ jobs:
             exit 0
           fi
           echo "::error::APK не собран, outcome сборки: ${{ steps.build.outcome }}"
-          grep -oE "[^ ]+\.java:[0-9]+: error: .*" build.log 2>/dev/null | sort -u | head -n 40 \
+          grep -A2 -E "[^ ]+\.java:[0-9]+: error:" build.log 2>/dev/null | tr '\n' '~' | sed 's/~~/~/g' \
+            | tr '~' '\n' | grep -E "\.java:[0-9]+: error:|symbol:|location:" | head -n 90 \
             | while IFS= read -r l; do printf '::error::JAVA %s\n' "${l:0:400}"; done
           grep -oE "[^ ]+\.java:[0-9]+: (warning|error)" build.log 2>/dev/null | sort -u | wc -l \
             | sed 's/^/::notice::Всего уникальных строк с ошибками в .java: /'

@@ -40,9 +40,9 @@ public final class DownloadSheet {
         b.title.setText("Серия " + episode + " · " + anime.title);
         b.subtitle.setText(track.voice);
         b.close.setOnClickListener(v -> dialog.dismiss());
-        b.stateResolving.getRoot().setVisibility(View.VISIBLE);
-        b.stateReady.getRoot().setVisibility(View.GONE);
-        b.stateError.getRoot().setVisibility(View.GONE);
+        b.stateResolving.setVisibility(View.VISIBLE);
+        b.stateReady.setVisibility(View.GONE);
+        b.stateError.setVisibility(View.GONE);
 
         b.start.setOnClickListener(v -> {
             StreamSource picked = pick(sources, chosen[0]);
@@ -65,9 +65,9 @@ public final class DownloadSheet {
     /** Подбирает прямые потоки серии и показывает доступные качества. */
     private static void resolve(final DetailActivity host, final SheetDownloadBinding b, final Track track,
                                 final int episode, final List<StreamSource> sources, final int[] chosen) {
-        b.stateError.getRoot().setVisibility(View.GONE);
-        b.stateReady.getRoot().setVisibility(View.GONE);
-        b.stateResolving.getRoot().setVisibility(View.VISIBLE);
+        b.stateError.setVisibility(View.GONE);
+        b.stateReady.setVisibility(View.GONE);
+        b.stateResolving.setVisibility(View.VISIBLE);
         AppExecutors.get().heavy().execute(() -> {
             List<StreamSource> found;
             String error = null;
@@ -88,8 +88,8 @@ public final class DownloadSheet {
                     return;
                 }
                 chosen[0] = clamp(chosen[0], availableQualities(sources));
-                b.stateResolving.getRoot().setVisibility(View.GONE);
-                b.stateReady.getRoot().setVisibility(View.VISIBLE);
+                b.stateResolving.setVisibility(View.GONE);
+                b.stateReady.setVisibility(View.VISIBLE);
                 StreamSource first = sources.get(0);
                 b.sourceInfo.setText(first.label + " · " + (first.kind == null ? "hls" : first.kind)
                         + " · " + track.voice);
@@ -139,9 +139,9 @@ public final class DownloadSheet {
     }
 
     private static void showError(SheetDownloadBinding b, String message) {
-        b.stateResolving.getRoot().setVisibility(View.GONE);
-        b.stateReady.getRoot().setVisibility(View.GONE);
-        b.stateError.getRoot().setVisibility(View.VISIBLE);
+        b.stateResolving.setVisibility(View.GONE);
+        b.stateReady.setVisibility(View.GONE);
+        b.stateError.setVisibility(View.VISIBLE);
         b.errorText.setText(message == null ? "Не удалось получить поток" : message);
     }
 
