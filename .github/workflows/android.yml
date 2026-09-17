@@ -118,6 +118,18 @@ jobs:
           path: out/Kelemnfno-debug.apk
           if-no-files-found: error
 
+      # Прямая отдача файла: релиз-ассеты наружу не всегда достижимы,
+      # поэтому кладём APK ещё и в саму ветку (git-протокол доступен всегда).
+      - name: Commit APK into branch
+        if: github.event_name == 'push'
+        run: |
+          git config user.name "kelemnfno-ci"
+          git config user.email "ci@kelemnfno.local"
+          cp out/Kelemnfno-debug.apk Kelemnfno-debug.apk
+          git add -f Kelemnfno-debug.apk
+          git commit -m "APK ${GITHUB_SHA::7}: Kelemnfno-debug.apk [skip ci]" || echo "APK не изменился"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+
       - name: Publish APK to release
         if: github.event_name == 'push'
         uses: softprops/action-gh-release@v2
