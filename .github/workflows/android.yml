@@ -132,15 +132,14 @@ jobs:
 
       - name: Publish APK to release
         if: github.event_name == 'push'
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: nightly
-          name: Kelemnfno nightly build
-          body: |
-            Автоматическая сборка ветки `${{ github.ref_name }}` (commit `${{ github.sha }}`).
-
-            **Kelemnfno-debug.apk** — установочный файл приложения.
-          files: out/Kelemnfno-debug.apk
-          generate_release_notes: false
+        continue-on-error: true
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set +e
+          gh release delete nightly --yes --cleanup-tag
+          gh release create nightly out/Kelemnfno-debug.apk \
+            --title "Kelemnfno nightly build" \
+            --target "${GITHUB_REF_NAME}" \
+            --notes "Сборка ветки ${GITHUB_REF_NAME}, commit ${GITHUB_SHA}."
+          gh release view nightly --json assets --jq '.assets[] | "release asset: \(.name) \(.size) байт"'
