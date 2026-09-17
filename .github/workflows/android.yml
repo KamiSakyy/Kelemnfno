@@ -14,7 +14,7 @@ jobs:
   build:
     name: Assemble APK
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
 
     steps:
       - name: Checkout
@@ -26,13 +26,42 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Install SDK packages
+      # SDK уже стоит на образе runner'а — сторонние экшены не используем.
+      - name: Inspect preinstalled Android SDK
         run: |
-          yes | sdkmanager --licenses > /dev/null || true
-          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+          set -x
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+          ls -la "$ANDROID_HOME" || true
+          ls "$ANDROID_HOME/platforms" || true
+          ls "$ANDROID_HOME/build-tools" || true
+          ls "$ANDROID_HOME/cmdline-tools" || true
+          command -v sdkmanager || true
+          echo "sdk-info=ANDROID_HOME=$ANDROID_HOME platforms=[$(ls "$ANDROID_HOME/platforms" 2>/dev/null | tr '\n' ' ')] build-tools=[$(ls "$ANDROID_HOME/build-tools" 2>/dev/null | tr '\n' ' ')] cmdline=[$(ls "$ANDROID_HOME/cmdline-tools" 2>/dev/null | tr '\n' ' ')]" >> "$GITHUB_ENV"
+
+      - name: Report SDK info
+        run: echo "::notice::$sdk_info"
+
+      - name: Accept licenses and install SDK packages
+        run: |
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -x "$SDKMANAGER" ]; then
+            SDKMANAGER="$(ls -d "$ANDROID_HOME"/cmdline-tools/*/bin/sdkmanager 2>/dev/null | head -1 || true)"
+          fi
+          if [ -z "$SDKMANAGER" ] || [ ! -x "$SDKMANAGER" ]; then
+            SDKMANAGER="$(command -v sdkmanager || true)"
+          fi
+          echo "Using sdkmanager: $SDKMANAGER"
+          if [ -z "$SDKMANAGER" ]; then
+            echo "::error::sdkmanager не найден в $ANDROID_HOME"
+            exit 1
+          fi
+          yes | "$SDKMANAGER" --licenses > /dev/null 2>&1 || true
+          "$SDKMANAGER" --install "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+          echo "installed=[$("$SDKMANAGER" --list_installed 2>/dev/null | tr '\n' ' ')]" >> "$GITHUB_ENV"
+
+      - name: Report installed packages
+        run: echo "::notice::$installed"
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
@@ -47,12 +76,29 @@ jobs:
           restore-keys: ${{ runner.os }}-gradle-
 
       - name: Build debug APK
-        run: ./gradlew --no-daemon --stacktrace assembleDebug
+        id: build
+        continue-on-error: true
+        run: ./gradlew --no-daemon --stacktrace assembleDebug 2>&1 | tee build.log
+
+      # Логи джоба снаружи не всегда доступны, поэтому дублируем ошибки в аннотации.
+      - name: Publish build errors as annotations
+        if: steps.build.outcome == 'failure'
+        run: |
+          echo "===== tail ====="
+          tail -n 120 build.log
+          grep -nE "error:|FAILURE:|What went wrong|Caused by:|Execution failed|AAPT:|Exception|\.java:[0-9]+" build.log \
+            | head -n 40 \
+            | while IFS= read -r line; do
+                printf '::error::%s\n' "${line:0:900}"
+              done
+          echo "::error::Сборка упала — см. аннотации выше (build.log в артефакте лога)"
+          exit 1
 
       - name: Rename artifact
         run: |
           mkdir -p out
           cp app/build/outputs/apk/debug/app-debug.apk out/Kelemnfno-debug.apk
+          ls -la out
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
