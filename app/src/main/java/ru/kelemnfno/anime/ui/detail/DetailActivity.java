@@ -466,6 +466,7 @@ public class DetailActivity extends AppCompatActivity {
         adapter.submit(models);
         b.viewingOrder.sectionList.setLayoutManager(
                 new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+        b.viewingOrder.sectionList.addItemDecoration(new ru.kelemnfno.anime.ui.CardSpacing(this, 0));
         b.viewingOrder.sectionList.setAdapter(adapter);
     }
 

@@ -117,6 +117,10 @@ public final class TsuyuEngine {
         for (Map.Entry<String, Bucket> e : buckets.entrySet()) {
             Bucket b = e.getValue();
             if (b.routes.isEmpty()) continue;
+            // Публикуем маршруты: именно отсюда streams() берёт плееры серий.
+            // Без этой строки список озвучек есть, а поток получить нельзя.
+            if (ROUTES.size() > 400) ROUTES.clear();
+            ROUTES.put(e.getKey(), b);
             Track t = new Track();
             t.id = e.getKey();
             t.voice = b.voice;

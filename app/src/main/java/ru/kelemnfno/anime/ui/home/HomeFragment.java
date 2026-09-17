@@ -216,6 +216,7 @@ public class HomeFragment extends Fragment {
         AnimeCardAdapter adapter = new AnimeCardAdapter(118);
         adapter.setListener(cardListener());
         adapter.submit(models);
+        s.sectionList.addItemDecoration(new ru.kelemnfno.anime.ui.CardSpacing(requireContext(), 0));
         s.sectionList.setLayoutManager(
                 new LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false));
         s.sectionList.setAdapter(adapter);
@@ -261,7 +262,8 @@ public class HomeFragment extends Fragment {
             AnimeCardAdapter adapter = new AnimeCardAdapter(118);
             adapter.setListener(cardListener());
             adapter.submit(models);
-            s.sectionList.setLayoutManager(
+            s.sectionList.addItemDecoration(new ru.kelemnfno.anime.ui.CardSpacing(requireContext(), 0));
+        s.sectionList.setLayoutManager(
                     new LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false));
             s.sectionList.setAdapter(adapter);
             // вставляем сразу после героя

@@ -97,6 +97,7 @@ public class CatalogFragment extends Fragment {
             }
         });
         b.grid.setLayoutManager(new GridLayoutManager(requireContext(), 3));
+        b.grid.addItemDecoration(new ru.kelemnfno.anime.ui.CardSpacing(requireContext(), 3));
         b.grid.setAdapter(adapter);
         b.grid.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override

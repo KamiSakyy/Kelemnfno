@@ -84,7 +84,7 @@ public class AnimeCardAdapter extends RecyclerView.Adapter<AnimeCardAdapter.Hold
         }
 
         void bind(CardModel m) {
-            Ui.poster(b.poster, m.poster, 14);
+            Ui.poster(b.poster, m.poster, 12);
             b.title.setText(m.title);
             b.subtitle.setText(m.subtitle == null ? "" : m.subtitle);
             b.subtitle.setVisibility(m.subtitle == null || m.subtitle.isEmpty() ? View.GONE : View.VISIBLE);

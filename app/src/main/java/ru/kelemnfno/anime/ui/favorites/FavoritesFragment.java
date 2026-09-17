@@ -58,6 +58,7 @@ public class FavoritesFragment extends Fragment {
             }
         });
         b.grid.setLayoutManager(new GridLayoutManager(requireContext(), 3));
+        b.grid.addItemDecoration(new ru.kelemnfno.anime.ui.CardSpacing(requireContext(), 3));
         b.grid.setAdapter(adapter);
         b.empty.emptyIcon.setImageResource(R.drawable.ic_heart);
         b.empty.emptyText.setText(R.string.empty_favorites);
