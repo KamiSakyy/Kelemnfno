@@ -21,6 +21,7 @@ import ru.kelemnfno.anime.data.db.HistoryEntity;
 import ru.kelemnfno.anime.databinding.ActivityHistoryBinding;
 import ru.kelemnfno.anime.databinding.ItemHistoryBinding;
 import ru.kelemnfno.anime.ui.detail.DetailActivity;
+import ru.kelemnfno.anime.util.AppExecutors;
 import ru.kelemnfno.anime.util.Fmt;
 import ru.kelemnfno.anime.util.Ui;
 
@@ -40,7 +41,8 @@ public class HistoryActivity extends AppCompatActivity {
         b.clear.setOnClickListener(v -> new MaterialAlertDialogBuilder(this)
                 .setTitle("Очистить историю?")
                 .setMessage("Прогресс просмотра будет удалён.")
-                .setPositiveButton(R.string.delete, (d, w) -> AppDatabase.get(this).historyDao().clear())
+                .setPositiveButton(R.string.delete, (d, w) -> AppExecutors.get().io().execute(
+                        () -> AppDatabase.get(HistoryActivity.this).historyDao().clear()))
                 .setNegativeButton(R.string.cancel, null)
                 .show());
         b.list.setLayoutManager(new LinearLayoutManager(this));
@@ -102,8 +104,8 @@ public class HistoryActivity extends AppCompatActivity {
                         DetailActivity.open(HistoryActivity.this, h.slug, h.episode, h.dubbing));
                 b.actionSecondary.setText("Открыть");
                 b.actionSecondary.setOnClickListener(v -> DetailActivity.open(HistoryActivity.this, h.slug));
-                b.actionDelete.setOnClickListener(v -> AppDatabase.get(HistoryActivity.this)
-                        .historyDao().deleteBySlug(h.slug));
+                b.actionDelete.setOnClickListener(v -> AppExecutors.get().io().execute(
+                        () -> AppDatabase.get(HistoryActivity.this).historyDao().deleteBySlug(h.slug)));
             }
         }
     }

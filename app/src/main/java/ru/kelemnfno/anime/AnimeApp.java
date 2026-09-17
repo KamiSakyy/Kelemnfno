@@ -7,6 +7,7 @@ import ru.kelemnfno.anime.data.prefs.Prefs;
 import ru.kelemnfno.anime.notify.NewEpisodeWorker;
 import ru.kelemnfno.anime.notify.NotificationHelper;
 import ru.kelemnfno.anime.util.AppExecutors;
+import ru.kelemnfno.anime.util.CrashGuard;
 
 /** Точка входа: каналы уведомлений, база, фоновые проверки новых серий. */
 public class AnimeApp extends Application {
@@ -21,6 +22,7 @@ public class AnimeApp extends Application {
     public void onCreate() {
         super.onCreate();
         instance = this;
+        CrashGuard.install(this);
         NotificationHelper.createChannels(this);
         AppExecutors.get().io().execute(() -> {
             AppDatabase.get(this).favoriteDao().all();

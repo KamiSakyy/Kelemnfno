@@ -17,6 +17,8 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import ru.kelemnfno.anime.R;
 import ru.kelemnfno.anime.data.prefs.Prefs;
+import ru.kelemnfno.anime.util.CrashGuard;
+import android.content.ClipData;
 import ru.kelemnfno.anime.databinding.ActivityMainBinding;
 import ru.kelemnfno.anime.notify.NewEpisodeWorker;
 import ru.kelemnfno.anime.ui.calendar.CalendarFragment;
@@ -71,6 +73,28 @@ public class MainActivity extends AppCompatActivity {
             currentTab = savedInstanceState.getString("tab", TAB_HOME);
             renderNav();
         }
+
+        showLastCrash();
+    }
+
+    /** Показывает стектрейс прошлого падения: без logcat это единственный способ узнать причину. */
+    private void showLastCrash() {
+        String report = CrashGuard.readAndClear(this);
+        if (report == null) return;
+        final String text = report.length() > 4000 ? report.substring(0, 4000) + "…" : report;
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("Прошлый запуск завершился ошибкой")
+                .setMessage(text)
+                .setPositiveButton(R.string.copy_crash, (d, w) -> {
+                    android.content.ClipboardManager cm = (android.content.ClipboardManager)
+                            getSystemService(android.content.Context.CLIPBOARD_SERVICE);
+                    if (cm != null) {
+                        cm.setPrimaryClip(android.content.ClipData.newPlainText("Kelemnfno crash", text));
+                        Ui.toast(this, "Скопировано — пришлите разработчику");
+                    }
+                })
+                .setNegativeButton(R.string.close, null)
+                .show();
     }
 
     @Override

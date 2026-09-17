@@ -62,6 +62,8 @@
     <string name="later">Позже</string>
     <string name="player_error">Не удалось запустить поток</string>
     <string name="external">Сайт</string>
+    <string name="copy_crash">Скопировать</string>
+    <string name="close">Закрыть</string>
     <string name="resolving">Ищем рабочий источник…</string>
     <string name="no_sources">Рабочие источники не найдены</string>
 </resources>

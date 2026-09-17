@@ -31,6 +31,8 @@ public abstract class AppDatabase extends RoomDatabase {
                 if (instance == null) {
                     instance = Room.databaseBuilder(context.getApplicationContext(), AppDatabase.class, "kelemnfno.db")
                             .fallbackToDestructiveMigration()
+                            // База крошечная, а падение приложения хуже миллисекундного чтения.
+                            .allowMainThreadQueries()
                             .build();
                 }
             }

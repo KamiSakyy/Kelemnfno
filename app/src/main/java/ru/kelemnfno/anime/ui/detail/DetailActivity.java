@@ -95,7 +95,7 @@ public class DetailActivity extends AppCompatActivity {
         b.episodes.setLayoutManager(new GridLayoutManager(this, 6));
         b.episodes.setAdapter(episodeAdapter);
         b.resetProgress.setOnClickListener(v -> {
-            AppDatabase.get(this).watchedDao().resetSlug(slug);
+            AppExecutors.get().io().execute(() -> AppDatabase.get(this).watchedDao().resetSlug(slug));
             Ui.toast(this, "Прогресс сброшен");
         });
         b.descriptionMore.setOnClickListener(v -> {
@@ -178,12 +178,15 @@ public class DetailActivity extends AppCompatActivity {
         renderViewingOrder();
 
         b.watch.setOnClickListener(v -> {
-            if (currentTrack != null && !currentTrack.episodes.isEmpty()) {
-                int episode = resumeEpisode();
-                play(currentTrack, episode);
-            } else {
+            if (currentTrack == null || currentTrack.episodes.isEmpty()) {
                 Ui.toast(this, getString(R.string.resolving));
+                return;
             }
+            // чтение истории — вне главного потока
+            AppExecutors.get().run(this::resumeEpisode, (ep, error) -> {
+                if (b == null || isFinishing() || currentTrack == null) return;
+                play(currentTrack, ep == null ? currentTrack.firstEpisode() : ep);
+            });
         });
     }
 
@@ -321,10 +324,9 @@ public class DetailActivity extends AppCompatActivity {
                 track.id, episode, track.voice, tracks);
     }
 
-    private void saveHistory(String episode) {
+    private void saveHistory(final String episode) {
         if (anime == null) return;
-        HistoryEntity h = AppDatabase.get(this).historyDao().bySlug(slug);
-        HistoryEntity entity = new HistoryEntity();
+        final HistoryEntity entity = new HistoryEntity();
         entity.slug = slug;
         entity.animeId = anime.animeId;
         entity.title = anime.title;
@@ -332,47 +334,55 @@ public class DetailActivity extends AppCompatActivity {
         entity.episode = episode;
         entity.dubbing = currentTrack == null ? "" : currentTrack.voice;
         entity.total = currentTrack == null ? 0 : currentTrack.episodes.size();
-        entity.positionMs = h == null ? 0 : h.positionMs;
-        entity.durationMs = h == null ? 0 : h.durationMs;
         entity.updatedAt = System.currentTimeMillis();
-        new Thread(() -> AppDatabase.get(this).historyDao().upsert(entity)).start();
+        AppExecutors.get().io().execute(() -> {
+            HistoryEntity h = AppDatabase.get(this).historyDao().bySlug(slug);
+            entity.positionMs = h == null ? 0 : h.positionMs;
+            entity.durationMs = h == null ? 0 : h.durationMs;
+            AppDatabase.get(this).historyDao().upsert(entity);
+        });
     }
 
     /* ---------------- Избранное ---------------- */
 
     private void renderFavoriteState() {
-        boolean fav = AppDatabase.get(this).favoriteDao().contains(slug);
-        b.fav.setImageResource(fav ? R.drawable.ic_heart_filled : R.drawable.ic_heart);
-        b.fav.setImageTintList(android.content.res.ColorStateList.valueOf(
-                getColor(fav ? R.color.rose : R.color.text)));
-        b.favButton.setText(fav ? R.string.in_favorites : R.string.to_favorites);
-        b.favButton.setBackgroundResource(fav ? R.drawable.bg_chip_accent : R.drawable.bg_chip);
-        Ui.pop(b.fav);
+        AppExecutors.get().run(() -> AppDatabase.get(this).favoriteDao().contains(slug), (value, error) -> {
+            if (b == null || isFinishing()) return;
+            boolean fav = value != null && value;
+            b.fav.setImageResource(fav ? R.drawable.ic_heart_filled : R.drawable.ic_heart);
+            b.fav.setImageTintList(android.content.res.ColorStateList.valueOf(
+                    getColor(fav ? R.color.rose : R.color.text)));
+            b.favButton.setText(fav ? R.string.in_favorites : R.string.to_favorites);
+            b.favButton.setBackgroundResource(fav ? R.drawable.bg_chip_accent : R.drawable.bg_chip);
+            Ui.pop(b.fav);
+        });
     }
 
     private void toggleFavorite() {
         if (anime == null) return;
-        FavoriteEntity existing = AppDatabase.get(this).favoriteDao().bySlug(slug);
-        if (existing != null) {
-            new Thread(() -> AppDatabase.get(this).favoriteDao().deleteBySlug(slug)).start();
-            Ui.toast(this, "Удалено из избранного");
-        } else {
-            FavoriteEntity f = new FavoriteEntity();
-            f.slug = slug;
-            f.animeId = anime.animeId;
-            f.title = anime.title;
-            f.poster = Fmt.posterUrl(anime, "big");
-            f.year = anime.year;
-            f.type = anime.type == null ? "" : anime.type.shortname;
-            f.addedAt = System.currentTimeMillis();
-            f.episodeCount = anime.videos == null ? 0 : anime.videos.size();
-            f.dubbing = currentTrack == null ? "" : currentTrack.voice;
-            f.status = anime.animeStatus == null ? "" : anime.animeStatus.alias;
-            f.nextDate = nextEpisodeTs;
-            new Thread(() -> AppDatabase.get(this).favoriteDao().upsert(f)).start();
-            Ui.toast(this, "Добавлено — пришлём уведомление о новой серии");
-        }
-        renderFavoriteState();
+        final FavoriteEntity draft = new FavoriteEntity();
+        draft.slug = slug;
+        draft.animeId = anime.animeId;
+        draft.title = anime.title;
+        draft.poster = Fmt.posterUrl(anime, "big");
+        draft.year = anime.year;
+        draft.type = anime.type == null ? "" : anime.type.shortname;
+        draft.addedAt = System.currentTimeMillis();
+        draft.episodeCount = anime.videos == null ? 0 : anime.videos.size();
+        draft.dubbing = currentTrack == null ? "" : currentTrack.voice;
+        draft.status = anime.animeStatus == null ? "" : anime.animeStatus.alias;
+        draft.nextDate = nextEpisodeTs;
+        AppExecutors.get().run(() -> AppDatabase.get(this).favoriteDao().bySlug(slug), (existing, error) -> {
+            if (b == null || isFinishing()) return;
+            if (existing != null) {
+                AppExecutors.get().io().execute(() -> AppDatabase.get(this).favoriteDao().deleteBySlug(slug));
+                Ui.toast(this, "Удалено из избранного");
+            } else {
+                AppExecutors.get().io().execute(() -> AppDatabase.get(this).favoriteDao().upsert(draft));
+                Ui.toast(this, "Добавлено — пришлём уведомление о новой серии");
+            }
+            renderFavoriteState();
+        });
     }
 
     private void share() {

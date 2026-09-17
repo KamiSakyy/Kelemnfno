@@ -22,6 +22,7 @@ import ru.kelemnfno.anime.notify.NotificationHelper;
 import ru.kelemnfno.anime.ui.AnimeCardAdapter;
 import ru.kelemnfno.anime.ui.CardModel;
 import ru.kelemnfno.anime.ui.detail.DetailActivity;
+import ru.kelemnfno.anime.util.AppExecutors;
 import ru.kelemnfno.anime.util.Countdown;
 import ru.kelemnfno.anime.util.Ui;
 
@@ -51,7 +52,8 @@ public class FavoritesFragment extends Fragment {
 
             @Override
             public void onLongClick(CardModel model) {
-                AppDatabase.get(requireContext()).favoriteDao().deleteBySlug(model.slug);
+                AppExecutors.get().io().execute(() ->
+                        AppDatabase.get(requireContext()).favoriteDao().deleteBySlug(model.slug));
                 Ui.toast(requireContext(), "Удалено из избранного");
             }
         });

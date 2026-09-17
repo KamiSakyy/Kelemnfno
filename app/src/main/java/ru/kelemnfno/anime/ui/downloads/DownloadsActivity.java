@@ -27,6 +27,7 @@ import ru.kelemnfno.anime.databinding.ItemDownloadBinding;
 import ru.kelemnfno.anime.download.DownloadBus;
 import ru.kelemnfno.anime.download.DownloadService;
 import ru.kelemnfno.anime.download.DownloadStore;
+import ru.kelemnfno.anime.util.AppExecutors;
 import ru.kelemnfno.anime.util.Fmt;
 import ru.kelemnfno.anime.util.Ui;
 
@@ -47,7 +48,8 @@ public class DownloadsActivity extends AppCompatActivity {
                 .setTitle("Удалить завершённые?")
                 .setMessage("Файлы останутся в папке приложения, но список очистится.")
                 .setPositiveButton(R.string.delete, (d, w) -> {
-                    AppDatabase.get(this).downloadDao().clearFinished();
+                    AppExecutors.get().io().execute(() ->
+                            AppDatabase.get(DownloadsActivity.this).downloadDao().clearFinished());
                     Ui.toast(this, "Список очищен");
                 })
                 .setNegativeButton(R.string.cancel, null)
@@ -198,7 +200,8 @@ public class DownloadsActivity extends AppCompatActivity {
                 b.actionDelete.setOnClickListener(v -> {
                     DownloadService.cancel(DownloadsActivity.this, d.id);
                     if (d.path != null && !d.path.isEmpty()) DownloadStore.delete(new File(d.path));
-                    AppDatabase.get(DownloadsActivity.this).downloadDao().deleteById(d.id);
+                    AppExecutors.get().io().execute(() ->
+                            AppDatabase.get(DownloadsActivity.this).downloadDao().deleteById(d.id));
                 });
             }
         }
