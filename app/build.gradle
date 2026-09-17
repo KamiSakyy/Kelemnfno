@@ -17,6 +17,21 @@ android {
         resourceConfigurations += ['ru', 'en']
     }
 
+    signingConfigs {
+        release {
+            def props = new Properties()
+            def propsFile = rootProject.file('keystore.properties')
+            if (propsFile.exists()) propsFile.withInputStream { props.load(it) }
+            def store = rootProject.file(props.getProperty('storeFile', 'keystore/release.keystore'))
+            if (store.exists()) {
+                storeFile store
+                storePassword props.getProperty('storePassword', 'kelemnfno')
+                keyAlias props.getProperty('keyAlias', 'kelemnfno')
+                keyPassword props.getProperty('keyPassword', 'kelemnfno')
+            }
+        }
+    }
+
     buildTypes {
         debug {
             applicationIdSuffix ""
@@ -26,8 +41,10 @@ android {
             versionNameSuffix "-debug"
         }
         release {
-            minifyEnabled true
-            shrinkResources true
+            // R8 не включаем: подписанный релиз должен вести себя ровно как проверенный debug
+            minifyEnabled false
+            shrinkResources false
+            signingConfig signingConfigs.release
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }

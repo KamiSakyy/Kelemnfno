@@ -22,7 +22,7 @@ public final class Fmt {
         return u;
     }
 
-    /** Постер нужного размера с запасными вариантами. */
+    /** Постер нужного размера. Если его нет — перебираем все остальные, пустым не возвращаем. */
     public static String posterUrl(Poster p, String size) {
         if (p == null) return "";
         String v = null;
@@ -35,9 +35,8 @@ public final class Fmt {
             case "mega": v = p.mega; break;
             default: v = p.medium; break;
         }
-        if (isBlank(v)) v = p.medium;
-        if (isBlank(v)) v = p.big;
-        if (isBlank(v)) v = p.fullsize;
+        String[] fallback = {p.medium, p.big, p.huge, p.fullsize, p.small, p.mega};
+        for (int i = 0; i < fallback.length && isBlank(v); i++) v = fallback[i];
         return absUrl(v);
     }
 

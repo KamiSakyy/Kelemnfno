@@ -10,6 +10,8 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.model.GlideUrl;
+import com.bumptech.glide.load.model.LazyHeaders;
 import com.bumptech.glide.load.resource.bitmap.CenterCrop;
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
 import com.bumptech.glide.request.RequestOptions;
@@ -27,18 +29,38 @@ public final class Ui {
         return Math.round(c.getResources().getDisplayMetrics().density * v);
     }
 
+    /**
+     * CDN постеров отдаёт картинки только запросам, похожим на браузер, —
+     * поэтому добавляем User-Agent и Referer к каждому запросу Glide.
+     */
+    private static GlideUrl withHeaders(String url) {
+        return new GlideUrl(url, new LazyHeaders.Builder()
+                .addHeader("User-Agent", ru.kelemnfno.anime.data.tsuyu.Net.CHROME)
+                .addHeader("Referer", "https://yani.tv/")
+                .addHeader("Accept", "image/avif,image/webp,image/apng,image/*,*/*;q=0.8")
+                .build());
+    }
+
     public static void poster(ImageView view, String url, int radiusDp) {
         if (view == null) return;
+        if (url == null || url.isEmpty()) {
+            view.setImageResource(R.drawable.ph_poster);
+            return;
+        }
         RequestOptions opts = new RequestOptions()
                 .transform(new CenterCrop(), new RoundedCorners(dp(view.getContext(), radiusDp)))
                 .placeholder(R.drawable.ph_poster)
                 .error(R.drawable.ph_poster);
-        Glide.with(view.getContext()).load(url).apply(opts).into(view);
+        Glide.with(view.getContext()).load(withHeaders(url)).apply(opts).into(view);
     }
 
     public static void image(ImageView view, String url) {
         if (view == null) return;
-        Glide.with(view.getContext()).load(url)
+        if (url == null || url.isEmpty()) {
+            view.setImageResource(R.drawable.ph_poster);
+            return;
+        }
+        Glide.with(view.getContext()).load(withHeaders(url))
                 .apply(new RequestOptions().placeholder(R.drawable.ph_poster).error(R.drawable.ph_poster))
                 .into(view);
     }

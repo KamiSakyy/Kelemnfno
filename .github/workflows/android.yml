@@ -29,18 +29,12 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      # SDK уже стоит на образе runner'а — сторонние экшены не используем.
       - name: Inspect preinstalled Android SDK
         run: |
-          set -x
           echo "ANDROID_HOME=$ANDROID_HOME"
-          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
-          ls -la "$ANDROID_HOME" || true
           ls "$ANDROID_HOME/platforms" || true
           ls "$ANDROID_HOME/build-tools" || true
-          ls "$ANDROID_HOME/cmdline-tools" || true
-          command -v sdkmanager || true
-          echo "sdkinfo=ANDROID_HOME=$ANDROID_HOME platforms=[$(ls "$ANDROID_HOME/platforms" 2>/dev/null | tr '\n' ' ')] build-tools=[$(ls "$ANDROID_HOME/build-tools" 2>/dev/null | tr '\n' ' ')] cmdline=[$(ls "$ANDROID_HOME/cmdline-tools" 2>/dev/null | tr '\n' ' ')]" >> "$GITHUB_ENV"
+          echo "sdkinfo=platforms=[$(ls "$ANDROID_HOME/platforms" 2>/dev/null | tr '\n' ' ')] build-tools=[$(ls "$ANDROID_HOME/build-tools" 2>/dev/null | tr '\n' ' ')]" >> "$GITHUB_ENV"
 
       - name: Report SDK info
         run: echo "::notice::$sdkinfo"
@@ -54,17 +48,36 @@ jobs:
           if [ -z "$SDKMANAGER" ] || [ ! -x "$SDKMANAGER" ]; then
             SDKMANAGER="$(command -v sdkmanager || true)"
           fi
-          echo "Using sdkmanager: $SDKMANAGER"
           if [ -z "$SDKMANAGER" ]; then
             echo "::error::sdkmanager не найден в $ANDROID_HOME"
             exit 1
           fi
           yes | "$SDKMANAGER" --licenses > /dev/null 2>&1 || true
           "$SDKMANAGER" --install "platform-tools" "platforms;android-35" "build-tools;35.0.0"
-          echo "installed=[$("$SDKMANAGER" --list_installed 2>/dev/null | tr '\n' ' ')]" >> "$GITHUB_ENV"
 
-      - name: Report installed packages
-        run: echo "::notice::$installed"
+      # Ключ создаётся один раз и хранится в репозитории, чтобы подпись релиза
+      # не менялась от сборки к сборке и обновления вставали поверх.
+      - name: Prepare release signing key
+        run: |
+          set -e
+          if [ ! -f keystore/release.keystore ]; then
+            mkdir -p keystore
+            keytool -genkeypair -v -keystore keystore/release.keystore -alias kelemnfno \
+              -keyalg RSA -keysize 2048 -validity 10950 \
+              -storepass kelemnfno -keypass kelemnfno \
+              -dname "CN=Kelemnfno, OU=Mobile, O=Kelemnfno, L=Unknown, ST=Unknown, C=RU"
+            git config user.name "kelemnfno-ci"
+            git config user.email "ci@kelemnfno.local"
+            git add -f keystore/release.keystore keystore.properties
+            git commit -m "Ключ подписи релиза [skip ci]"
+            git pull --rebase origin "${GITHUB_REF_NAME}" || true
+            git push origin "HEAD:${GITHUB_REF_NAME}" || echo "::warning::ключ не запушен, но сборка подписана локально"
+            echo "::notice::Ключ подписи создан и сохранён в репозиторий"
+          else
+            echo "::notice::Ключ подписи уже есть"
+          fi
+          keytool -list -keystore keystore/release.keystore -storepass kelemnfno \
+            | sed -n '1,8p' | tr '\n' ' ' | sed 's|^|::notice::keystore: |'
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
@@ -78,24 +91,25 @@ jobs:
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: ${{ runner.os }}-gradle-
 
-      - name: Build debug APK
+      - name: Build debug and release APK
         id: build
         continue-on-error: true
         run: |
           set -o pipefail
-          ./gradlew --no-daemon --stacktrace assembleDebug 2>&1 | tee build.log
+          ./gradlew --no-daemon --stacktrace assembleDebug assembleRelease 2>&1 | tee build.log
 
       # Логи джоба снаружи не всегда доступны, поэтому дублируем ошибки в аннотации.
       - name: Publish build errors as annotations
         if: always()
         run: |
           set +e
-          APK=app/build/outputs/apk/debug/app-debug.apk
-          if [ -f "$APK" ]; then
-            echo "::notice::APK собран: $(stat -c%s "$APK") байт"
+          DBG=app/build/outputs/apk/debug/app-debug.apk
+          REL=app/build/outputs/apk/release/app-release.apk
+          if [ -f "$DBG" ] && [ -f "$REL" ]; then
+            echo "::notice::APK собраны: debug $(stat -c%s "$DBG") байт, release $(stat -c%s "$REL") байт"
             exit 0
           fi
-          echo "::error::APK не собран, outcome сборки: ${{ steps.build.outcome }}"
+          echo "::error::APK не собран (outcome: ${{ steps.build.outcome }})"
           grep -A2 -E "[^ ]+\.java:[0-9]+: error:" build.log 2>/dev/null | tr '\n' '~' | sed 's/~~/~/g' \
             | tr '~' '\n' | grep -E "\.java:[0-9]+: error:|symbol:|location:" | head -n 90 \
             | while IFS= read -r l; do printf '::error::JAVA %s\n' "${l:0:400}"; done
@@ -105,32 +119,36 @@ jobs:
             | grep -v "\.java:" | head -n 15 | while IFS= read -r l; do printf '::error::%s\n' "${l:0:400}"; done
           exit 1
 
-      - name: Rename artifact
+      - name: Rename artifacts
         run: |
           mkdir -p out
           cp app/build/outputs/apk/debug/app-debug.apk out/Kelemnfno-debug.apk
+          cp app/build/outputs/apk/release/app-release.apk out/Kelemnfno-release.apk
           ls -la out
 
-      - name: Upload APK artifact
+      - name: Upload APK artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: Kelemnfno-debug-apk
-          path: out/Kelemnfno-debug.apk
+          name: Kelemnfno-apk
+          path: |
+            out/Kelemnfno-debug.apk
+            out/Kelemnfno-release.apk
           if-no-files-found: error
 
-      # Прямая отдача файла: релиз-ассеты наружу не всегда достижимы,
+      # Прямая отдача файлов: релиз-ассеты наружу не всегда достижимы,
       # поэтому кладём APK ещё и в саму ветку (git-протокол доступен всегда).
-      - name: Commit APK into branch
+      - name: Commit APKs into branch
         if: github.event_name == 'push'
         run: |
           git config user.name "kelemnfno-ci"
           git config user.email "ci@kelemnfno.local"
           cp out/Kelemnfno-debug.apk Kelemnfno-debug.apk
-          git add -f Kelemnfno-debug.apk
-          git commit -m "APK ${GITHUB_SHA::7}: Kelemnfno-debug.apk [skip ci]" || echo "APK не изменился"
+          cp out/Kelemnfno-release.apk Kelemnfno-release.apk
+          git add -f Kelemnfno-debug.apk Kelemnfno-release.apk
+          git commit -m "APK ${GITHUB_SHA::7}: debug + подписанный release [skip ci]" || echo "APK не изменились"
           git push origin "HEAD:${GITHUB_REF_NAME}"
 
-      - name: Publish APK to release
+      - name: Publish APKs to release
         if: github.event_name == 'push'
         continue-on-error: true
         env:
@@ -138,8 +156,8 @@ jobs:
         run: |
           set +e
           gh release delete nightly --yes --cleanup-tag
-          gh release create nightly out/Kelemnfno-debug.apk \
+          gh release create nightly out/Kelemnfno-release.apk out/Kelemnfno-debug.apk \
             --title "Kelemnfno nightly build" \
             --target "${GITHUB_REF_NAME}" \
-            --notes "Сборка ветки ${GITHUB_REF_NAME}, commit ${GITHUB_SHA}."
+            --notes "Сборка ветки ${GITHUB_REF_NAME}, commit ${GITHUB_SHA}. Kelemnfno-release.apk — подписанный релиз."
           gh release view nightly --json assets --jq '.assets[] | "release asset: \(.name) \(.size) байт"'
