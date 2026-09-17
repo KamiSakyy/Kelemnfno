@@ -1,10 +1,12 @@
 package ru.kelemnfno.anime.ui.detail;
 
+import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -414,8 +416,8 @@ public class DetailActivity extends AppCompatActivity {
     private void loadScreenshots() {
         int shiki = anime.remoteIds == null ? 0 : anime.remoteIds.shikimoriId;
         int mal = anime.remoteIds == null ? 0 : anime.remoteIds.malId;
-        if (shiki <= 0 && mal <= 0) return;
-        AppExecutors.get().run(() -> ScreenshotFetcher.fetch(shiki, mal), (value, error) -> {
+        String name = anime.title;
+        AppExecutors.get().run(() -> ScreenshotFetcher.fetch(shiki, mal, name), (value, error) -> {
             if (b == null || value == null || value.isEmpty()) return;
             b.screenshotsBlock.setVisibility(View.VISIBLE);
             b.screenshots.setLayoutManager(
@@ -561,6 +563,7 @@ public class DetailActivity extends AppCompatActivity {
         public void onBindViewHolder(@NonNull Holder holder, int position) {
             String url = urls.get(position);
             Ui.image(holder.b.image, url);
+            holder.b.getRoot().setOnClickListener(v -> showShot(url));
         }
 
         @Override
@@ -576,6 +579,20 @@ public class DetailActivity extends AppCompatActivity {
                 this.b = binding;
             }
         }
+    }
+
+    /** Кадр на весь экран — тап по картинке или по фону закрывает. */
+    private void showShot(String url) {
+        ImageView full = new ImageView(this);
+        full.setLayoutParams(new ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        full.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        full.setBackgroundColor(0xFF000000);
+        Ui.image(full, url);
+        Dialog dialog = new Dialog(this, android.R.style.Theme_Black_NoTitleBar_Fullscreen);
+        dialog.setContentView(full);
+        full.setOnClickListener(v -> dialog.dismiss());
+        dialog.show();
     }
 
     @Override
