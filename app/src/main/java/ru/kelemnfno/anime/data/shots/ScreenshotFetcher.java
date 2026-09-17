@@ -178,7 +178,12 @@ public final class ScreenshotFetcher {
         if (out.size() >= LIMIT || v == null) return;
         v = v.trim();
         if (v.isEmpty()) return;
-        if (v.startsWith("//")) v = "https:" + v;
+        if (v.startsWith("//")) {
+            v = "https:" + v;
+        } else if (v.startsWith("/")) {
+            // Shikimori отдаёт кадры относительными путями: /system/screenshots/…
+            v = ru.kelemnfno.anime.data.tsuyu.Secrets.shikimori() + v;
+        }
         if (!v.startsWith("http://") && !v.startsWith("https://")) return;
         for (int i = 0; i < out.size(); i++) {
             if (out.get(i).equals(v)) return;

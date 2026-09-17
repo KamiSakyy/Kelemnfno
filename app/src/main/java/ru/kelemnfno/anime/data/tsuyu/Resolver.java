@@ -181,7 +181,7 @@ public final class Resolver {
     }
 
     private static Map<Integer, String> kodik(String url) throws IOException {
-        String page = Net.get(url, Net.baseHeaders(originOf(url), "https://yani.tv/"), 15_000)
+        String page = Net.get(url, Net.baseHeaders(originOf(url), Secrets.referer()), 15_000)
                 .replaceAll("[\\n\\r]", "");
 
         Map<String, String> payload = new LinkedHashMap<>();
@@ -374,7 +374,7 @@ public final class Resolver {
     /* ---------------- Alloha ---------------- */
 
     private static Map<Integer, String> alloha(String url) throws IOException {
-        String page = Net.get(url, Net.baseHeaders(originOf(url), "https://yani.tv/"), 15_000);
+        String page = Net.get(url, Net.baseHeaders(originOf(url), Secrets.referer()), 15_000);
         String id = find(page,
                 "const\\s+fileList\\s*=\\s*JSON\\.parse\\('\\{\"type\":\\s*\"serial\",\\s*\"active\":\\s*\\{\"id\":\\s*(\\d+)");
         if (id.isEmpty()) id = find(page, "\"active\"\\s*:\\s*\\{\\s*\"id\"\\s*:\\s*(\\d+)");
@@ -382,10 +382,10 @@ public final class Resolver {
         String user = find(page, "<meta\\s+name\\s*=\\s*[\"']user[\"']\\s+content\\s*=\\s*[\"'](.+?)[\"']");
         if (id.isEmpty() || token.isEmpty() || user.isEmpty()) throw new IOException("alloha: нет параметров");
 
-        Map<String, String> h = Net.baseHeaders("https://alloha.yani.tv", url);
+        Map<String, String> h = Net.baseHeaders(Secrets.alloha(), url);
         h.put("Accepts-Controls", user);
         String body = "token=" + Net.enc(token) + "&av1=true&autoplay=0&audio=&subtitle=";
-        JsonObject root = Net.parse(Net.postForm("https://alloha.yani.tv/movie/" + id, body, h));
+        JsonObject root = Net.parse(Net.postForm(Secrets.alloha() + "/movie/" + id, body, h));
 
         Map<Integer, String> out = new TreeMap<>(Collections.reverseOrder());
         JsonArray hlsSource = J.arr(root, "hlsSource");
@@ -432,7 +432,7 @@ public final class Resolver {
         }
         if (!out.isEmpty()) return clean(out);
         try {
-            String page = Net.get(url, Net.baseHeaders(origin, "https://yani.tv/"), 12_000);
+            String page = Net.get(url, Net.baseHeaders(origin, Secrets.referer()), 12_000);
             String link = absolute(url, find(page, "var\\s+videoUrl\\s*=\\s*[\"'](.+?)[\"']"));
             if (!link.isEmpty()) put(out, qualityOf(link), link);
         } catch (Exception ignored) {
@@ -534,7 +534,7 @@ public final class Resolver {
     /* ---------------- VK / Rutube ---------------- */
 
     private static Map<Integer, String> vk(String url) throws IOException {
-        String page = TsuyuUtil.unescape(Net.get(url, Net.baseHeaders(originOf(url), "https://yani.tv/"), 15_000));
+        String page = TsuyuUtil.unescape(Net.get(url, Net.baseHeaders(originOf(url), Secrets.referer()), 15_000));
         String ext = find(page, "(?:src|href)=[\"']([^\"']*video_ext\\.php[^\"']+)[\"']");
         if (ext.isEmpty()) ext = find(page, "(https?:\\\\?/\\\\?/vk\\.com/video_ext\\.php[^\"'<>\\s]+)");
         if (!ext.isEmpty()) {
@@ -643,16 +643,16 @@ public final class Resolver {
         }
 
         Map<Integer, String> streams;
-        if ((hostMatches(host, "yummyani.me", "yani.tv") && path.contains("iframecvh"))
+        if ((hostMatches(host, "yummyani.me", Secrets.bareHost()) && path.contains("iframecvh"))
                 || hostMatches(host, "cdnvideohub.com")) {
             streams = cvh(url);
         } else if (hostMatches(host, "animetka.com") && path.startsWith("/api/anime/playlist")) {
             streams = animetkaPlaylist(url);
         } else if (hostMatches(host, "kodikplayer.com", "kodik.info", "kodik.cc", "kodik.biz", "aniqit.com")) {
             streams = kodik(url);
-        } else if (hostMatches(host, "alloha.yani.tv", "alloha.tv")) {
+        } else if (hostMatches(host, "alloha." + Secrets.bareHost(), "alloha.tv")) {
             streams = alloha(url);
-        } else if (hostMatches(host, "aksor.tv", "aksor.yani.tv", "player.aksor.tv")) {
+        } else if (hostMatches(host, "aksor.tv", "aksor." + Secrets.bareHost(), "player.aksor.tv")) {
             streams = aksor(url);
         } else if (hostMatches(host, "video.sibnet.ru", "sibnet.ru")) {
             streams = sibnet(url);

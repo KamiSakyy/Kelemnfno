@@ -14,8 +14,8 @@ import retrofit2.converter.gson.GsonConverterFactory;
 /** Единая точка доступа к API: кэш, таймауты, «человеческий» User-Agent. */
 public final class ApiClient {
 
-    public static final String API_BASE = "https://api.yani.tv/";
-    public static final String STATIC_BASE = "https://static.yani.tv";
+    public static final String API_BASE = ru.kelemnfno.anime.data.tsuyu.Secrets.apiBase();
+    public static final String STATIC_BASE = ru.kelemnfno.anime.data.tsuyu.Secrets.staticBase();
     public static final String UA =
             "Mozilla/5.0 (Linux; Android 15) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Mobile Safari/537.36 Kelemnfno/1.2";
 

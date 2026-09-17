@@ -339,6 +339,7 @@ public class DetailActivity extends AppCompatActivity {
             Chips.add(b.voices, t.voice + " · " + t.episodes.size(), t == chosen, v -> {
                 currentTrack = track;
                 renderVoices();
+                if (inlineStarted) playInline(inlineEpisode);
             });
         }
         currentTrack = chosen;
@@ -562,10 +563,10 @@ public class DetailActivity extends AppCompatActivity {
                         : downloadedEpisodes.contains(String.valueOf(episode)) ? "скачано" : "");
                 b.downloaded.setVisibility(downloadedEpisodes.contains(String.valueOf(episode))
                         ? View.VISIBLE : View.GONE);
-                b.getRoot().setAlpha(isWatched ? 0.55f : 1f);
-                b.getRoot().setOnClickListener(v -> {
-                    if (currentTrack != null) play(currentTrack, episode);
-                });
+                boolean playing = inlineStarted && episode == inlineEpisode;
+                b.getRoot().setAlpha(!playing && isWatched ? 0.55f : 1f);
+                b.number.setTextColor(getColor(playing ? R.color.accent : R.color.text));
+                b.getRoot().setOnClickListener(v -> playInline(episode));
                 b.getRoot().setOnLongClickListener(v -> {
                     if (currentTrack != null) {
                         DownloadSheet.show(DetailActivity.this, anime, tracks, currentTrack, episode);
@@ -582,18 +583,42 @@ public class DetailActivity extends AppCompatActivity {
     private ExoPlayer inlinePlayer;
     private String inlineReferer = "";
     private int inlineEpisode = 1;
+    private boolean inlineStarted;
 
     private void setupInlinePlayer() {
         b.playerBlock.setVisibility(View.VISIBLE);
         Ui.image(b.inlinePoster, Fmt.posterUrl(anime, "fullsize"));
         b.inlinePlay.setOnClickListener(v -> playInline(defaultEpisode()));
+        b.inlinePrev.setOnClickListener(v -> stepEpisode(-1));
+        b.inlineNext.setOnClickListener(v -> stepEpisode(1));
+        b.inlineEpLabel.setText(episodeLabel(defaultEpisode()));
         b.inlineFullscreen.setOnClickListener(v -> {
             if (currentTrack == null) {
                 Ui.toast(this, getString(R.string.sources_pending));
                 return;
             }
-            play(currentTrack, inlineEpisode);
+            play(currentTrack, inlineStarted ? inlineEpisode : defaultEpisode());
         });
+    }
+
+    /** Предыдущая/следующая серия в пределах выбранной озвучки. */
+    private void stepEpisode(int delta) {
+        if (currentTrack == null || currentTrack.episodes.isEmpty()) {
+            Ui.toast(this, getString(R.string.sources_pending));
+            return;
+        }
+        List<Integer> eps = new ArrayList<>(currentTrack.episodes);
+        java.util.Collections.sort(eps);
+        int i = eps.indexOf(inlineEpisode);
+        if (i < 0) i = 0;
+        else i = Math.max(0, Math.min(eps.size() - 1, i + delta));
+        playInline(eps.get(i));
+    }
+
+    private String episodeLabel(int episode) {
+        return "Серия " + episode
+                + (currentTrack == null || currentTrack.voice == null || currentTrack.voice.isEmpty()
+                ? "" : " · " + currentTrack.voice);
     }
 
     private int defaultEpisode() {
@@ -655,6 +680,9 @@ public class DetailActivity extends AppCompatActivity {
         }
         b.inlinePoster.setVisibility(View.GONE);
         b.inlinePlay.setVisibility(View.GONE);
+        inlineStarted = true;
+        b.inlineEpLabel.setText(episodeLabel(episode));
+        if (episodeAdapter != null) episodeAdapter.notifyDataSetChanged();
         saveHistory(String.valueOf(episode));
         inlinePlayer.setMediaItem(new MediaItem.Builder()
                 .setUri(source.url)
