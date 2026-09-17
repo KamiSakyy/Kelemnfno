@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Заголовок секции: «Топ аниме» -->
+    <style name="Widget.Kelemnfno.SectionTitle">
+        <item name="android:textSize">18sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/text</item>
+        <item name="android:letterSpacing">-0.01</item>
+    </style>
+
+    <style name="Widget.Kelemnfno.SectionSubtitle">
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">@color/text_mute</item>
+    </style>
+
+    <!-- Подпись-метка: «ЖАНРЫ» -->
+    <style name="Widget.Kelemnfno.Label">
+        <item name="android:textSize">11sp</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:letterSpacing">0.08</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/text_mute</item>
+    </style>
+
+    <!-- Чип-фильтр -->
+    <style name="Widget.Kelemnfno.Chip">
+        <item name="android:background">@drawable/bg_chip</item>
+        <item name="android:textColor">@color/text_dim</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:paddingStart">14dp</item>
+        <item name="android:paddingEnd">14dp</item>
+        <item name="android:paddingTop">8dp</item>
+        <item name="android:paddingBottom">8dp</item>
+    </style>
+
+    <!-- Основная белая кнопка -->
+    <style name="Widget.Kelemnfno.Button" parent="Widget.Material3.Button">
+        <item name="android:background">@drawable/bg_pill_white</item>
+        <item name="backgroundTint">@null</item>
+        <item name="android:textColor">#FF0B0B10</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:minHeight">50dp</item>
+        <item name="android:stateListAnimator">@null</item>
+        <item name="cornerRadius">999dp</item>
+    </style>
+
+    <style name="Widget.Kelemnfno.Button.Ghost" parent="Widget.Material3.Button">
+        <item name="android:background">@drawable/bg_chip</item>
+        <item name="backgroundTint">@null</item>
+        <item name="android:textColor">@color/text</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:minHeight">48dp</item>
+        <item name="android:stateListAnimator">@null</item>
+        <item name="cornerRadius">999dp</item>
+    </style>
+
+    <!-- Круглая иконка-кнопка -->
+    <style name="Widget.Kelemnfno.IconButton">
+        <item name="android:background">@drawable/bg_ripple_circle</item>
+        <item name="android:padding">10dp</item>
+        <item name="android:scaleType">centerInside</item>
+        <item name="tint">@color/text</item>
+    </style>
+
+    <style name="Widget.Kelemnfno.Switch" parent="Widget.Material3.CompoundButton.MaterialSwitch">
+        <item name="thumbTint">@color/text</item>
+    </style>
+
+    <style name="Widget.Kelemnfno.SeekBar" parent="Widget.AppCompat.SeekBar">
+        <item name="android:progressTint">@color/accent</item>
+        <item name="android:thumbTint">#FFFFFFFF</item>
+        <item name="android:progressBackgroundTint">#33FFFFFF</item>
+    </style>
+
+    <style name="TextAppearance.Kelemnfno.Title" parent="TextAppearance.Material3.TitleLarge">
+        <item name="android:textColor">@color/text</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+</resources>
