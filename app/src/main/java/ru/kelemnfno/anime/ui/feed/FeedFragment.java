@@ -224,7 +224,11 @@ public class FeedFragment extends Fragment {
         current = position;
         if (position < 0 || position >= clips.size()) return;
         FeedClip clip = clips.get(position);
-        RecyclerView.ViewHolder holder = b.pager.findViewHolderForAdapterPosition(position);
+        // У ViewPager2 метод поиска страницы есть только у внутреннего RecyclerView.
+        View pages = b.pager.getChildAt(0);
+        RecyclerView.ViewHolder holder = pages instanceof RecyclerView
+                ? ((RecyclerView) pages).findViewHolderForAdapterPosition(position)
+                : null;
         if (holder instanceof FeedAdapter.Holder) {
             attached = (FeedAdapter.Holder) holder;
             attached.b.feedLoading.setVisibility(View.VISIBLE);
