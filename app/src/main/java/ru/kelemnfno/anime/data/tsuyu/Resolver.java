@@ -250,7 +250,7 @@ public final class Resolver {
         List<String> bases = new ArrayList<>();
         bases.add(endpoint);
         bases.add(originOf(url) + "/ftor");
-        bases.add("https://kodikplayer.com/ftor");
+        bases.add(Secrets.s(34));
         JsonObject links = null;
         for (String base : new LinkedHashSet<String>(bases)) {
             try {
@@ -325,10 +325,10 @@ public final class Resolver {
         if (ep <= 0) ep = 1;
         String dubbing = param(url, "dubbing_code");
 
-        Map<String, String> h = Net.baseHeaders("https://ru.yummyani.me", "https://ru.yummyani.me/");
+        Map<String, String> h = Net.baseHeaders(Secrets.s(41), Secrets.s(42));
         h.put("Accept", "application/json");
         JsonObject playlist = Net.getJson(
-                "https://plapi.cdnvideohub.com/api/v1/player/sv/playlist?pub=745&id=" + Net.enc(animeId) + "&aggr=mali", h);
+                Secrets.s(39) + Net.enc(animeId) + "&aggr=mali", h);
 
         JsonObject chosen = null;
         for (JsonObject item : J.list(playlist, "items")) {
@@ -343,7 +343,7 @@ public final class Resolver {
         if (vkId.isEmpty()) throw new IOException("cvh: серия не найдена");
 
         JsonObject video = Net.getJson(
-                "https://plapi.cdnvideohub.com/api/v1/player/sv/video/" + Net.enc(vkId), h);
+                Secrets.s(40) + Net.enc(vkId), h);
         String failover = J.str(video, "failoverHost");
         JsonObject s = J.obj(video, "sources");
 
@@ -446,10 +446,10 @@ public final class Resolver {
         String page = Net.get(url, Net.baseHeaders(originOf(url), url), 12_000);
         Map<Integer, String> out = new TreeMap<>(Collections.reverseOrder());
         for (String m : findAll(page, "[\"'](\\/v\\/[a-z0-9]+\\/[^\"']+?\\.m3u8)[\"']")) {
-            put(out, 480, "https://video.sibnet.ru" + m);
+            put(out, 480, Secrets.s(51) + m);
         }
         for (String m : findAll(page, "src:\\s*[\"']\\/(.+?\\.mp4[^\"']*)[\"']")) {
-            put(out, 480, "https://video.sibnet.ru/" + m.replace("\\/", "/"));
+            put(out, 480, Secrets.s(52) + m.replace("\\/", "/"));
         }
         if (out.isEmpty()) throw new IOException("sibnet: пусто");
         return clean(out);
@@ -468,7 +468,7 @@ public final class Resolver {
     /* ---------------- AniBoom / AniLib ---------------- */
 
     private static Map<Integer, String> aniboom(String url) throws IOException {
-        String page = Net.get(url, Net.baseHeaders(originOf(url), "https://animego.org/"), 12_000);
+        String page = Net.get(url, Net.baseHeaders(originOf(url), Secrets.s(12)), 12_000);
         String raw = find(page, "data-parameters\\s*=\\s*\"([^\"]+)\"");
         Map<Integer, String> out = new TreeMap<>(Collections.reverseOrder());
         if (!raw.isEmpty()) {
@@ -482,14 +482,14 @@ public final class Resolver {
             } catch (Exception ignored) {
             }
         }
-        if (out.isEmpty()) return scan(url, "https://aniboom.one/");
+        if (out.isEmpty()) return scan(url, Secrets.s(8));
         return clean(out);
     }
 
     private static Map<Integer, String> anilib(String url) throws IOException {
         Map<Integer, String> out = new TreeMap<>(Collections.reverseOrder());
         String safe = safeUrl(url);
-        out.putAll(direct(safe, "https://anilib.me/"));
+        out.putAll(direct(safe, Secrets.s(9)));
         if (out.isEmpty() && !safe.isEmpty()) put(out, qualityOf(safe), safe);
         return clean(out);
     }
@@ -497,7 +497,7 @@ public final class Resolver {
     /* ---------------- Animetka playlist ---------------- */
 
     private static Map<Integer, String> animetkaPlaylist(String url) throws IOException {
-        Map<String, String> h = Net.baseHeaders("https://animetka.com", "https://animetka.com/");
+        Map<String, String> h = Net.baseHeaders(Secrets.s(13), Secrets.s(14));
         h.put("Accept", "application/json, text/plain, */*");
         String text = Net.get(url, h, 12_000);
         Map<Integer, String> out = new TreeMap<>(Collections.reverseOrder());
@@ -539,7 +539,7 @@ public final class Resolver {
         if (ext.isEmpty()) ext = find(page, "(https?:\\\\?/\\\\?/vk\\.com/video_ext\\.php[^\"'<>\\s]+)");
         if (!ext.isEmpty()) {
             try {
-                page += "\n" + TsuyuUtil.unescape(Net.get(absolute(url, ext), Net.baseHeaders("https://vk.com", url), 12_000));
+                page += "\n" + TsuyuUtil.unescape(Net.get(absolute(url, ext), Net.baseHeaders(Secrets.s(53), url), 12_000));
             } catch (Exception ignored) {
             }
         }
@@ -570,14 +570,14 @@ public final class Resolver {
         String id = rutubeId(url);
         if (id.isEmpty()) {
             try {
-                id = rutubeId(Net.get(url, Net.baseHeaders("https://rutube.ru", "https://rutube.ru/"), 12_000));
+                id = rutubeId(Net.get(url, Net.baseHeaders(Secrets.s(43), Secrets.s(44)), 12_000));
             } catch (Exception ignored) {
             }
         }
         if (id.isEmpty()) throw new IOException("rutube: нет id");
-        Map<String, String> h = Net.baseHeaders("https://rutube.ru", url);
+        Map<String, String> h = Net.baseHeaders(Secrets.s(43), url);
         h.put("Accept", "application/json,*/*");
-        JsonObject root = Net.getJson("https://rutube.ru/api/play/options/" + Net.enc(id)
+        JsonObject root = Net.getJson(Secrets.s(45) + Net.enc(id)
                 + "/?no_404=true&referer=" + Net.enc(url) + "&pver=v2", h);
         Map<Integer, String> out = new TreeMap<>(Collections.reverseOrder());
         for (Map.Entry<String, JsonElement> e : J.obj(root, "video_balancer").entrySet()) {
@@ -652,14 +652,14 @@ public final class Resolver {
             streams = kodik(url);
         } else if (hostMatches(host, "alloha." + Secrets.bareHost(), "alloha.tv")) {
             streams = alloha(url);
-        } else if (hostMatches(host, "aksor.tv", "aksor." + Secrets.bareHost(), "player.aksor.tv")) {
+        } else if (hostMatches(host, "aksor.tv", "aksor." + Secrets.bareHost(), Secrets.s(54))) {
             streams = aksor(url);
-        } else if (hostMatches(host, "video.sibnet.ru", "sibnet.ru")) {
+        } else if (hostMatches(host, Secrets.s(55), "sibnet.ru")) {
             streams = sibnet(url);
         } else if (hostMatches(host, "stormo.tv")) {
             streams = stormo(url);
         } else if (host.contains("ladony") || path.contains("vid.php")) {
-            streams = hlsEndpoint(url, "https://online.anidub.com/");
+            streams = hlsEndpoint(url, Secrets.s(38));
         } else if (hostMatches(host, "vk.com", "vkvideo.ru", "vkvideo.com") || path.contains("iframevk")) {
             streams = vk(url);
         } else if (hostMatches(host, "rutube.ru")) {
@@ -668,7 +668,7 @@ public final class Resolver {
             streams = scan(url, null);
         } else if (hostMatches(host, "aniboom.one")) {
             streams = aniboom(url);
-        } else if (hostMatches(host, "video1.anilib.me", "video2.anilib.me", "anilib.me")) {
+        } else if (hostMatches(host, Secrets.s(56), Secrets.s(57), "anilib.me")) {
             streams = anilib(url);
         } else {
             streams = scan(url, null);

@@ -53,21 +53,21 @@ public final class ScreenshotFetcher {
 
         String encoded = "https%3A%2F%2Fshikimori.one%2Fanimes%2F" + shikimoriId + ".json%3Flang%3Dru";
         if (shikimoriId > 0) {
-            shots = shikimori("https://shikimori.one/animes/" + shikimoriId + ".json?lang=ru");
+            shots = shikimori(Secrets.s(49) + shikimoriId + ".json?lang=ru");
             if (shots.isEmpty()) {
-                shots = shikimori("https://shikimori.me/animes/" + shikimoriId + ".json?lang=ru");
+                shots = shikimori(Secrets.s(47) + shikimoriId + ".json?lang=ru");
             }
             if (shots.isEmpty()) {
-                shots = shikimori("https://shikimori.one/api/animes/" + shikimoriId + "?lang=ru");
+                shots = shikimori(Secrets.s(50) + shikimoriId + "?lang=ru");
             }
             if (shots.isEmpty()) {
-                shots = shikimori("https://api.shikimori.me/animes/" + shikimoriId + "?lang=ru");
+                shots = shikimori(Secrets.s(28) + shikimoriId + "?lang=ru");
             }
             if (shots.isEmpty()) {
-                shots = shikimori("https://api.allorigins.win/raw?url=" + encoded);
+                shots = shikimori(Secrets.s(19) + encoded);
             }
             if (shots.isEmpty()) {
-                shots = shikimori("https://corsproxy.io/?url=" + encoded);
+                shots = shikimori(Secrets.s(29) + encoded);
             }
         }
 
@@ -86,7 +86,7 @@ public final class ScreenshotFetcher {
     private static List<String> shikimori(String url) {
         List<String> out = new ArrayList<>();
         try {
-            Map<String, String> headers = Net.baseHeaders("https://shikimori.one", "https://shikimori.one/");
+            Map<String, String> headers = Net.baseHeaders(Secrets.s(2), Secrets.s(48));
             headers.put("Accept", "application/json");
             JsonObject json = Net.getJson(url, headers);
             for (JsonElement el : J.arr(json, "screenshots")) {
@@ -101,7 +101,7 @@ public final class ScreenshotFetcher {
     private static List<String> jikan(int malId) {
         List<String> out = new ArrayList<>();
         try {
-            JsonObject root = Net.getJson("https://api.jikan.moe/v4/anime/" + malId + "/pictures",
+            JsonObject root = Net.getJson(Secrets.s(26) + malId + "/pictures",
                     Net.baseHeaders(null, null));
             for (JsonObject item : J.list(root, "data")) {
                 JsonObject jpg = J.obj(J.obj(item, "images"), "jpg");
@@ -119,12 +119,12 @@ public final class ScreenshotFetcher {
     private static List<String> malPictures(int malId) {
         List<String> out = new ArrayList<>();
         try {
-            String html = Net.get("https://myanimelist.net/anime/" + malId + "/pictures",
-                    Net.baseHeaders("https://myanimelist.net", "https://myanimelist.net/anime/" + malId));
+            String html = Net.get(Secrets.s(36) + malId + "/pictures",
+                    Net.baseHeaders(Secrets.s(35), Secrets.s(36) + malId));
             Document doc = Jsoup.parse(html);
             for (Element img : doc.select("img[data-src], img[src]")) {
                 String src = img.hasAttr("data-src") ? img.attr("data-src") : img.attr("src");
-                if (src.contains("cdn.myanimelist.net/images/anime")) add(out, src);
+                if (src.contains(Secrets.s(6))) add(out, src);
             }
         } catch (Exception ignored) {
         }
@@ -138,7 +138,7 @@ public final class ScreenshotFetcher {
             String body = "{\"query\":\"{ Media(idMAL: " + malId
                     + ", type: ANIME) { bannerImage coverImage { extraLarge large } } }\"}";
             Request request = new Request.Builder()
-                    .url("https://graphql.anilist.co/")
+                    .url(Secrets.s(30))
                     .header("User-Agent", Net.CHROME)
                     .post(RequestBody.create(body, JSON))
                     .build();
@@ -164,7 +164,7 @@ public final class ScreenshotFetcher {
         try {
             String q = URLEncoder.encode(title.trim(), "UTF-8");
             JsonObject root = Net.getJson(
-                    "https://api.jikan.moe/v4/anime?q=" + q + "&limit=1&type=anime",
+                    Secrets.s(27) + q + "&limit=1&type=anime",
                     Net.baseHeaders(null, null));
             List<JsonObject> items = J.list(root, "data");
             if (items.isEmpty()) return 0;

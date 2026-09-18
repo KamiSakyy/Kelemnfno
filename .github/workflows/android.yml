@@ -53,7 +53,8 @@ jobs:
             exit 1
           fi
           yes | "$SDKMANAGER" --licenses > /dev/null 2>&1 || true
-          "$SDKMANAGER" --install "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+          "$SDKMANAGER" --install "platform-tools" "platforms;android-35" "build-tools;35.0.0" \
+            "ndk;27.0.12077973" "cmake;3.22.1"
 
       # Ключ создаётся один раз и хранится в репозитории, чтобы подпись релиза
       # не менялась от сборки к сборке и обновления вставали поверх.
@@ -118,6 +119,15 @@ jobs:
           grep -nE "error:|FAILURE|Caused by|What went wrong|Execution failed|AAPT" build.log 2>/dev/null \
             | grep -v "\.java:" | head -n 15 | while IFS= read -r l; do printf '::error::%s\n' "${l:0:400}"; done
           exit 1
+
+      - name: Verify native key library is packed
+        run: |
+          APK=app/build/outputs/apk/release/app-release.apk
+          if ! unzip -l "$APK" | grep -q "libkelemnfno.so"; then
+            echo "::error::В релизном APK нет libkelemnfno.so — нативный ключ не собрался"
+            exit 1
+          fi
+          unzip -l "$APK" | grep "libkelemnfno.so" | tr -s ' ' | sed 's/^/::notice::so: /'
 
       - name: Rename artifacts
         run: |

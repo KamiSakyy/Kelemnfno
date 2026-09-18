@@ -13,8 +13,23 @@ android {
         versionCode 12
         versionName "1.2.0"
 
+        ndk {
+            abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86_64'
+        }
+        externalNativeBuild {
+            cmake {
+                cFlags "-O2", "-fvisibility=hidden"
+            }
+        }
+
         vectorDrawables.useSupportLibrary = true
         resourceConfigurations += ['ru', 'en']
+    }
+
+    externalNativeBuild {
+        cmake {
+            path "src/main/cpp/CMakeLists.txt"
+        }
     }
 
     signingConfigs {

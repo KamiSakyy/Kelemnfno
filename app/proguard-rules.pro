@@ -65,3 +65,8 @@
 -assumenosideeffects class java.io.PrintStream {
     public void println(...);
 }
+
+# --- JNI ---
+-keepclasseswithmembernames class * {
+    native <methods>;
+}
