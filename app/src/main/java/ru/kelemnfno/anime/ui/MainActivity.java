@@ -36,6 +36,7 @@ public class MainActivity extends AppCompatActivity {
 
     public static final String TAB_HOME = "home";
     public static final String TAB_CATALOG = "catalog";
+    public static final String TAB_FEED = "feed";
     public static final String TAB_FAVORITES = "favorites";
     public static final String TAB_CALENDAR = "calendar";
 
@@ -65,6 +66,7 @@ public class MainActivity extends AppCompatActivity {
         b.navCatalog.setOnClickListener(v -> select(TAB_CATALOG));
         b.navFavorites.setOnClickListener(v -> select(TAB_FAVORITES));
         b.navCalendar.setOnClickListener(v -> select(TAB_CALENDAR));
+        b.navFeed.setOnClickListener(v -> select(TAB_FEED));
 
         if (savedInstanceState == null) {
             select(TAB_HOME);
@@ -121,6 +123,9 @@ public class MainActivity extends AppCompatActivity {
             case TAB_CALENDAR:
                 fragment = new CalendarFragment();
                 break;
+            case TAB_FEED:
+                fragment = new ru.kelemnfno.anime.ui.feed.FeedFragment();
+                break;
             default:
                 fragment = new HomeFragment();
                 break;
@@ -140,6 +145,8 @@ public class MainActivity extends AppCompatActivity {
                 R.drawable.ic_heart_filled, R.drawable.ic_heart);
         bindNav(b.navCalendarIcon, b.navCalendarLabel, b.navCalendar, TAB_CALENDAR,
                 R.drawable.ic_calendar, R.drawable.ic_calendar);
+        bindNav(b.navFeedIcon, b.navFeedLabel, b.navFeed, TAB_FEED,
+                R.drawable.ic_feed, R.drawable.ic_feed);
     }
 
     private void bindNav(android.widget.ImageView icon, android.widget.TextView label, View container,

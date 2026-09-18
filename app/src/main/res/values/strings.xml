@@ -5,6 +5,7 @@
     <string name="tab_catalog">Каталог</string>
     <string name="tab_favorites">Избранное</string>
     <string name="tab_calendar">Календарь</string>
+    <string name="tab_feed">Лента</string>
 
     <string name="search_hint">Название аниме…</string>
     <string name="recent">Недавние</string>

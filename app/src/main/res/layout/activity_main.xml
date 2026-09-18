@@ -85,7 +85,7 @@
         android:background="@color/nav_bg"
         android:elevation="12dp"
         android:orientation="horizontal"
-        android:weightSum="4"
+        android:weightSum="5"
         app:layout_constraintBottom_toBottomOf="parent">
 
         <LinearLayout
@@ -188,6 +188,31 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/tab_calendar"
+                android:textColor="@color/text_mute"
+                android:textSize="10.5sp" />
+        </LinearLayout>
+        <LinearLayout
+            android:id="@+id/nav_feed"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@drawable/bg_ripple_rounded"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <ImageView
+                android:id="@+id/nav_feed_icon"
+                android:layout_width="46dp"
+                android:layout_height="28dp"
+                android:contentDescription="@string/tab_feed"
+                android:padding="3dp"
+                android:src="@drawable/ic_feed" />
+
+            <TextView
+                android:id="@+id/nav_feed_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/tab_feed"
                 android:textColor="@color/text_mute"
                 android:textSize="10.5sp" />
         </LinearLayout>
