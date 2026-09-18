@@ -69,14 +69,17 @@ public final class Net {
     private static OkHttpClient.Builder pinned(OkHttpClient.Builder builder) {
         try {
             String pin = Pins.API;
-            if (pin == null || pin.isEmpty()) return builder;
+            String ca = Pins.API_CA;
+            if ((pin == null || pin.isEmpty()) && (ca == null || ca.isEmpty())) return builder;
             String base = Cfg.apiBase();
             int from = base.indexOf("://");
             int to = base.indexOf('/', from + 3);
             String host = to > from ? base.substring(from + 3, to) : base.substring(from + 3);
             if (host.isEmpty()) return builder;
-            return builder.certificatePinner(
-                    new okhttp3.CertificatePinner.Builder().add(host, pin).build());
+            okhttp3.CertificatePinner.Builder cb = new okhttp3.CertificatePinner.Builder();
+            if (pin != null && !pin.isEmpty()) cb.add(host, pin);
+            if (ca != null && !ca.isEmpty()) cb.add(host, ca);
+            return builder.certificatePinner(cb.build());
         } catch (Throwable t) {
             return builder;
         }

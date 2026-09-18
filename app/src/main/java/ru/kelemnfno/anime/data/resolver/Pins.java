@@ -9,6 +9,9 @@ public final class Pins {
 
     public static final String API = "";
 
+    /** Отпечаток промежуточного центра: переживает замену листового сертификата. */
+    public static final String API_CA = "";
+
     private Pins() {
     }
 }
