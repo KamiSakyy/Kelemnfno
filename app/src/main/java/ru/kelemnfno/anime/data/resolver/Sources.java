@@ -73,7 +73,7 @@ public final class Sources {
     public static final List<Source> ALL = new ArrayList<>();
 
     static {
-        ALL.add(simple(Cfg.s(434), false, Sources::yummy));
+        ALL.add(simple(Cfg.s(434), false, Sources::primary));
         ALL.add(simple(Cfg.s(210), false, Sources::anilibria));
         ALL.add(simple(Cfg.s(235), false, Sources::anix));
         ALL.add(simple(Cfg.s(227), false, Sources::animevost));
@@ -210,7 +210,7 @@ public final class Sources {
 
     /* ============ 1. Yummy (api.yani.tv) ============ */
 
-    static SourceResult yummy(Lookup l) throws Exception {
+    static SourceResult primary(Lookup l) throws Exception {
         TreeMap<Integer, EpisodeRow> map = map();
         String id = l.sourceId > 0 ? String.valueOf(l.sourceId) : "";
         int shiki = l.shikimoriId > 0 ? l.shikimoriId : l.malId;
@@ -262,10 +262,10 @@ public final class Sources {
         Map<String, String> h = Net.baseHeaders(null, null);
         JsonObject release = null;
 
-        if (l.anilibriaAlias != null && !l.anilibriaAlias.isEmpty()) {
+        if (l.extAlias != null && !l.extAlias.isEmpty()) {
             try {
                 JsonObject byAlias = Net.getJson(
-                        Cfg.s(11) + Net.enc(l.anilibriaAlias), h);
+                        Cfg.s(11) + Net.enc(l.extAlias), h);
                 JsonObject data = J.obj(byAlias, Cfg.s(262));
                 if (data.size() > 0) release = data;
             } catch (Exception ignored) {

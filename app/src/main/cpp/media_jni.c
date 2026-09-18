@@ -1,20 +1,24 @@
 #include <jni.h>
 
 /*
- * Вспомогательный JNI-модуль. Имена класса и метода не хранятся открытым
- * текстом и не экспортируются как Java_...-символы: регистрация идёт
- * через JNI_OnLoad, строки собраны из инвертированных байтов.
+ * Вспомогательный JNI-модуль. Имя класса, метода и сигнатура не хранятся
+ * открытым текстом и не экспортируются как Java_...-символы: регистрация
+ * идёт через JNI_OnLoad, строки собираются в рантайме. Ключ дешифровки
+ * лежит в volatile-переменной, поэтому компилятор не может вычислить
+ * строки на этапе сборки.
  */
 
-#define KX 0x37
+static volatile int g_kx;
 
 static char g_cls[37];
 static char g_mth[10];
 static char g_sig[4];
 
+__attribute__((noinline))
 static void unpack(char *dst, const unsigned char *src, int n) {
+    int k = g_kx;
     int i;
-    for (i = 0; i < n; i++) dst[i] = (char) (src[i] ^ KX);
+    for (i = 0; i < n; i++) dst[i] = (char) (src[i] ^ k);
     dst[n] = 0;
 }
 
@@ -40,6 +44,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
     jclass c;
 
     (void) reserved;
+    g_kx = 0x37;
     if ((*vm)->GetEnv(vm, (void **) &env, JNI_VERSION_1_6) != JNI_OK) return JNI_ERR;
 
     unpack(g_cls, cn, 36);

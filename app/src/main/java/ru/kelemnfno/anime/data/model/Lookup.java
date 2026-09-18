@@ -12,7 +12,7 @@ public class Lookup {
     public int shikimoriId;
     public int sourceId;
     public int kpId;
-    public String anilibriaAlias;
+    public String extAlias;
     public List<String> genres = new ArrayList<>();
 
     public Lookup copy() {
@@ -24,7 +24,7 @@ public class Lookup {
         l.shikimoriId = shikimoriId;
         l.sourceId = sourceId;
         l.kpId = kpId;
-        l.anilibriaAlias = anilibriaAlias;
+        l.extAlias = extAlias;
         l.genres = genres == null ? new ArrayList<>() : new ArrayList<>(genres);
         return l;
     }

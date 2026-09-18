@@ -33,13 +33,13 @@ import ru.kelemnfno.anime.data.repo.MemCache;
  */
 public final class SourceEngine {
 
-    public static final String PREFIX = "ksrc:";
+    public static final String PREFIX = Cfg.s(470);
 
     /** Общий дедлайн опроса источников. */
     private static final long DEADLINE_MS = 14_000L;
     /** Источники с точным матчингом по ID — их маршруты надёжнее. */
     private static final Set<String> ID_SOURCES = new LinkedHashSet<>(
-            java.util.Arrays.asList("yummy", "anilibria", "animelib", "animelib4k"));
+            java.util.Arrays.asList(Cfg.s(434), Cfg.s(210), Cfg.s(221), Cfg.s(222)));
 
     private static final Map<String, Bucket> ROUTES = new ConcurrentHashMap<>();
     private static final Map<String, Lookup> LOOKUPS = new ConcurrentHashMap<>();
@@ -82,7 +82,7 @@ public final class SourceEngine {
     public static List<Track> tracks(final Lookup lookup) {
         if (Cfg.guarded()) return new java.util.ArrayList<>();
         String lookupKey = lookupKeyOf(lookup);
-        List<Track> cached = TRACK_CACHE.get("tracks:" + lookupKey, 45 * 60_000L);
+        List<Track> cached = TRACK_CACHE.get(Cfg.s(482) + lookupKey, 45 * 60_000L);
         if (cached != null) return cached;
 
         Map<String, Bucket> buckets = new LinkedHashMap<>();
@@ -139,7 +139,7 @@ public final class SourceEngine {
             return score(b2.id) - score(a.id);
         });
 
-        TRACK_CACHE.put("tracks:" + lookupKey, tracks);
+        TRACK_CACHE.put(Cfg.s(482) + lookupKey, tracks);
         LOOKUPS.put(lookupKey, lookup);
         return tracks;
     }
@@ -175,9 +175,9 @@ public final class SourceEngine {
     private static void mergeInto(Map<String, Bucket> buckets, Scored scored, String lookupKey) {
         for (EpisodeRow ep : scored.result.episodes) {
             for (VariantRow v : ep.variants) {
-                String rawVoice = v.voice == null || v.voice.isEmpty() ? "Оригинал" : v.voice;
+                String rawVoice = v.voice == null || v.voice.isEmpty() ? Cfg.s(438) : v.voice;
                 String key = SourceUtil.voiceKey(rawVoice);
-                if (key.isEmpty()) key = "src:" + scored.source;
+                if (key.isEmpty()) key = Cfg.s(479) + scored.source;
                 String title = SourceUtil.voiceTitle(rawVoice);
                 if (title.isEmpty()) title = rawVoice;
 
@@ -219,9 +219,9 @@ public final class SourceEngine {
         if (cached != null && !cached.isEmpty()) return cached;
 
         Bucket bucket = ROUTES.get(trackId);
-        if (bucket == null) throw new IOException("Дорожка устарела, обновите список озвучек");
+        if (bucket == null) throw new IOException(Cfg.s(486));
         List<VariantRow> variants = bucket.routes.get(episode);
-        if (variants == null || variants.isEmpty()) throw new IOException("Серия " + episode + " не найдена в этой озвучке");
+        if (variants == null || variants.isEmpty()) throw new IOException(Cfg.s(439) + episode + Cfg.s(457));
 
         List<StreamSource> out = new ArrayList<>();
         IOException last = null;
@@ -263,7 +263,7 @@ public final class SourceEngine {
                     if (same != null) return streams(same.id, episode, true);
                 }
             }
-            throw last == null ? new IOException("Не удалось получить поток") : last;
+            throw last == null ? new IOException(Cfg.s(487)) : last;
         }
 
         STREAM_CACHE.put(key, out);
@@ -276,7 +276,7 @@ public final class SourceEngine {
 
     /** Прямые потоки произвольного плеера (для скачивания и запасных маршрутов). */
     public static List<StreamSource> resolveEmbed(String embedUrl) throws IOException {
-        List<StreamSource> cached = STREAM_CACHE.get("embed:" + embedUrl, 10 * 60_000L);
+        List<StreamSource> cached = STREAM_CACHE.get(Cfg.s(468) + embedUrl, 10 * 60_000L);
         if (cached != null && !cached.isEmpty()) return cached;
         Resolver.Resolved r = Resolver.resolveStreams(embedUrl);
         Map<Integer, String> verified = Resolver.verifyStreams(r.streams, r.referer);
@@ -285,8 +285,8 @@ public final class SourceEngine {
         for (Map.Entry<Integer, String> e : verified.entrySet()) {
             out.add(source(e.getKey(), e.getValue(), r.referer, ""));
         }
-        if (out.isEmpty()) throw new IOException("Прямой поток не найден");
-        STREAM_CACHE.put("embed:" + embedUrl, out);
+        if (out.isEmpty()) throw new IOException(Cfg.s(488));
+        STREAM_CACHE.put(Cfg.s(468) + embedUrl, out);
         return out;
     }
 
@@ -297,7 +297,7 @@ public final class SourceEngine {
         s.referer = referer == null ? "" : referer;
         s.voice = voice == null ? "" : voice;
         s.kind = Resolver.kindOf(url);
-        s.label = (quality > 0 ? quality + "p" : "Авто");
+        s.label = (quality > 0 ? quality + "p" : Cfg.s(485));
         return s;
     }
 
@@ -310,7 +310,7 @@ public final class SourceEngine {
         return url != null && url.startsWith(PREFIX);
     }
 
-    /** "<prefix><trackId>:<episode>" */
+    /** Cfg.s(463) */
     public static String makeRef(String trackId, int episode) {
         return PREFIX + trackId + ":" + episode;
     }
@@ -341,10 +341,10 @@ public final class SourceEngine {
 
     private static String sha1(String value) {
         try {
-            MessageDigest md = MessageDigest.getInstance("SHA-1");
-            byte[] digest = md.digest(value.getBytes("UTF-8"));
+            MessageDigest md = MessageDigest.getInstance(Cfg.s(464));
+            byte[] digest = md.digest(value.getBytes(Cfg.s(159)));
             StringBuilder sb = new StringBuilder();
-            for (byte b : digest) sb.append(String.format("%02x", b));
+            for (byte b : digest) sb.append(String.format(Cfg.s(458), b));
             return sb.toString();
         } catch (Exception e) {
             return Integer.toHexString(value.hashCode());

@@ -11,7 +11,7 @@ public class RemoteIds {
     @SerializedName("anidub_id")
     public int anidubId;
     @SerializedName("anilibria_alias")
-    public String anilibriaAlias;
+    public String extAlias;
     @SerializedName("myanimelist_id")
     public int malId;
     @SerializedName("kp_id")

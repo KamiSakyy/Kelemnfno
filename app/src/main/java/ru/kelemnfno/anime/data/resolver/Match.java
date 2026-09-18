@@ -19,21 +19,21 @@ public final class Match {
     public static final double ACCEPT = 0.8;
 
     private static final Set<String> STOP = new HashSet<>(Arrays.asList(
-            "tv", "тв", "the", "a", "an", "of", "and", "и", "season", "сезон", "part", "часть", "cour",
-            "аниме", "anime", "смотреть", "онлайн", "series", "серия", "серии", "movie", "фильм",
-            "ova", "ona", "special", "спешл", "dub", "sub", "русская", "озвучка"));
+            "tv", "тв", Cfg.s(481), "a", "an", "of", Cfg.s(465), "и", Cfg.s(475), Cfg.s(493), Cfg.s(474), Cfg.s(500), Cfg.s(467),
+            Cfg.s(489), Cfg.s(466), Cfg.s(497), Cfg.s(491), Cfg.s(477), Cfg.s(496), Cfg.s(495), Cfg.s(471), Cfg.s(499),
+            Cfg.s(473), Cfg.s(472), Cfg.s(478), Cfg.s(498), Cfg.s(270), Cfg.s(480), Cfg.s(492), Cfg.s(490)));
 
     private static final Map<String, Integer> ROMAN = new HashMap<>();
 
     static {
         ROMAN.put("i", 1);
         ROMAN.put("ii", 2);
-        ROMAN.put("iii", 3);
+        ROMAN.put(Cfg.s(469), 3);
         ROMAN.put("iv", 4);
         ROMAN.put("v", 5);
         ROMAN.put("vi", 6);
-        ROMAN.put("vii", 7);
-        ROMAN.put("viii", 8);
+        ROMAN.put(Cfg.s(483), 7);
+        ROMAN.put(Cfg.s(484), 8);
         ROMAN.put("ix", 9);
         ROMAN.put("x", 10);
     }
@@ -64,7 +64,7 @@ public final class Match {
 
     public static String normTitle(String raw) {
         if (raw == null) return "";
-        return raw.toLowerCase().replace("ё", "е").replaceAll("[^\\p{L}\\p{N}]+", " ").replaceAll("\\s+", " ").trim();
+        return raw.toLowerCase().replace("ё", "е").replaceAll(Cfg.s(173), " ").replaceAll(Cfg.s(187), " ").trim();
     }
 
     private static List<String> tokensOf(String raw) {
@@ -79,17 +79,17 @@ public final class Match {
     public static Integer seasonOf(String raw) {
         String v = normTitle(raw);
         if (v.isEmpty()) return null;
-        Matcher m = Pattern.compile("(\\d{1,2})\\s*(?:й|ый|ой|я|ая)?\\s*сезон").matcher(v);
+        Matcher m = Pattern.compile(Cfg.s(462)).matcher(v);
         if (m.find()) return parseInt(m.group(1));
-        m = Pattern.compile("сезон\\s*(\\d{1,2})").matcher(v);
+        m = Pattern.compile(Cfg.s(494)).matcher(v);
         if (m.find()) return parseInt(m.group(1));
-        m = Pattern.compile("season\\s*(\\d{1,2})").matcher(v);
+        m = Pattern.compile(Cfg.s(476)).matcher(v);
         if (m.find()) return parseInt(m.group(1));
-        m = Pattern.compile("(\\d{1,2})\\s*(?:st|nd|rd|th)\\s*season").matcher(v);
+        m = Pattern.compile(Cfg.s(460)).matcher(v);
         if (m.find()) return parseInt(m.group(1));
-        m = Pattern.compile("(?:^|\\s)s(\\d{1,2})(?:\\s|$)").matcher(v);
+        m = Pattern.compile(Cfg.s(459)).matcher(v);
         if (m.find()) return parseInt(m.group(1));
-        m = Pattern.compile("(\\d{1,2})\\s*(?:й|ая)?\\s*часть").matcher(v);
+        m = Pattern.compile(Cfg.s(461)).matcher(v);
         if (m.find()) return parseInt(m.group(1));
         String[] words = v.split(" ");
         String last = words.length > 0 ? words[words.length - 1] : "";

@@ -8,7 +8,7 @@ public class Rating {
     @SerializedName("kp_rating")
     public double kpRating;
     @SerializedName("anidub_rating")
-    public double anidubRating;
+    public double extRatingA;
     @SerializedName("myanimelist_rating")
     public double malRating;
     @SerializedName("worldart_rating")

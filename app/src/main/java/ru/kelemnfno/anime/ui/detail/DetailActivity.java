@@ -310,7 +310,7 @@ public class DetailActivity extends AppCompatActivity {
             l.shikimoriId = a.remoteIds.shikimoriId;
             l.malId = a.remoteIds.malId;
             l.kpId = a.remoteIds.kpId;
-            l.anilibriaAlias = a.remoteIds.anilibriaAlias;
+            l.extAlias = a.remoteIds.extAlias;
         }
         if (a.genres != null) {
             for (ru.kelemnfno.anime.data.model.GenreShort g : a.genres) l.genres.add(g.title);
