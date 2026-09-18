@@ -287,7 +287,7 @@ public class CatalogFragment extends Fragment {
      * экономим трафик.
      */
     private boolean renderFromCache() {
-        if (offset != 0 || adapter.itemCount() > 0) return false;
+        if (offset != 0 || adapter.getItemCount() > 0) return false;
         AnimeRepository repo = AnimeRepository.get(requireContext());
         Map<String, String> p = pageParams(0);
         List<AnimeItem> cached = repo.listCached(p);
