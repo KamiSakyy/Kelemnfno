@@ -34,9 +34,9 @@ public final class SourceUtil {
 
     public static String absolute(String base, String value) {
         if (value == null || value.isEmpty()) return "";
-        String v = value.trim().replace("\\/", "/").replace("&amp;", "&").replace(" ", "%20");
+        String v = value.trim().replace("\\/", "/").replace(Cfg.s(95), "&").replace(" ", "%20");
         if (v.isEmpty()) return "";
-        if (v.startsWith("//")) v = "https:" + v;
+        if (v.startsWith("//")) v = Cfg.s(297) + v;
         try {
             return new URL(new URL(base), v).toString();
         } catch (Exception e) {
@@ -47,10 +47,10 @@ public final class SourceUtil {
     /** Достаёт src из iframe и канонизирует Kodik-хосты. */
     public static String embed(String input) {
         if (input == null || input.isEmpty()) return "";
-        String s = input.trim().replace("&amp;", "&");
+        String s = input.trim().replace(Cfg.s(95), "&");
         Matcher m = Pattern.compile(Cfg.s(385), Pattern.CASE_INSENSITIVE).matcher(s);
         if (m.find()) s = m.group(1);
-        if (s.startsWith("//")) s = "https:" + s;
+        if (s.startsWith("//")) s = Cfg.s(297) + s;
         String safe = safeUrl(s);
         if (safe.isEmpty()) return "";
         try {
@@ -79,7 +79,7 @@ public final class SourceUtil {
                 .replace(Cfg.s(105), "»")
                 .replace(Cfg.s(99), "—")
                 .replace(Cfg.s(101), "–")
-                .replace("&amp;", "&")
+                .replace(Cfg.s(95), "&")
                 .replaceAll(Cfg.s(187), " ")
                 .trim();
     }
@@ -107,74 +107,74 @@ public final class SourceUtil {
                 .replace(Cfg.s(446), Cfg.s(220))
                 .replace(Cfg.s(441), Cfg.s(207))
                 .replace(Cfg.s(456), Cfg.s(393))
-                .replace(Cfg.s(453), "subtitles");
-        if (v.contains("anilibria") || v.contains("aniliberty") || v.contains(Cfg.s(249))) {
+                .replace(Cfg.s(453), Cfg.s(393));
+        if (v.contains(Cfg.s(210)) || v.contains(Cfg.s(209)) || v.contains(Cfg.s(249))) {
             if (v.contains(Cfg.s(251))) return Cfg.s(211);
             if (v.contains(Cfg.s(270))) return Cfg.s(212);
             if (v.contains("hd") || v.contains(Cfg.s(289))) return Cfg.s(213);
-            return "anilibria";
+            return Cfg.s(210);
         }
-        if (v.contains("animaunt") || v.contains(Cfg.s(203))) return "animaunt";
-        if (v.contains(Cfg.s(230)) || v.contains(Cfg.s(206))) return "anirise";
-        if (v.contains(Cfg.s(208)) || v.contains(Cfg.s(202))) return "anifilm";
-        if (v.contains(Cfg.s(228)) || v.contains(Cfg.s(205))) return "aniplay";
+        if (v.contains(Cfg.s(214)) || v.contains(Cfg.s(203))) return Cfg.s(214);
+        if (v.contains(Cfg.s(230)) || v.contains(Cfg.s(206))) return Cfg.s(230);
+        if (v.contains(Cfg.s(208)) || v.contains(Cfg.s(202))) return Cfg.s(208);
+        if (v.contains(Cfg.s(228)) || v.contains(Cfg.s(205))) return Cfg.s(228);
         if (v.contains(Cfg.s(199)) && v.contains(Cfg.s(271))) return Cfg.s(200);
-        if (v.contains("animevost") || v.contains(Cfg.s(215))) return "animevost";
-        if (v.contains(Cfg.s(340)) || v.contains(Cfg.s(339))) return "newstation";
-        if (v.contains(Cfg.s(345)) || v.contains(Cfg.s(344))) return "onwave";
+        if (v.contains(Cfg.s(227)) || v.contains(Cfg.s(215))) return Cfg.s(227);
+        if (v.contains(Cfg.s(340)) || v.contains(Cfg.s(339))) return Cfg.s(340);
+        if (v.contains(Cfg.s(345)) || v.contains(Cfg.s(344))) return Cfg.s(345);
         if (v.contains(Cfg.s(231)) && v.contains(Cfg.s(265))) return Cfg.s(232);
         if (v.contains(Cfg.s(244)) && v.contains(Cfg.s(388))) return Cfg.s(245);
         if (v.contains(Cfg.s(268)) && v.contains(Cfg.s(247))) return Cfg.s(269);
-        if (v.contains("anidub") || v.contains(Cfg.s(201))) return "anidub";
-        if (v.contains("animedia") || v.contains(Cfg.s(204))) return "animedia";
+        if (v.contains(Cfg.s(207)) || v.contains(Cfg.s(201))) return Cfg.s(207);
+        if (v.contains(Cfg.s(220)) || v.contains(Cfg.s(204))) return Cfg.s(220);
         if (v.contains(Cfg.s(391)) || v.contains(Cfg.s(389)) || v.contains(Cfg.s(454))) return Cfg.s(390);
         if (Pattern.compile(Cfg.s(178)).matcher(v).find()) return Cfg.s(308);
-        if (v.contains(Cfg.s(309))) return "kansai";
-        if (v.contains(Cfg.s(256))) return "crunchyroll";
-        if (v.contains(Cfg.s(429))) return "wakanim";
-        if (v.contains(Cfg.s(338))) return "netflix";
-        if (v.contains(Cfg.s(375))) return "shiza";
-        if (v.contains(Cfg.s(455)) || v.contains("subtitles") || v.contains(Cfg.s(392))
-                || Pattern.compile(Cfg.s(179)).matcher(v).find()) return "subtitles";
+        if (v.contains(Cfg.s(309))) return Cfg.s(309);
+        if (v.contains(Cfg.s(256))) return Cfg.s(256);
+        if (v.contains(Cfg.s(429))) return Cfg.s(429);
+        if (v.contains(Cfg.s(338))) return Cfg.s(338);
+        if (v.contains(Cfg.s(375))) return Cfg.s(375);
+        if (v.contains(Cfg.s(455)) || v.contains(Cfg.s(393)) || v.contains(Cfg.s(392))
+                || Pattern.compile(Cfg.s(179)).matcher(v).find()) return Cfg.s(393);
         if (routeLabel(v)) return "";
         String p = plainName(v);
         if (p.isEmpty() || p.equals(Cfg.s(241)) || p.equals(Cfg.s(242)) || p.equals(Cfg.s(349)) || p.equals(Cfg.s(352))) return "";
-        return p.replaceAll("\\s+", "");
+        return p.replaceAll(Cfg.s(187), "");
     }
 
     private static final String[][] TITLES = {
-            {"anilibria-classic", Cfg.s(135)},
-            {"anilibria-dub", Cfg.s(136)},
-            {"anilibria-hd", Cfg.s(137)},
-            {"anilibria", Cfg.s(81)},
-            {"animaunt", Cfg.s(138)},
-            {"anirise", Cfg.s(141)},
-            {"anifilm", Cfg.s(134)},
-            {"aniplay", Cfg.s(140)},
-            {"amazing-dubbing", Cfg.s(132)},
-            {"animevost", Cfg.s(143)},
-            {"newstation", Cfg.s(151)},
-            {"onwave", Cfg.s(152)},
-            {"anistar-deep", Cfg.s(142)},
-            {"beyond-studio", Cfg.s(144)},
-            {"dreamcast", Cfg.s(147)},
-            {"anidub", Cfg.s(133)},
-            {"animedia", Cfg.s(139)},
-            {"studio-band", Cfg.s(158)},
-            {"jam", Cfg.s(148)},
-            {"kansai", Cfg.s(149)},
-            {"crunchyroll", Cfg.s(146)},
-            {"wakanim", Cfg.s(161)},
-            {"netflix", Cfg.s(150)},
-            {"shiza", Cfg.s(157)},
-            {"subtitles", Cfg.s(440)},
+            {Cfg.s(211), Cfg.s(135)},
+            {Cfg.s(212), Cfg.s(136)},
+            {Cfg.s(213), Cfg.s(137)},
+            {Cfg.s(210), Cfg.s(81)},
+            {Cfg.s(214), Cfg.s(138)},
+            {Cfg.s(230), Cfg.s(141)},
+            {Cfg.s(208), Cfg.s(134)},
+            {Cfg.s(228), Cfg.s(140)},
+            {Cfg.s(200), Cfg.s(132)},
+            {Cfg.s(227), Cfg.s(143)},
+            {Cfg.s(340), Cfg.s(151)},
+            {Cfg.s(345), Cfg.s(152)},
+            {Cfg.s(232), Cfg.s(142)},
+            {Cfg.s(245), Cfg.s(144)},
+            {Cfg.s(269), Cfg.s(147)},
+            {Cfg.s(207), Cfg.s(133)},
+            {Cfg.s(220), Cfg.s(139)},
+            {Cfg.s(390), Cfg.s(158)},
+            {Cfg.s(308), Cfg.s(148)},
+            {Cfg.s(309), Cfg.s(149)},
+            {Cfg.s(256), Cfg.s(146)},
+            {Cfg.s(429), Cfg.s(161)},
+            {Cfg.s(338), Cfg.s(150)},
+            {Cfg.s(375), Cfg.s(157)},
+            {Cfg.s(393), Cfg.s(440)},
     };
 
     public static String voiceTitle(String value) {
         String key = voiceKey(value);
         if (key.isEmpty()) return "";
         for (String[] row : TITLES) if (row[0].equals(key)) return row[1];
-        String raw = (value == null ? "" : value).trim().replaceAll("\\s+", " ");
+        String raw = (value == null ? "" : value).trim().replaceAll(Cfg.s(187), " ");
         if (raw.length() <= 1) return "";
         return raw.length() > 48 ? raw.substring(0, 48) : raw;
     }
@@ -215,7 +215,7 @@ public final class SourceUtil {
 
     public static String hostOf(String url) {
         try {
-            return new URL(url.startsWith("//") ? "https:" + url : url).getHost().toLowerCase();
+            return new URL(url.startsWith("//") ? Cfg.s(297) + url : url).getHost().toLowerCase();
         } catch (Exception e) {
             return "";
         }
@@ -223,7 +223,7 @@ public final class SourceUtil {
 
     public static String pathOf(String url) {
         try {
-            return new URL(url.startsWith("//") ? "https:" + url : url).getPath();
+            return new URL(url.startsWith("//") ? Cfg.s(297) + url : url).getPath();
         } catch (Exception e) {
             return "";
         }
@@ -300,7 +300,7 @@ public final class SourceUtil {
                 .replaceAll(Cfg.s(112), " ")
                 .replaceAll(Cfg.s(185), " ")
                 .replaceAll(Cfg.s(186), " ")
-                .replaceAll("\\s+", " ")
+                .replaceAll(Cfg.s(187), " ")
                 .trim();
         if (v.length() >= 2) out.add(v);
     }
@@ -326,9 +326,9 @@ public final class SourceUtil {
 
     public static String unescape(String s) {
         if (s == null) return "";
-        return s.replace("&quot;", "\"")
+        return s.replace(Cfg.s(104), "\"")
                 .replace("&#34;", "\"")
-                .replace("&amp;", "&")
+                .replace(Cfg.s(95), "&")
                 .replace("\\\"", "\"")
                 .replace("\\/", "/");
     }

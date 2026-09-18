@@ -73,16 +73,16 @@ public final class Sources {
     public static final List<Source> ALL = new ArrayList<>();
 
     static {
-        ALL.add(simple("yummy", false, Sources::yummy));
-        ALL.add(simple("anilibria", false, Sources::anilibria));
-        ALL.add(simple("anixsekai", false, Sources::anix));
-        ALL.add(simple("animevost", false, Sources::animevost));
-        ALL.add(simple("animelib", false, l -> animelibEpisodes(l, false)));
-        ALL.add(simple("animelib4k", false, l -> animelibEpisodes(l, true)));
-        ALL.add(simple("animedia", false, Sources::animedia));
-        ALL.add(simple("animetka", false, Sources::animetka));
-        ALL.add(simple("anidub", false, Sources::anidub));
-        ALL.add(simple("hanime", true, Sources::hanime));
+        ALL.add(simple(Cfg.s(434), false, Sources::yummy));
+        ALL.add(simple(Cfg.s(210), false, Sources::anilibria));
+        ALL.add(simple(Cfg.s(235), false, Sources::anix));
+        ALL.add(simple(Cfg.s(227), false, Sources::animevost));
+        ALL.add(simple(Cfg.s(221), false, l -> animelibEpisodes(l, false)));
+        ALL.add(simple(Cfg.s(222), false, l -> animelibEpisodes(l, true)));
+        ALL.add(simple(Cfg.s(220), false, Sources::animedia));
+        ALL.add(simple(Cfg.s(224), false, Sources::animetka));
+        ALL.add(simple(Cfg.s(207), false, Sources::anidub));
+        ALL.add(simple(Cfg.s(286), true, Sources::hanime));
     }
 
     private interface Runner {
@@ -212,7 +212,7 @@ public final class Sources {
 
     static SourceResult yummy(Lookup l) throws Exception {
         TreeMap<Integer, EpisodeRow> map = map();
-        String id = l.yummyId > 0 ? String.valueOf(l.yummyId) : "";
+        String id = l.sourceId > 0 ? String.valueOf(l.sourceId) : "";
         int shiki = l.shikimoriId > 0 ? l.shikimoriId : l.malId;
         Map<String, String> json = Net.baseHeaders(null, null);
 
@@ -230,29 +230,29 @@ public final class Sources {
         }
         if (id.isEmpty()) {
             try {
-                JsonObject found = Net.getJson(Cfg.apiBase() + Cfg.s(217) + Net.enc(l.title) + "&limit=20", json);
-                JsonObject best = choose(J.list(found, "response"), l, row -> {
-                    Match.Candidate c = new Match.Candidate(str(row, "title"));
+                JsonObject found = Net.getJson(Cfg.apiBase() + Cfg.s(217) + Net.enc(l.title) + Cfg.s(98), json);
+                JsonObject best = choose(J.list(found, Cfg.s(365)), l, row -> {
+                    Match.Candidate c = new Match.Candidate(str(row, Cfg.s(395)));
                     for (JsonElement t : J.arr(row, Cfg.s(348))) c.titles.add(J.str(t));
                     return c.year(num(row, Cfg.s(432)));
                 });
-                if (best != null) id = str(best, "anime_id");
+                if (best != null) id = str(best, Cfg.s(219));
             } catch (Exception ignored) {
             }
         }
-        if (id.isEmpty()) return done("yummy", map);
+        if (id.isEmpty()) return done(Cfg.s(434), map);
 
         JsonObject detail = Net.getJson(Cfg.apiBase() + Cfg.s(216) + Net.enc(id) + Cfg.s(128), json);
-        for (JsonObject v : J.list(J.obj(detail, "response"), Cfg.s(423))) {
+        for (JsonObject v : J.list(J.obj(detail, Cfg.s(365)), Cfg.s(423))) {
             String iframe = embed(str(v, Cfg.s(303)));
             if (iframe.isEmpty()) continue;
             JsonObject data = J.obj(v, Cfg.s(262));
             String voice = voiceTitle(str(data, Cfg.s(271)));
             if (voice.isEmpty()) voice = Cfg.s(438);
-            String name = str(v, Cfg.s(341)).isEmpty() ? null : Cfg.s(439) + str(v, "number");
-            push(map, numberIn(str(v, "number"), 0), variant(voice, "yummy", iframe), name, J.num(v, Cfg.s(274)));
+            String name = str(v, Cfg.s(341)).isEmpty() ? null : Cfg.s(439) + str(v, Cfg.s(341));
+            push(map, numberIn(str(v, Cfg.s(341)), 0), variant(voice, Cfg.s(434), iframe), name, J.num(v, Cfg.s(274)));
         }
-        return done("yummy", map);
+        return done(Cfg.s(434), map);
     }
 
     /* ============ 2. AniLibria (anilibria.top) ============ */
@@ -266,7 +266,7 @@ public final class Sources {
             try {
                 JsonObject byAlias = Net.getJson(
                         Cfg.s(11) + Net.enc(l.anilibriaAlias), h);
-                JsonObject data = J.obj(byAlias, "data");
+                JsonObject data = J.obj(byAlias, Cfg.s(262));
                 if (data.size() > 0) release = data;
             } catch (Exception ignored) {
             }
@@ -279,10 +279,10 @@ public final class Sources {
                     p.put(Cfg.s(350), "1");
                     p.put(Cfg.s(280), term);
                     JsonObject data = Net.getJson(Net.query(Cfg.s(10), p), h);
-                    JsonObject hit = choose(J.list(data, "data"), l, row -> {
+                    JsonObject hit = choose(J.list(data, Cfg.s(262)), l, row -> {
                         JsonObject name = J.obj(row, Cfg.s(337));
                         return new Match.Candidate(str(name, Cfg.s(320)), str(name, Cfg.s(276)), str(name, Cfg.s(198)))
-                                .year(num(row, "year"));
+                                .year(num(row, Cfg.s(432)));
                     });
                     if (hit != null) {
                         release = hit;
@@ -292,7 +292,7 @@ public final class Sources {
                 }
             }
         }
-        if (release == null) return done("anilibria", map);
+        if (release == null) return done(Cfg.s(210), map);
 
         String alias = str(release, Cfg.s(193));
         if (alias.isEmpty()) alias = str(release, "id");
@@ -306,9 +306,9 @@ public final class Sources {
                 if (!safe.isEmpty()) streams.put(pairs[i][0], safe);
             }
             if (streams.isEmpty()) continue;
-            push(map, num(e, Cfg.s(346)), variant(Cfg.s(81), "anilibria", streams), str(e, "name"), J.num(e, "duration"));
+            push(map, num(e, Cfg.s(346)), variant(Cfg.s(81), Cfg.s(210), streams), str(e, Cfg.s(337)), J.num(e, Cfg.s(274)));
         }
-        return done("anilibria", map);
+        return done(Cfg.s(210), map);
     }
 
     /* ============ 3. AnimeVost ============ */
@@ -319,15 +319,15 @@ public final class Sources {
         for (String term : searchTerms(l.title, l.original)) {
             try {
                 Map<String, String> fields = new LinkedHashMap<>();
-                fields.put("name", term);
+                fields.put(Cfg.s(337), term);
                 JsonObject data = Net.postFormJson(Cfg.s(21), fields, Net.baseHeaders(null, null));
-                JsonObject hit = choose(J.list(data, "data"), l, row -> {
+                JsonObject hit = choose(J.list(data, Cfg.s(262)), l, row -> {
                     List<String> titles = new ArrayList<>();
-                    titles.add(str(row, "title"));
-                    titles.addAll(Arrays.asList(str(row, "title").split("/")));
+                    titles.add(str(row, Cfg.s(395)));
+                    titles.addAll(Arrays.asList(str(row, Cfg.s(395)).split("/")));
                     Match.Candidate c = new Match.Candidate();
                     c.titles = titles;
-                    return c.year(num(row, "year"));
+                    return c.year(num(row, Cfg.s(432)));
                 });
                 if (hit != null) {
                     id = str(hit, "id");
@@ -336,7 +336,7 @@ public final class Sources {
             } catch (Exception ignored) {
             }
         }
-        if (id.isEmpty()) return done("animevost", map);
+        if (id.isEmpty()) return done(Cfg.s(227), map);
 
         String text = Net.postForm(Cfg.s(20), Cfg.s(301) + Net.enc(id),
                 Net.baseHeaders(null, null));
@@ -351,15 +351,15 @@ public final class Sources {
             if (!std.isEmpty()) streams.put(480, std);
             if (!hd.isEmpty()) streams.put(720, hd);
             if (streams.isEmpty()) continue;
-            push(map, numberIn(str(e, "name"), i), variant(Cfg.s(143), "animevost", streams), str(e, "name"), 0);
+            push(map, numberIn(str(e, Cfg.s(337)), i), variant(Cfg.s(143), Cfg.s(227), streams), str(e, Cfg.s(337)), 0);
         }
-        return done("animevost", map);
+        return done(Cfg.s(227), map);
     }
 
     /* ============ 4/5. AniLib + AniLib Ultra (api.cdnlibs.org) ============ */
 
     static SourceResult animelibEpisodes(final Lookup l, final boolean ultra) throws Exception {
-        final String source = ultra ? "animelib4k" : "animelib";
+        final String source = ultra ? Cfg.s(222) : Cfg.s(221);
         final TreeMap<Integer, EpisodeRow> map = map();
         String slug = "";
         Map<String, String> h = Net.baseHeaders(null, null);
@@ -368,10 +368,10 @@ public final class Sources {
         for (String term : searchTerms(l.title, l.original)) {
             try {
                 Map<String, String> p = new LinkedHashMap<>();
-                p.put("page", "1");
+                p.put(Cfg.s(350), "1");
                 p.put("q", term);
                 JsonObject data = Net.getJson(Net.query(Cfg.s(23), p), h);
-                List<JsonObject> rows = J.list(data, "data");
+                List<JsonObject> rows = J.list(data, Cfg.s(262));
                 if (l.shikimoriId > 0) {
                     for (JsonObject r : rows) {
                         if (shikiFromHref(str(r, Cfg.s(373))) == l.shikimoriId) {
@@ -381,10 +381,10 @@ public final class Sources {
                     }
                     if (!slug.isEmpty()) break;
                 }
-                JsonObject hit = choose(rows, l, row -> new Match.Candidate(str(row, Cfg.s(368)), str(row, "name"),
+                JsonObject hit = choose(rows, l, row -> new Match.Candidate(str(row, Cfg.s(368)), str(row, Cfg.s(337)),
                         str(row, Cfg.s(275))).year(yearOfRelease(str(row, Cfg.s(361)))));
                 if (hit != null) {
-                    slug = first(str(hit, "slug_url"), str(hit, "slug"), str(hit, "id"));
+                    slug = first(str(hit, Cfg.s(378)), str(hit, Cfg.s(377)), str(hit, "id"));
                     break;
                 }
             } catch (Exception ignored) {
@@ -395,7 +395,7 @@ public final class Sources {
         List<JsonObject> rows;
         try {
             JsonObject eps = Net.getJson(Cfg.s(25) + Net.enc(slug), h);
-            rows = J.list(eps, "data");
+            rows = J.list(eps, Cfg.s(262));
         } catch (Exception e) {
             rows = new ArrayList<>();
         }
@@ -408,26 +408,26 @@ public final class Sources {
             futures.add(pool.submit(new Callable<EpisodeRow>() {
                 @Override
                 public EpisodeRow call() {
-                    int n = (int) Math.round(J.num(e, "number"));
+                    int n = (int) Math.round(J.num(e, Cfg.s(341)));
                     if (n < 0) return null;
                     EpisodeRow row = new EpisodeRow();
                     row.number = n;
-                    row.name = str(e, "name");
+                    row.name = str(e, Cfg.s(337));
                     try {
                         Map<String, String> hh = Net.baseHeaders(null, null);
-                        hh.put("Accept", "application/json");
+                        hh.put(Cfg.s(129), Cfg.s(236));
                         JsonObject detail = Net.getJson(
                                 Cfg.s(24) + Net.enc(str(e, "id")), hh);
-                        for (JsonObject p : J.list(J.obj(detail, "data"), Cfg.s(354))) {
+                        for (JsonObject p : J.list(J.obj(detail, Cfg.s(262)), Cfg.s(354))) {
                             String u = embed(str(p, Cfg.s(380)));
                             if (u.isEmpty()) continue;
-                            String teamName = first(str(J.obj(p, Cfg.s(394)), "name"), str(J.obj(p, "team"), "title"));
+                            String teamName = first(str(J.obj(p, Cfg.s(394)), Cfg.s(337)), str(J.obj(p, Cfg.s(394)), Cfg.s(395)));
                             String typeName = first(str(J.obj(p, Cfg.s(405)), Cfg.s(314)),
-                                    str(J.obj(p, "translation_type"), "title"), Cfg.s(437));
+                                    str(J.obj(p, Cfg.s(405)), Cfg.s(395)), Cfg.s(437));
                             String label = cleanLabel((typeName + " " + teamName).trim());
                             String voice = voiceTitle(teamName);
                             if (voice.isEmpty()) voice = voiceTitle(label);
-                            if (voice.isEmpty()) voice = teamName.isEmpty() ? "Озвучка" : cleanLabel(teamName);
+                            if (voice.isEmpty()) voice = teamName.isEmpty() ? Cfg.s(437) : cleanLabel(teamName);
                             row.variants.add(variant(voice, source, u));
                         }
                     } catch (Exception ignored) {
@@ -474,15 +474,15 @@ public final class Sources {
                         + Net.enc(term);
                 String html = Net.postForm(base + Cfg.s(121), body, Net.baseHeaders(base, base + "/"));
                 JsonObject hit = choose(searchLinks(html, base), l,
-                        row -> new Match.Candidate(str(row, "title")));
+                        row -> new Match.Candidate(str(row, Cfg.s(395))));
                 if (hit != null) {
-                    page = str(hit, "url");
+                    page = str(hit, Cfg.s(411));
                     break;
                 }
             } catch (Exception ignored) {
             }
         }
-        if (page.isEmpty()) return done("animedia", map);
+        if (page.isEmpty()) return done(Cfg.s(220), map);
 
         String html = Net.get(page, Net.baseHeaders(base, base + "/"));
         Matcher m = Pattern.compile(Cfg.s(264), Pattern.CASE_INSENSITIVE)
@@ -497,9 +497,9 @@ public final class Sources {
             }
             String vod = SourceUtil.absolute(base, m.group(2));
             if (n < 1 || !vod.contains(Cfg.s(124))) continue;
-            push(map, (int) Math.round(n), variant(Cfg.s(139), "animedia", vod));
+            push(map, (int) Math.round(n), variant(Cfg.s(139), Cfg.s(220), vod));
         }
-        return done("animedia", map);
+        return done(Cfg.s(220), map);
     }
 
     /* ============ 7. Animetka ============ */
@@ -507,7 +507,7 @@ public final class Sources {
     static SourceResult animetka(Lookup l) throws Exception {
         TreeMap<Integer, EpisodeRow> map = map();
         Map<String, String> headers = Net.baseHeaders(Cfg.s(13), Cfg.s(14));
-        headers.put("Accept", Cfg.s(238));
+        headers.put(Cfg.s(129), Cfg.s(238));
         JsonObject material = null;
 
         for (String term : searchTerms(l.title, l.original)) {
@@ -515,13 +515,13 @@ public final class Sources {
                 Map<String, String> p = new LinkedHashMap<>();
                 p.put(Cfg.s(358), term);
                 p.put("q", term);
-                p.put("limit", "12");
+                p.put(Cfg.s(316), "12");
                 JsonObject data = Net.getJson(Net.query(Cfg.s(17), p), headers);
-                List<JsonObject> rows = J.list(data, "data");
+                List<JsonObject> rows = J.list(data, Cfg.s(262));
                 if (rows.isEmpty()) rows = J.list(data, Cfg.s(366));
                 if (rows.isEmpty()) rows = J.list(data, Cfg.s(307));
-                JsonObject hit = choose(rows, l, row -> new Match.Candidate(str(row, "title"), str(row, "name"),
-                        str(row, Cfg.s(398)), str(row, Cfg.s(347))).year(num(row, "year")));
+                JsonObject hit = choose(rows, l, row -> new Match.Candidate(str(row, Cfg.s(395)), str(row, Cfg.s(337)),
+                        str(row, Cfg.s(398)), str(row, Cfg.s(347))).year(num(row, Cfg.s(432))));
                 if (hit != null) {
                     material = hit;
                     break;
@@ -529,7 +529,7 @@ public final class Sources {
             } catch (Exception ignored) {
             }
         }
-        if (material == null) return done("animetka", map);
+        if (material == null) return done(Cfg.s(224), map);
 
         String id = first(str(material, Cfg.s(226)), str(material, "id"));
         JsonObject detail = new JsonObject();
@@ -543,11 +543,11 @@ public final class Sources {
         if (translations.isEmpty()) translations = J.list(detail, Cfg.s(273));
 
         int total = (int) Math.round(J.num(detail, Cfg.s(279)));
-        if (total == 0) total = num(material, "episodes");
+        if (total == 0) total = num(material, Cfg.s(278));
         total = Math.max(1, Math.min(200, total == 0 ? 12 : total));
 
         int materialId = (int) Math.round(J.num(detail, Cfg.s(322)));
-        if (materialId == 0) materialId = num(material, "material_id");
+        if (materialId == 0) materialId = num(material, Cfg.s(322));
         if (materialId == 0) {
             try {
                 materialId = Integer.parseInt(id);
@@ -562,20 +562,20 @@ public final class Sources {
             int tid = (int) Math.round(J.num(t, "id"));
             if (tid == 0) tid = num(t, Cfg.s(404));
             if (tid == 0) continue;
-            String raw = first(str(t, "title"), str(t, "name"));
+            String raw = first(str(t, Cfg.s(395)), str(t, Cfg.s(337)));
             String voice = voiceTitle(raw);
             if (voice.isEmpty()) voice = cleanLabel(raw);
-            if (voice.isEmpty()) voice = "Озвучка";
+            if (voice.isEmpty()) voice = Cfg.s(437);
             for (int ep = 1; ep <= total; ep++) {
                 Map<String, String> p = new LinkedHashMap<>();
                 p.put(Cfg.s(321), String.valueOf(materialId));
                 p.put(Cfg.s(403), String.valueOf(tid));
                 p.put(Cfg.s(277), String.valueOf(ep));
                 String url = Net.query(Cfg.s(16), p);
-                push(map, ep, variant(voice, "animetka", url));
+                push(map, ep, variant(voice, Cfg.s(224), url));
             }
         }
-        return done("animetka", map);
+        return done(Cfg.s(224), map);
     }
 
     /* ============ 8. AniDUB (online.anidub.com) ============ */
@@ -588,21 +588,21 @@ public final class Sources {
             try {
                 String body = Cfg.s(267)
                         + Net.enc(term);
-                String html = Net.postForm(base + "/index.php?do=search", body, Net.baseHeaders(base, base + "/"));
-                JsonObject hit = choose(searchLinks(html, base), l, row -> new Match.Candidate(str(row, "title")));
+                String html = Net.postForm(base + Cfg.s(121), body, Net.baseHeaders(base, base + "/"));
+                JsonObject hit = choose(searchLinks(html, base), l, row -> new Match.Candidate(str(row, Cfg.s(395))));
                 if (hit != null) {
-                    page = str(hit, "url");
+                    page = str(hit, Cfg.s(411));
                     break;
                 }
             } catch (Exception ignored) {
             }
         }
-        if (page.isEmpty()) return done("anidub", map);
+        if (page.isEmpty()) return done(Cfg.s(207), map);
 
         String html = Net.get(page, Net.baseHeaders(base, base + "/"));
         String embedUrl = SourceUtil.find(html, Cfg.s(298))
                 .replace(Cfg.s(95), "&").replaceAll(Cfg.s(110), "");
-        if (embedUrl.isEmpty()) return done("anidub", map);
+        if (embedUrl.isEmpty()) return done(Cfg.s(207), map);
 
         String origin = SourceUtil.originOf(embedUrl);
         String playlist;
@@ -621,13 +621,13 @@ public final class Sources {
             String hash = spans.group(1).replaceAll("^/+", "");
             String label = plain(spans.group(2));
             int n = numberIn(label, i);
-            push(map, n, variant(Cfg.s(133), "anidub", origin + Cfg.s(123) + hash), label, 0);
+            push(map, n, variant(Cfg.s(133), Cfg.s(207), origin + Cfg.s(123) + hash), label, 0);
         }
         if (!found) {
             String single = SourceUtil.find(embedUrl, Cfg.s(170));
-            if (!single.isEmpty()) push(map, 1, variant("AniDUB", "anidub", origin + "/vid.php?v=/" + single));
+            if (!single.isEmpty()) push(map, 1, variant(Cfg.s(133), Cfg.s(207), origin + Cfg.s(123) + single));
         }
-        return done("anidub", map);
+        return done(Cfg.s(207), map);
     }
 
     /* ============ 9. AnixSekai ============ */
@@ -636,7 +636,7 @@ public final class Sources {
 
     private static Map<String, String> anixHeaders(String base) {
         Map<String, String> h = new LinkedHashMap<>();
-        h.put("Accept", "application/json");
+        h.put(Cfg.s(129), Cfg.s(236));
         h.put(Cfg.s(160), ANIX_UA);
         h.put(Cfg.s(153), base);
         h.put(Cfg.s(156), base + "/");
@@ -649,7 +649,7 @@ public final class Sources {
         for (String base : ANIX_BASES) {
             try {
                 JsonObject root = Net.parse(Net.get(base + path, anixHeaders(base)));
-                if (J.has(root, Cfg.s(252)) && J.intOf(root, "code") != 0) throw new Exception(Cfg.s(234));
+                if (J.has(root, Cfg.s(252)) && J.intOf(root, Cfg.s(252)) != 0) throw new Exception(Cfg.s(234));
                 return root;
             } catch (Exception e) {
                 last = e;
@@ -663,13 +663,13 @@ public final class Sources {
         for (String base : ANIX_BASES) {
             try {
                 JsonObject root = Net.parse(Net.postJson(base + path, body, anixHeaders(base)));
-                if (J.has(root, "code") && J.intOf(root, "code") != 0) throw new Exception("anix code");
+                if (J.has(root, Cfg.s(252)) && J.intOf(root, Cfg.s(252)) != 0) throw new Exception(Cfg.s(234));
                 return root;
             } catch (Exception e) {
                 last = e;
             }
         }
-        throw last == null ? new Exception("anix") : last;
+        throw last == null ? new Exception(Cfg.s(233)) : last;
     }
 
     /** Ищет первый массив в ответе по списку ключей (структура API плавающая). */
@@ -679,8 +679,8 @@ public final class Sources {
             JsonElement v = root.get(k);
             if (v != null && v.isJsonArray()) return v.getAsJsonArray();
             if (v != null && v.isJsonObject()) {
-                JsonArray nested = firstArray(v.getAsJsonObject(), Cfg.s(363), Cfg.s(255), "data", Cfg.s(319), "items",
-                        Cfg.s(409), Cfg.s(379), "episodes");
+                JsonArray nested = firstArray(v.getAsJsonObject(), Cfg.s(363), Cfg.s(255), Cfg.s(262), Cfg.s(319), Cfg.s(307),
+                        Cfg.s(409), Cfg.s(379), Cfg.s(278));
                 if (nested.size() > 0) return nested;
             }
         }
@@ -694,9 +694,9 @@ public final class Sources {
             try {
                 JsonObject root = anixPost(Cfg.s(122),
                         Cfg.s(435) + escapeJson(term) + Cfg.s(88));
-                List<JsonObject> rows = J.list(firstArray(root, "releases", "content", "data", "list", "items"));
-                JsonObject hit = choose(rows, l, row -> new Match.Candidate(str(row, Cfg.s(400)), str(row, "title"),
-                        str(row, Cfg.s(399)), str(row, Cfg.s(397))).year(num(row, "year")));
+                List<JsonObject> rows = J.list(firstArray(root, Cfg.s(363), Cfg.s(255), Cfg.s(262), Cfg.s(319), Cfg.s(307)));
+                JsonObject hit = choose(rows, l, row -> new Match.Candidate(str(row, Cfg.s(400)), str(row, Cfg.s(395)),
+                        str(row, Cfg.s(399)), str(row, Cfg.s(397))).year(num(row, Cfg.s(432))));
                 if (hit != null) {
                     release = hit;
                     break;
@@ -704,29 +704,29 @@ public final class Sources {
             } catch (Exception ignored) {
             }
         }
-        if (release == null) return done("anixsekai", map);
+        if (release == null) return done(Cfg.s(235), map);
         String id = first(str(release, "id"), str(release, Cfg.s(362)));
-        if (id.isEmpty()) return done("anixsekai", map);
+        if (id.isEmpty()) return done(Cfg.s(235), map);
 
-        List<JsonObject> types = J.list(firstArray(anixGetSafe(Cfg.s(118) + Net.enc(id)), "types", "data", "items"));
+        List<JsonObject> types = J.list(firstArray(anixGetSafe(Cfg.s(118) + Net.enc(id)), Cfg.s(409), Cfg.s(262), Cfg.s(307)));
         List<JsonObject> filtered = new ArrayList<>();
         for (JsonObject t : types) {
-            if (!voiceTitle(first(str(t, "name"), str(t, "title"))).isEmpty()) filtered.add(t);
+            if (!voiceTitle(first(str(t, Cfg.s(337)), str(t, Cfg.s(395)))).isEmpty()) filtered.add(t);
         }
-        filtered.sort((a, b) -> num(b, "episodes_count") - num(a, "episodes_count"));
+        filtered.sort((a, b) -> num(b, Cfg.s(279)) - num(a, Cfg.s(279)));
         if (filtered.size() > 8) filtered = filtered.subList(0, 8);
 
         for (JsonObject type : filtered) {
-            String voice = voiceTitle(first(str(type, "name"), str(type, "title")));
+            String voice = voiceTitle(first(str(type, Cfg.s(337)), str(type, Cfg.s(395))));
             int typeId = num(type, "id");
             if (typeId == 0) continue;
             List<JsonObject> sources = J.list(firstArray(
-                    anixGetSafe("/episode/" + Net.enc(id) + "/" + typeId), "sources", "data", "items"));
+                    anixGetSafe(Cfg.s(118) + Net.enc(id) + "/" + typeId), Cfg.s(379), Cfg.s(262), Cfg.s(307)));
             if (sources.isEmpty()) continue;
             JsonObject chosen = null;
             for (JsonObject s : sources) {
                 boolean kodik = num(s, "id") == 12
-                        || (str(s, "name") + str(s, "title")).toLowerCase().contains(Cfg.s(310));
+                        || (str(s, Cfg.s(337)) + str(s, Cfg.s(395))).toLowerCase().contains(Cfg.s(310));
                 if (!kodik) {
                     chosen = s;
                     break;
@@ -736,18 +736,18 @@ public final class Sources {
             int sourceId = num(chosen, "id");
             if (sourceId == 0) continue;
             List<JsonObject> eps = J.list(firstArray(
-                    anixGetSafe("/episode/" + Net.enc(id) + "/" + typeId + "/" + sourceId), "episodes", "data", "items"));
+                    anixGetSafe(Cfg.s(118) + Net.enc(id) + "/" + typeId + "/" + sourceId), Cfg.s(278), Cfg.s(262), Cfg.s(307)));
             int i = 0;
             for (JsonObject e : eps) {
                 i++;
-                String u = embed(first(str(e, "url"), str(e, Cfg.s(317)), str(e, "iframe_url")));
+                String u = embed(first(str(e, Cfg.s(411)), str(e, Cfg.s(317)), str(e, Cfg.s(303))));
                 if (u.isEmpty()) continue;
-                int n = J.firstNum(e, Cfg.s(355), "episode", "number");
+                int n = J.firstNum(e, Cfg.s(355), Cfg.s(277), Cfg.s(341));
                 if (n <= 0) n = i;
-                push(map, n, variant(voice, "anixsekai", u), first(str(e, "title"), str(e, "name")), J.num(e, "duration"));
+                push(map, n, variant(voice, Cfg.s(235), u), first(str(e, Cfg.s(395)), str(e, Cfg.s(337))), J.num(e, Cfg.s(274)));
             }
         }
-        return done("anixsekai", map);
+        return done(Cfg.s(235), map);
     }
 
     private static JsonObject anixGetSafe(String path) {
@@ -780,12 +780,12 @@ public final class Sources {
         String body = Cfg.s(436) + escapeJson(l.title) + Cfg.s(89)
                 + Cfg.s(91);
         Map<String, String> h = Net.baseHeaders(Cfg.s(31), Cfg.s(32));
-        h.put("Accept", "application/json");
+        h.put(Cfg.s(129), Cfg.s(236));
         String root;
         try {
             root = Net.postJson(Cfg.s(46), body, h);
         } catch (Exception e) {
-            return done("hanime", map);
+            return done(Cfg.s(286), map);
         }
         List<JsonObject> hits = new ArrayList<>();
         try {
@@ -795,29 +795,29 @@ public final class Sources {
                 hits = J.list(parseArray(hitsRaw));
             }
         } catch (Exception e) {
-            return done("hanime", map);
+            return done(Cfg.s(286), map);
         }
-        JsonObject best = choose(hits, l, row -> new Match.Candidate(str(row, "name"), str(row, Cfg.s(401))));
-        if (best == null) return done("hanime", map);
-        String slug = str(best, "slug");
-        if (slug.isEmpty()) return done("hanime", map);
+        JsonObject best = choose(hits, l, row -> new Match.Candidate(str(row, Cfg.s(337)), str(row, Cfg.s(401))));
+        if (best == null) return done(Cfg.s(286), map);
+        String slug = str(best, Cfg.s(377));
+        if (slug.isEmpty()) return done(Cfg.s(286), map);
 
         JsonObject detail;
         try {
             detail = Net.getJson(Cfg.s(33) + Net.enc(slug), h);
         } catch (Exception e) {
-            return done("hanime", map);
+            return done(Cfg.s(286), map);
         }
         Map<Integer, String> streams = new LinkedHashMap<>();
         for (JsonObject s : J.list(J.obj(detail, Cfg.s(424)), Cfg.s(372))) {
             for (JsonObject st : J.list(s, Cfg.s(387))) {
-                String u = safeUrl(str(st, "url"));
+                String u = safeUrl(str(st, Cfg.s(411)));
                 if (u.isEmpty()) continue;
                 int height = J.firstNum(st, Cfg.s(288), Cfg.s(430));
                 streams.put(height > 0 ? height : 720, u);
             }
         }
-        if (!streams.isEmpty()) push(map, 1, variant("Оригинал", "hanime", streams));
-        return done("hanime", map);
+        if (!streams.isEmpty()) push(map, 1, variant(Cfg.s(438), Cfg.s(286), streams));
+        return done(Cfg.s(286), map);
     }
 }

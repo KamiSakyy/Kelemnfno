@@ -66,7 +66,7 @@ public final class SourceEngine {
     }
 
     public static String lookupKeyOf(Lookup l) {
-        return sha1(l.malId + "|" + l.shikimoriId + "|" + l.yummyId + "|"
+        return sha1(l.malId + "|" + l.shikimoriId + "|" + l.sourceId + "|"
                 + (l.title == null ? "" : l.title.toLowerCase()));
     }
 

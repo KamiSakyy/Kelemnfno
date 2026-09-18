@@ -57,7 +57,7 @@ public final class Resolver {
         if (url == null) return Cfg.s(291);
         if (Pattern.compile(Cfg.s(176), Pattern.CASE_INSENSITIVE).matcher(url).find()) return Cfg.s(324);
         if (url.toLowerCase().contains(Cfg.s(116))) return Cfg.s(261);
-        return "hls";
+        return Cfg.s(291);
     }
 
     /* ---------------- Общие helpers ---------------- */
@@ -103,17 +103,17 @@ public final class Resolver {
         String lower = url.toLowerCase();
         String p = pathOf(url).toLowerCase();
         try {
-            if (p.contains(Cfg.s(115)) || lower.contains(".m3u8")) {
+            if (p.contains(Cfg.s(115)) || lower.contains(Cfg.s(115))) {
                 try {
                     String manifest = Net.get(url, Net.baseHeaders(originOf(url), referer), 12_000);
                     out.putAll(parseHls(manifest, url));
                 } catch (Exception ignored) {
                 }
                 if (out.isEmpty()) put(out, qualityOf(url), url);
-            } else if (p.contains(".mpd") || lower.contains(".mpd")) {
+            } else if (p.contains(Cfg.s(116)) || lower.contains(Cfg.s(116))) {
                 out.put(0, url);
             } else if (Pattern.compile(Cfg.s(175)).matcher(p).find()
-                    || Pattern.compile("\\.(mp4|mkv|webm)").matcher(lower).find()) {
+                    || Pattern.compile(Cfg.s(175)).matcher(lower).find()) {
                 put(out, qualityOf(url), url);
             }
         } catch (Exception ignored) {
@@ -176,7 +176,7 @@ public final class Resolver {
             }
         }
         String plain = b64(raw);
-        if (plain.matches("^(https?:)?//.*")) return safeUrl(plain.startsWith("//") ? "https:" + plain : plain);
+        if (plain.matches(Cfg.s(188))) return safeUrl(plain.startsWith("//") ? Cfg.s(297) + plain : plain);
         return safeUrl(raw);
     }
 
@@ -198,11 +198,11 @@ public final class Resolver {
         }
         if (payload.get("d") == null || payload.get("d").isEmpty()) {
             payload.put("d", find(page, Cfg.s(413)));
-            payload.put("d_sign", find(page, Cfg.s(412)));
+            payload.put(Cfg.s(260), find(page, Cfg.s(412)));
             payload.put("pd", find(page, Cfg.s(414)));
-            payload.put("pd_sign", find(page, Cfg.s(415)));
-            payload.put("ref", find(page, Cfg.s(416)));
-            payload.put("ref_sign", find(page, Cfg.s(417)));
+            payload.put(Cfg.s(351), find(page, Cfg.s(415)));
+            payload.put(Cfg.s(359), find(page, Cfg.s(416)));
+            payload.put(Cfg.s(360), find(page, Cfg.s(417)));
         }
         String type = find(page, Cfg.s(109));
         if (type.isEmpty()) type = find(page, Cfg.s(169));
@@ -229,27 +229,27 @@ public final class Resolver {
             }
         }
 
-        for (String k : new String[]{"d", "d_sign", "pd", "pd_sign", "type", "hash", "id"}) {
+        for (String k : new String[]{"d", Cfg.s(260), "pd", Cfg.s(351), Cfg.s(408), Cfg.s(287), "id"}) {
             if (payload.get(k) == null || payload.get(k).isEmpty()) throw new IOException(Cfg.s(312));
         }
 
         String body = Net.formBodyRaw(
                 "d", payload.get("d"),
-                "d_sign", payload.get("d_sign"),
+                Cfg.s(260), payload.get(Cfg.s(260)),
                 "pd", payload.get("pd"),
-                "pd_sign", payload.get("pd_sign"),
-                "ref", payload.get("ref") == null ? "" : payload.get("ref"),
-                "ref_sign", payload.get("ref_sign") == null ? "" : payload.get("ref_sign"),
+                Cfg.s(351), payload.get(Cfg.s(351)),
+                Cfg.s(359), payload.get(Cfg.s(359)) == null ? "" : payload.get(Cfg.s(359)),
+                Cfg.s(360), payload.get(Cfg.s(360)) == null ? "" : payload.get(Cfg.s(360)),
                 Cfg.s(243), Cfg.s(407),
-                Cfg.s(248), "true",
-                "type", payload.get("type"),
-                "hash", payload.get("hash"),
+                Cfg.s(248), Cfg.s(407),
+                Cfg.s(408), payload.get(Cfg.s(408)),
+                Cfg.s(287), payload.get(Cfg.s(287)),
                 "id", payload.get("id"),
                 Cfg.s(306), "{}");
 
         List<String> bases = new ArrayList<>();
         bases.add(endpoint);
-        bases.add(originOf(url) + "/ftor");
+        bases.add(originOf(url) + Cfg.s(119));
         bases.add(Cfg.s(34));
         JsonObject links = null;
         for (String base : new LinkedHashSet<String>(bases)) {
@@ -286,7 +286,7 @@ public final class Resolver {
                     srcs.add(el.isJsonPrimitive() ? el.getAsString() : J.str(J.obj(el), Cfg.s(380)));
                 }
             } else {
-                srcs.add(value.isJsonPrimitive() ? value.getAsString() : J.str(J.obj(value), "src"));
+                srcs.add(value.isJsonPrimitive() ? value.getAsString() : J.str(J.obj(value), Cfg.s(380)));
             }
             for (String src : srcs) {
                 if (src == null || src.isEmpty()) continue;
@@ -307,7 +307,7 @@ public final class Resolver {
         try {
             java.net.URL u = new java.net.URL(safe);
             if (!Cfg.s(296).equals(u.getProtocol()) || !u.getHost().matches(Cfg.s(190))) return safe;
-            return new java.net.URL("https", failover, u.getPort(), u.getFile()).toString();
+            return new java.net.URL(Cfg.s(296), failover, u.getPort(), u.getFile()).toString();
         } catch (Exception e) {
             return safe;
         }
@@ -326,13 +326,13 @@ public final class Resolver {
         String dubbing = param(url, Cfg.s(272));
 
         Map<String, String> h = Net.baseHeaders(Cfg.s(41), Cfg.s(42));
-        h.put("Accept", Cfg.s(236));
+        h.put(Cfg.s(129), Cfg.s(236));
         JsonObject playlist = Net.getJson(
                 Cfg.s(39) + Net.enc(animeId) + Cfg.s(94), h);
 
         JsonObject chosen = null;
         for (JsonObject item : J.list(playlist, Cfg.s(307))) {
-            if (J.intOf(item, "episode") != ep) continue;
+            if (J.intOf(item, Cfg.s(277)) != ep) continue;
             if (chosen == null) chosen = item;
             if (!dubbing.isEmpty() && J.str(item, Cfg.s(427)).equalsIgnoreCase(dubbing)) {
                 chosen = item;
@@ -398,7 +398,7 @@ public final class Resolver {
                 if (cut >= 0) link = link.substring(0, cut);
                 String safe = safeUrl(link);
                 if (safe.isEmpty()) continue;
-                String digits = e.getKey().replaceAll("\\D+", "");
+                String digits = e.getKey().replaceAll(Cfg.s(177), "");
                 int quality = digits.isEmpty() ? qualityOf(safe) : Integer.parseInt(digits);
                 out.put(quality > 0 ? quality : 720, safe);
             }
@@ -420,12 +420,12 @@ public final class Resolver {
                 for (Map.Entry<String, JsonElement> e : J.obj(j, Cfg.s(356)).entrySet()) {
                     String safe = safeUrl(J.str(e.getValue()));
                     if (safe.isEmpty()) continue;
-                    String digits = e.getKey().replaceAll("\\D+", "");
+                    String digits = e.getKey().replaceAll(Cfg.s(177), "");
                     out.put(digits.isEmpty() ? qualityOf(safe) : Integer.parseInt(digits), safe);
                 }
-                for (JsonObject row : J.list(j, "sources")) {
-                    String safe = safeUrl(first(J.str(row, Cfg.s(411)), J.str(row, "src")));
-                    if (!safe.isEmpty()) out.put(J.intOf(row, Cfg.s(288)) > 0 ? J.intOf(row, "height") : qualityOf(safe), safe);
+                for (JsonObject row : J.list(j, Cfg.s(379))) {
+                    String safe = safeUrl(first(J.str(row, Cfg.s(411)), J.str(row, Cfg.s(380))));
+                    if (!safe.isEmpty()) out.put(J.intOf(row, Cfg.s(288)) > 0 ? J.intOf(row, Cfg.s(288)) : qualityOf(safe), safe);
                 }
             }
         } catch (Exception ignored) {
@@ -474,7 +474,7 @@ public final class Resolver {
         if (!raw.isEmpty()) {
             try {
                 JsonObject params = Net.parse(SourceUtil.unescape(raw));
-                JsonObject hls = Net.parse(J.str(params, "hls"));
+                JsonObject hls = Net.parse(J.str(params, Cfg.s(291)));
                 for (Map.Entry<String, JsonElement> e : hls.entrySet()) {
                     String safe = safeUrl(J.str(e.getValue()));
                     if (!safe.isEmpty()) out.putAll(direct(safe, url));
@@ -498,7 +498,7 @@ public final class Resolver {
 
     private static Map<Integer, String> animetkaPlaylist(String url) throws IOException {
         Map<String, String> h = Net.baseHeaders(Cfg.s(13), Cfg.s(14));
-        h.put("Accept", Cfg.s(238));
+        h.put(Cfg.s(129), Cfg.s(238));
         String text = Net.get(url, h, 12_000);
         Map<Integer, String> out = new TreeMap<>(Collections.reverseOrder());
         try {
@@ -518,7 +518,7 @@ public final class Resolver {
         if (el.isJsonPrimitive()) {
             String v = el.getAsString();
             if (v != null && Pattern.compile(Cfg.s(174), Pattern.CASE_INSENSITIVE).matcher(v).find()) {
-                put(out, 720, v.startsWith("//") ? "https:" + v : v);
+                put(out, 720, v.startsWith("//") ? Cfg.s(297) + v : v);
             }
             return;
         }
@@ -576,7 +576,7 @@ public final class Resolver {
         }
         if (id.isEmpty()) throw new IOException(Cfg.s(369));
         Map<String, String> h = Net.baseHeaders(Cfg.s(43), url);
-        h.put("Accept", Cfg.s(239));
+        h.put(Cfg.s(129), Cfg.s(239));
         JsonObject root = Net.getJson(Cfg.s(45) + Net.enc(id)
                 + Cfg.s(117) + Net.enc(url) + Cfg.s(103), h);
         Map<Integer, String> out = new TreeMap<>(Collections.reverseOrder());
@@ -592,7 +592,7 @@ public final class Resolver {
 
     private static Map<Integer, String> hlsEndpoint(String url, String referer) throws IOException {
         String body = Net.get(url, Net.baseHeaders(originOf(url), referer), 12_000);
-        if (body.trim().startsWith("#EXTM3U")) {
+        if (body.trim().startsWith(Cfg.s(93))) {
             Map<Integer, String> parsed = parseHls(body, url);
             if (!parsed.isEmpty()) return parsed;
             Map<Integer, String> single = new TreeMap<>(Collections.reverseOrder());
@@ -687,7 +687,7 @@ public final class Resolver {
     public static boolean verify(String url, String referer, String kind) {
         try {
             Map<String, String> headers = Net.baseHeaders(originOf(url), referer);
-            if ("mp4".equals(kind)) headers.put(Cfg.s(155), Cfg.s(246));
+            if (Cfg.s(324).equals(kind)) headers.put(Cfg.s(155), Cfg.s(246));
             Request request = new Request.Builder().url(url).headers(Net.Headers.of(headers)).get().build();
             try (Response response = Net.client().newCall(request).execute()) {
                 int code = response.code();
@@ -695,13 +695,13 @@ public final class Resolver {
                 String type = response.header(Cfg.s(145));
                 type = type == null ? "" : type.toLowerCase();
                 byte[] bytes = response.body() == null ? new byte[0] : response.body().bytes();
-                if ("hls".equals(kind)) {
-                    if (type.contains(Cfg.s(421)) || type.contains("mp4")) return false;
+                if (Cfg.s(291).equals(kind)) {
+                    if (type.contains(Cfg.s(421)) || type.contains(Cfg.s(324))) return false;
                     String text = new String(bytes, StandardCharsets.UTF_8).trim();
-                    return text.startsWith("#EXTM3U");
+                    return text.startsWith(Cfg.s(93));
                 }
                 if (type.contains(Cfg.s(336))) return false;
-                if (type.contains("video/") || type.contains(Cfg.s(343))) return true;
+                if (type.contains(Cfg.s(421)) || type.contains(Cfg.s(343))) return true;
                 int len = Math.min(bytes.length, 64);
                 String head = new String(bytes, 0, len, StandardCharsets.ISO_8859_1);
                 return head.contains(Cfg.s(284)) || head.contains(Cfg.s(323));

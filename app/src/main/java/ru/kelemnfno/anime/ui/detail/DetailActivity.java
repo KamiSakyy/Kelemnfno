@@ -305,7 +305,7 @@ public class DetailActivity extends AppCompatActivity {
         l.title = a.title;
         l.original = a.otherTitles != null && !a.otherTitles.isEmpty() ? a.otherTitles.get(0) : a.original;
         l.year = a.year;
-        l.yummyId = a.animeId;
+        l.sourceId = a.animeId;
         if (a.remoteIds != null) {
             l.shikimoriId = a.remoteIds.shikimoriId;
             l.malId = a.remoteIds.malId;

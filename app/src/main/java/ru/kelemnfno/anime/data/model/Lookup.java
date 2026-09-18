@@ -10,7 +10,7 @@ public class Lookup {
     public int year;
     public int malId;
     public int shikimoriId;
-    public int yummyId;
+    public int sourceId;
     public int kpId;
     public String anilibriaAlias;
     public List<String> genres = new ArrayList<>();
@@ -22,7 +22,7 @@ public class Lookup {
         l.year = year;
         l.malId = malId;
         l.shikimoriId = shikimoriId;
-        l.yummyId = yummyId;
+        l.sourceId = sourceId;
         l.kpId = kpId;
         l.anilibriaAlias = anilibriaAlias;
         l.genres = genres == null ? new ArrayList<>() : new ArrayList<>(genres);
