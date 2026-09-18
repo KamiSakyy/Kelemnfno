@@ -74,44 +74,51 @@ public class HomeFragment extends Fragment {
         load();
     }
 
+    /** Секция не важна для экрана: при ошибке показываем её пустой. */
+    private static List<AnimeItem> quietly(java.util.concurrent.Future<List<AnimeItem>> future) {
+        try {
+            return future.get();
+        } catch (Throwable t) {
+            return new ArrayList<>();
+        }
+    }
+
     private void load() {
         b.refresh.setRefreshing(true);
         b.content.removeAllViews();
         sectionViews.clear();
         AppExecutors.get().run(() -> {
-            AnimeRepository repo = AnimeRepository.get(requireContext());
-            Map<String, String> p1 = new LinkedHashMap<>();
+            final AnimeRepository repo = AnimeRepository.get(requireContext());
+            final Map<String, String> p1 = new LinkedHashMap<>();
             p1.put("sort", "top");
             p1.put("limit", "20");
-            List<AnimeItem> top = repo.list(p1);
 
-            Map<String, String> p2 = new LinkedHashMap<>();
+            final Map<String, String> p2 = new LinkedHashMap<>();
             p2.put("sort", "top");
             p2.put("status", "ongoing");
             p2.put("limit", "20");
-            List<AnimeItem> ongoing = repo.list(p2);
 
-            Map<String, String> p3 = new LinkedHashMap<>();
+            final Map<String, String> p3 = new LinkedHashMap<>();
             p3.put("sort", "top");
             p3.put("types", "2");
             p3.put("limit", "16");
-            List<AnimeItem> movies;
-            try {
-                movies = repo.list(p3);
-            } catch (Exception e) {
-                movies = new ArrayList<>();
-            }
 
-            Map<String, String> p4 = new LinkedHashMap<>();
+            final Map<String, String> p4 = new LinkedHashMap<>();
             p4.put("sort", "views");
             p4.put("status", "announcement");
             p4.put("limit", "16");
-            List<AnimeItem> announce;
-            try {
-                announce = repo.list(p4);
-            } catch (Exception e) {
-                announce = new ArrayList<>();
-            }
+
+            // Все четыре секции запрашиваются одновременно, а не по очереди.
+            java.util.concurrent.ExecutorService pool = AppExecutors.get().heavy();
+            java.util.concurrent.Future<List<AnimeItem>> f1 = pool.submit(() -> repo.list(p1));
+            java.util.concurrent.Future<List<AnimeItem>> f2 = pool.submit(() -> repo.list(p2));
+            java.util.concurrent.Future<List<AnimeItem>> f3 = pool.submit(() -> repo.list(p3));
+            java.util.concurrent.Future<List<AnimeItem>> f4 = pool.submit(() -> repo.list(p4));
+
+            List<AnimeItem> top = f1.get();
+            List<AnimeItem> ongoing = f2.get();
+            List<AnimeItem> movies = quietly(f3);
+            List<AnimeItem> announce = quietly(f4);
 
             List<List<AnimeItem>> result = new ArrayList<>();
             result.add(top);

@@ -31,9 +31,12 @@ public final class AnimeRepository {
 
     private final RemoteApi api;
     private final MemCache cache = new MemCache();
+    private final DiskCache disk;
+    private static final com.google.gson.Gson GSON = new com.google.gson.Gson();
 
     private AnimeRepository(Context context) {
         api = ApiClient.api(context);
+        disk = new DiskCache(context);
     }
 
     public static AnimeRepository get(Context context) {
@@ -78,7 +81,50 @@ public final class AnimeRepository {
         if (hit != null) return hit;
         List<AnimeItem> data = unwrap(api.list(query));
         cache.put(key, data);
+        try {
+            disk.put(key, GSON.toJson(data));
+        } catch (Throwable ignored) {
+        }
         return data;
+    }
+
+    /**
+     * Кэш без сети: память, затем диск. Экран рисуется мгновенно,
+     * свежие данные подтягиваются фоном.
+     */
+    public List<AnimeItem> listCached(Map<String, String> params) {
+        List<AnimeItem> hit = cache.get(listKey(params), TTL_LIST);
+        if (hit != null) return hit;
+        return readItems(listKey(params));
+    }
+
+    /** Возраст кэша списка в миллисекундах; -1, если записи нет. */
+    public long listAge(Map<String, String> params) {
+        return disk.age(listKey(params));
+    }
+
+    private List<AnimeItem> readItems(String key) {
+        String json = disk.get(key);
+        if (json == null) return null;
+        try {
+            AnimeItem[] items = GSON.fromJson(json, AnimeItem[].class);
+            if (items == null || items.length == 0) return null;
+            List<AnimeItem> list = new ArrayList<>(java.util.Arrays.asList(items));
+            cache.put(key, list);
+            return list;
+        } catch (Throwable t) {
+            return null;
+        }
+    }
+
+    private static String listKey(Map<String, String> params) {
+        Map<String, String> query = new LinkedHashMap<>();
+        if (params != null) {
+            for (Map.Entry<String, String> e : params.entrySet()) {
+                if (e.getValue() != null && !e.getValue().isEmpty()) query.put(e.getKey(), e.getValue());
+            }
+        }
+        return "list:" + query.toString();
     }
 
     public List<AnimeItem> search(String q, int limit) throws ApiException {
@@ -109,7 +155,28 @@ public final class AnimeRepository {
         if (hit != null) return hit;
         List<ScheduleItem> data = unwrap(api.schedule());
         cache.put("schedule", data);
+        try {
+            disk.put("schedule", GSON.toJson(data));
+        } catch (Throwable ignored) {
+        }
         return data;
+    }
+
+    /** Расписание из кэша, без сети. */
+    public List<ScheduleItem> scheduleCached() {
+        List<ScheduleItem> hit = cache.get("schedule", TTL_SCHEDULE);
+        if (hit != null) return hit;
+        String json = disk.get("schedule");
+        if (json == null) return null;
+        try {
+            ScheduleItem[] items = GSON.fromJson(json, ScheduleItem[].class);
+            if (items == null || items.length == 0) return null;
+            List<ScheduleItem> list = new ArrayList<>(java.util.Arrays.asList(items));
+            cache.put("schedule", list);
+            return list;
+        } catch (Throwable t) {
+            return null;
+        }
     }
 
     public GenresData genres() throws ApiException {
@@ -133,7 +200,28 @@ public final class AnimeRepository {
             }
         }
         cache.put(key, data);
+        try {
+            disk.put(key, GSON.toJson(data));
+        } catch (Throwable ignored) {
+        }
         return data;
+    }
+
+    /** Полная карточка из кэша, без сети. */
+    public AnimeFull animeCached(String slugOrId) {
+        String key = "anime:" + slugOrId;
+        AnimeFull hit = cache.get(key, TTL_DETAIL);
+        if (hit != null) return hit;
+        String json = disk.get(key);
+        if (json == null) return null;
+        try {
+            AnimeFull full = GSON.fromJson(json, AnimeFull.class);
+            if (full == null) return null;
+            cache.put(key, full);
+            return full;
+        } catch (Throwable t) {
+            return null;
+        }
     }
 
     public List<VideoItem> videos(int animeId) throws ApiException {

@@ -281,8 +281,43 @@ public class CatalogFragment extends Fragment {
         loadMore();
     }
 
+    /**
+     * Первая страница показывается из кэша сразу — экран не пустой,
+     * пока идёт запрос. На мобильном интернете свежий кэш не обновляем:
+     * экономим трафик.
+     */
+    private boolean renderFromCache() {
+        if (offset != 0 || adapter.itemCount() > 0) return false;
+        AnimeRepository repo = AnimeRepository.get(requireContext());
+        Map<String, String> p = pageParams(0);
+        List<AnimeItem> cached = repo.listCached(p);
+        if (cached == null || cached.isEmpty()) return false;
+        List<AnimeItem> shown = new ArrayList<>();
+        for (AnimeItem a : cached) if (yearOk(a)) shown.add(a);
+        if (shown.isEmpty()) return false;
+        List<Object> result = new ArrayList<>();
+        result.add(shown);
+        result.add(cached.size());
+        result.add(true);
+        applyPage(result);
+        long age = repo.listAge(p);
+        return Fmt.isCellular() && age >= 0 && age < 30 * 60_000L;
+    }
+
+    private Map<String, String> pageParams(int cursor) {
+        Map<String, String> p = new LinkedHashMap<>();
+        p.put("sort", sort);
+        if (!status.isEmpty()) p.put("status", status);
+        p.put("limit", String.valueOf(PAGE));
+        p.put("offset", String.valueOf(cursor));
+        for (int g : genreIds) p.put("genres", p.containsKey("genres") ? p.get("genres") + "," + g : String.valueOf(g));
+        for (int t : typeIds) p.put("types", p.containsKey("types") ? p.get("types") + "," + t : String.valueOf(t));
+        return p;
+    }
+
     private void loadMore() {
         if (loading || !hasMore) return;
+        if (renderFromCache()) return;
         loading = true;
         final int from = offset;
         AppExecutors.get().run(() -> {
@@ -322,18 +357,23 @@ public class CatalogFragment extends Fragment {
                 Ui.toast(requireContext(), "Ошибка: " + error.getMessage());
                 return;
             }
-            @SuppressWarnings("unchecked")
-            List<AnimeItem> collected = (List<AnimeItem>) value.get(0);
-            offset = (Integer) value.get(1);
-            hasMore = (Boolean) value.get(2);
-            List<Integer> seen = new ArrayList<>();
-            for (AnimeItem a : items) seen.add(a.animeId);
-            List<AnimeItem> fresh = new ArrayList<>();
-            for (AnimeItem a : collected) if (!seen.contains(a.animeId)) fresh.add(a);
-            items.addAll(fresh);
-            adapter.addAll(models(fresh));
-            b.empty.getRoot().setVisibility(items.isEmpty() && !hasMore ? View.VISIBLE : View.GONE);
+            applyPage(value);
         });
+    }
+
+    /** Добавляет страницу в список, отбрасывая уже показанные тайтлы. */
+    private void applyPage(List<Object> value) {
+        @SuppressWarnings("unchecked")
+        List<AnimeItem> collected = (List<AnimeItem>) value.get(0);
+        offset = (Integer) value.get(1);
+        hasMore = (Boolean) value.get(2);
+        List<Integer> seen = new ArrayList<>();
+        for (AnimeItem a : items) seen.add(a.animeId);
+        List<AnimeItem> fresh = new ArrayList<>();
+        for (AnimeItem a : collected) if (!seen.contains(a.animeId)) fresh.add(a);
+        items.addAll(fresh);
+        adapter.addAll(models(fresh));
+        b.empty.getRoot().setVisibility(items.isEmpty() && !hasMore ? View.VISIBLE : View.GONE);
     }
 
     private boolean yearOk(AnimeItem a) {

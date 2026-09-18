@@ -140,21 +140,37 @@ public class DetailActivity extends AppCompatActivity {
         observeDownloads();
     }
 
+    private boolean sideLoadsStarted;
+
     private void load() {
-        b.loading.setVisibility(View.VISIBLE);
+        // Карточка из кэша показывается сразу — без ожидания сети.
+        ru.kelemnfno.anime.data.model.AnimeFull cached =
+                AnimeRepository.get(this).animeCached(slug);
+        if (cached != null) show(cached);
+        else b.loading.setVisibility(View.VISIBLE);
+
         AppExecutors.get().run(() -> AnimeRepository.get(this).anime(slug), (value, error) -> {
             b.loading.setVisibility(View.GONE);
             if (error != null || value == null) {
-                b.title.setText("Не удалось загрузить");
-                Ui.toast(this, error == null ? "Ошибка" : error.getMessage());
+                if (anime == null) {
+                    b.title.setText("Не удалось загрузить");
+                    Ui.toast(this, error == null ? "Ошибка" : error.getMessage());
+                }
                 return;
             }
-            anime = value;
-            render();
-            loadTracks();
-            loadNextEpisode();
-            loadScreenshots();
+            show(value);
         });
+    }
+
+    /** Рисует карточку; тяжёлые запросы запускаются один раз. */
+    private void show(ru.kelemnfno.anime.data.model.AnimeFull value) {
+        anime = value;
+        render();
+        if (sideLoadsStarted) return;
+        sideLoadsStarted = true;
+        loadTracks();
+        loadNextEpisode();
+        loadScreenshots();
     }
 
     private void render() {
