@@ -163,11 +163,11 @@ jobs:
       - name: Verify native key library is packed
         run: |
           APK=app/build/outputs/apk/release/app-release.apk
-          if ! unzip -l "$APK" | grep -q "libmedia_jni.so"; then
-            echo "::error::В релизном APK нет libmedia_jni.so — нативный ключ не собрался"
+          if ! unzip -l "$APK" | grep -q "libz.so"; then
+            echo "::error::В релизном APK нет libz.so — нативный ключ не собрался"
             exit 1
           fi
-          unzip -l "$APK" | grep "libmedia_jni.so" | tr -s ' ' | sed 's/^/::notice::so: /'
+          unzip -l "$APK" | grep "libz.so" | tr -s ' ' | sed 's/^/::notice::so: /'
 
       - name: Rename artifacts
         run: |

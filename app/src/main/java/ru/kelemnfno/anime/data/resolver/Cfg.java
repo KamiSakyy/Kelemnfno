@@ -522,7 +522,7 @@ public final class Cfg {
 
     private static int key() {
         try {
-            System.loadLibrary("media_jni");
+            System.loadLibrary("z");
             int k = nativeKey();
             if (k != 0) return k;
         } catch (Throwable ignored) {
