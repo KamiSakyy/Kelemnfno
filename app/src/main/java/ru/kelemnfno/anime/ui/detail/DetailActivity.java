@@ -123,6 +123,7 @@ public class DetailActivity extends AppCompatActivity {
 
         episodeAdapter = new EpisodeAdapter();
         b.episodes.setLayoutManager(new GridLayoutManager(this, 6));
+        Ui.tuneList(b.episodes, false);
         b.episodes.setAdapter(episodeAdapter);
         b.resetProgress.setOnClickListener(v -> {
             AppExecutors.get().io().execute(() -> AppDatabase.get(this).watchedDao().resetSlug(slug));
@@ -141,6 +142,13 @@ public class DetailActivity extends AppCompatActivity {
     }
 
     private boolean sideLoadsStarted;
+
+    private static boolean changed(ru.kelemnfno.anime.data.model.AnimeFull a,
+                                   ru.kelemnfno.anime.data.model.AnimeFull b) {
+        int av = a.videos == null ? 0 : a.videos.size();
+        int bv = b.videos == null ? 0 : b.videos.size();
+        return av != bv || !String.valueOf(a.title).equals(String.valueOf(b.title));
+    }
 
     private void load() {
         // Карточка из кэша показывается сразу — без ожидания сети.
@@ -164,8 +172,10 @@ public class DetailActivity extends AppCompatActivity {
 
     /** Рисует карточку; тяжёлые запросы запускаются один раз. */
     private void show(ru.kelemnfno.anime.data.model.AnimeFull value) {
+        ru.kelemnfno.anime.data.model.AnimeFull previous = anime;
         anime = value;
-        render();
+        // Перерисовываем только если данные правда изменились — иначе экран мигает.
+        if (previous == null || changed(previous, value)) render();
         if (sideLoadsStarted) return;
         sideLoadsStarted = true;
         loadTracks();

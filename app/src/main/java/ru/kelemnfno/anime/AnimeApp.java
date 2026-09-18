@@ -54,6 +54,7 @@ public class AnimeApp extends Application {
         NotificationHelper.createChannels(this);
         watchNetwork();
         AppExecutors.get().io().execute(() -> {
+            ru.kelemnfno.anime.data.api.ApiClient.preconnect(this);
             AppDatabase.get(this).favoriteDao().all();
             if (Prefs.get(this).settings().notifyNewEpisodes) NewEpisodeWorker.schedule(this);
         });

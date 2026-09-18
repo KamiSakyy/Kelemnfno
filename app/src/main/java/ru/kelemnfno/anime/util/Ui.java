@@ -74,6 +74,22 @@ public final class Ui {
                 .into(view);
     }
 
+    /**
+     * Настройка списка под плавную прокрутку: больше закэшированных
+     * представлений и без анимации «изменения» элемента.
+     * fixedSize — только для списков, чей размер не зависит от данных.
+     */
+    public static void tuneList(androidx.recyclerview.widget.RecyclerView list, boolean fixedSize) {
+        if (list == null) return;
+        list.setItemViewCacheSize(12);
+        if (fixedSize) list.setHasFixedSize(true);
+        androidx.recyclerview.widget.RecyclerView.ItemAnimator animator = list.getItemAnimator();
+        if (animator instanceof androidx.recyclerview.widget.SimpleItemAnimator) {
+            ((androidx.recyclerview.widget.SimpleItemAnimator) animator)
+                    .setSupportsChangeAnimations(false);
+        }
+    }
+
     public static void image(ImageView view, String url) {
         if (view == null) return;
         if (url == null || url.isEmpty()) {

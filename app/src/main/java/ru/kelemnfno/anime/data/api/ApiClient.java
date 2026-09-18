@@ -30,8 +30,12 @@ public final class ApiClient {
             synchronized (ApiClient.class) {
                 if (client == null) {
                     Cache cache = new Cache(new File(context.getCacheDir(), "http"), 40L * 1024 * 1024);
+                    okhttp3.Dispatcher dispatcher = new okhttp3.Dispatcher();
+                    dispatcher.setMaxRequestsPerHost(8);
                     client = new OkHttpClient.Builder()
                             .cache(cache)
+                            .dispatcher(dispatcher)
+                            .connectionPool(new okhttp3.ConnectionPool(8, 5, TimeUnit.MINUTES))
                             .connectTimeout(15, TimeUnit.SECONDS)
                             .readTimeout(30, TimeUnit.SECONDS)
                             .writeTimeout(30, TimeUnit.SECONDS)
@@ -51,6 +55,20 @@ public final class ApiClient {
             }
         }
         return client;
+    }
+
+    /**
+     * Прогрев соединения: DNS + TCP + TLS выполняются заранее,
+     * поэтому первый экран не платит за рукопожатие.
+     */
+    public static void preconnect(Context context) {
+        try {
+            Request request = new Request.Builder().url(API_BASE).head().build();
+            try (okhttp3.Response response = http(context).newCall(request).execute()) {
+                response.code();
+            }
+        } catch (Throwable ignored) {
+        }
     }
 
     public static RemoteApi api(Context context) {

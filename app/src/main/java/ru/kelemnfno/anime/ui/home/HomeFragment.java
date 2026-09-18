@@ -226,6 +226,7 @@ public class HomeFragment extends Fragment {
         s.sectionList.addItemDecoration(new ru.kelemnfno.anime.ui.CardSpacing(requireContext(), 0));
         s.sectionList.setLayoutManager(
                 new LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false));
+        Ui.tuneList(s.sectionList, true);
         s.sectionList.setAdapter(adapter);
         s.sectionList.setNestedScrollingEnabled(false);
         sectionViews.add(s.getRoot());
@@ -272,6 +273,7 @@ public class HomeFragment extends Fragment {
             s.sectionList.addItemDecoration(new ru.kelemnfno.anime.ui.CardSpacing(requireContext(), 0));
         s.sectionList.setLayoutManager(
                     new LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false));
+        Ui.tuneList(s.sectionList, true);
             s.sectionList.setAdapter(adapter);
             // вставляем сразу после героя
             int index = hero == null ? 0 : b.content.indexOfChild(hero.getRoot()) + 1;

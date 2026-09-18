@@ -99,6 +99,7 @@ public class CatalogFragment extends Fragment {
         b.grid.setLayoutManager(new GridLayoutManager(requireContext(), 3));
         b.grid.addItemDecoration(new ru.kelemnfno.anime.ui.CardSpacing(requireContext(), 3));
         b.grid.setAdapter(adapter);
+        Ui.tuneList(b.grid, true);
         b.grid.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(@NonNull RecyclerView rv, int dx, int dy) {
@@ -106,7 +107,7 @@ public class CatalogFragment extends Fragment {
                 GridLayoutManager lm = (GridLayoutManager) rv.getLayoutManager();
                 if (lm == null) return;
                 int last = lm.findLastVisibleItemPosition();
-                if (last >= items.size() - 9 && hasMore && !loading) loadMore();
+                if (last >= items.size() - 12 && hasMore && !loading) loadMore();
             }
         });
 
