@@ -52,7 +52,7 @@ public final class ScreenshotFetcher {
 
         List<String> shots = new ArrayList<>();
 
-        String encoded = "https%3A%2F%2Fshikimori.one%2Fanimes%2F" + shikimoriId + ".json%3Flang%3Dru";
+        String encoded = Secrets.s(66) + shikimoriId + ".json%3Flang%3Dru";
         if (shikimoriId > 0) {
             shots = shikimori(Secrets.s(49) + shikimoriId + ".json?lang=ru");
             if (shots.isEmpty()) {

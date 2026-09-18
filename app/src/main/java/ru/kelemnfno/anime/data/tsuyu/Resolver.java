@@ -643,32 +643,32 @@ public final class Resolver {
         }
 
         Map<Integer, String> streams;
-        if ((hostMatches(host, "yummyani.me", Secrets.bareHost()) && path.contains("iframecvh"))
-                || hostMatches(host, "cdnvideohub.com")) {
+        if ((hostMatches(host, Secrets.s(76), Secrets.bareHost()) && path.contains("iframecvh"))
+                || hostMatches(host, Secrets.s(64))) {
             streams = cvh(url);
-        } else if (hostMatches(host, "animetka.com") && path.startsWith("/api/anime/playlist")) {
+        } else if (hostMatches(host, Secrets.s(62)) && path.startsWith("/api/anime/playlist")) {
             streams = animetkaPlaylist(url);
-        } else if (hostMatches(host, "kodikplayer.com", "kodik.info", "kodik.cc", "kodik.biz", "aniqit.com")) {
+        } else if (hostMatches(host, Secrets.s(69), Secrets.s(68), Secrets.s(67), "kodik.biz", Secrets.s(63))) {
             streams = kodik(url);
-        } else if (hostMatches(host, "alloha." + Secrets.bareHost(), "alloha.tv")) {
+        } else if (hostMatches(host, "alloha." + Secrets.bareHost(), Secrets.s(59))) {
             streams = alloha(url);
-        } else if (hostMatches(host, "aksor.tv", "aksor." + Secrets.bareHost(), Secrets.s(54))) {
+        } else if (hostMatches(host, Secrets.s(58), "aksor." + Secrets.bareHost(), Secrets.s(54))) {
             streams = aksor(url);
-        } else if (hostMatches(host, Secrets.s(55), "sibnet.ru")) {
+        } else if (hostMatches(host, Secrets.s(55), Secrets.s(71))) {
             streams = sibnet(url);
-        } else if (hostMatches(host, "stormo.tv")) {
+        } else if (hostMatches(host, Secrets.s(72))) {
             streams = stormo(url);
         } else if (host.contains("ladony") || path.contains("vid.php")) {
             streams = hlsEndpoint(url, Secrets.s(38));
-        } else if (hostMatches(host, "vk.com", "vkvideo.ru", "vkvideo.com") || path.contains("iframevk")) {
+        } else if (hostMatches(host, Secrets.s(73), Secrets.s(75), Secrets.s(74)) || path.contains("iframevk")) {
             streams = vk(url);
-        } else if (hostMatches(host, "rutube.ru")) {
+        } else if (hostMatches(host, Secrets.s(70))) {
             streams = rutube(url);
-        } else if (hostMatches(host, "zedfilm.ru", "hlamer.ru")) {
+        } else if (hostMatches(host, Secrets.s(77), Secrets.s(65))) {
             streams = scan(url, null);
-        } else if (hostMatches(host, "aniboom.one")) {
+        } else if (hostMatches(host, Secrets.s(60))) {
             streams = aniboom(url);
-        } else if (hostMatches(host, Secrets.s(56), Secrets.s(57), "anilib.me")) {
+        } else if (hostMatches(host, Secrets.s(56), Secrets.s(57), Secrets.s(61))) {
             streams = anilib(url);
         } else {
             streams = scan(url, null);

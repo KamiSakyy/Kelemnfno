@@ -14,7 +14,7 @@ import java.util.regex.Pattern;
 /** Нормализация ссылок и распознавание озвучек (порт src/server/tsuyu/util.ts). */
 public final class TsuyuUtil {
 
-    private static final List<String> KODIK_HOSTS = Arrays.asList("aniqit.com", "kodik.info", "kodik.cc", "kodik.biz");
+    private static final List<String> KODIK_HOSTS = Arrays.asList(Secrets.s(63), Secrets.s(68), Secrets.s(67), "kodik.biz");
 
     private TsuyuUtil() {
     }
@@ -56,7 +56,7 @@ public final class TsuyuUtil {
         try {
             URL u = new URL(safe);
             if (KODIK_HOSTS.contains(u.getHost())) {
-                URL fixed = new URL("https", "kodikplayer.com", u.getPort(), u.getFile());
+                URL fixed = new URL("https", Secrets.s(69), u.getPort(), u.getFile());
                 return fixed.toString();
             }
             return u.toString();
