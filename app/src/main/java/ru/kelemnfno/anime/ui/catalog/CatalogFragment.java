@@ -295,13 +295,12 @@ public class CatalogFragment extends Fragment {
         List<AnimeItem> shown = new ArrayList<>();
         for (AnimeItem a : cached) if (yearOk(a)) shown.add(a);
         if (shown.isEmpty()) return false;
-        List<Object> result = new ArrayList<>();
-        result.add(shown);
-        result.add(cached.size());
-        result.add(true);
-        applyPage(result);
-        long age = repo.listAge(p);
-        return Fmt.isCellular() && age >= 0 && age < 30 * 60_000L;
+        // Показываем сохранённое и НЕ трогаем offset: сеть обновит первую
+        // страницу целиком, повторы отбросит фильтр по animeId.
+        items.addAll(shown);
+        adapter.addAll(models(shown));
+        b.empty.getRoot().setVisibility(View.GONE);
+        return false;
     }
 
     private Map<String, String> pageParams(int cursor) {

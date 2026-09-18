@@ -56,11 +56,6 @@ public class AnimeApp extends Application {
         AppExecutors.get().io().execute(() -> {
             AppDatabase.get(this).favoriteDao().all();
             if (Prefs.get(this).settings().notifyNewEpisodes) NewEpisodeWorker.schedule(this);
-            // Прогрев: DNS + TCP + TLS выполняются до первого открытия экрана.
-            ru.kelemnfno.anime.data.resolver.Net.preconnect(
-                    ru.kelemnfno.anime.data.resolver.Cfg.apiBase());
-            ru.kelemnfno.anime.data.resolver.Net.preconnect(
-                    ru.kelemnfno.anime.data.resolver.Cfg.staticBase());
         });
     }
 }

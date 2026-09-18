@@ -29,9 +29,15 @@ public final class ApiClient {
         if (client == null) {
             synchronized (ApiClient.class) {
                 if (client == null) {
-                    // Тот же клиент, что и у остальной сети: общие пул соединений,
-                    // диспетчер, кэш и DNS. newBuilder() их не копирует, а разделяет.
-                    client = ru.kelemnfno.anime.data.resolver.Net.client().newBuilder()
+                    Cache cache = new Cache(new File(context.getCacheDir(), "http"), 40L * 1024 * 1024);
+                    client = new OkHttpClient.Builder()
+                            .cache(cache)
+                            .connectTimeout(15, TimeUnit.SECONDS)
+                            .readTimeout(30, TimeUnit.SECONDS)
+                            .writeTimeout(30, TimeUnit.SECONDS)
+                            .retryOnConnectionFailure(true)
+                            .followRedirects(true)
+                            .followSslRedirects(true)
                             .addInterceptor(chain -> {
                                 Request req = chain.request().newBuilder()
                                         .header("User-Agent", UA)

@@ -49,22 +49,15 @@ public final class Net {
         if (client == null) {
             synchronized (Net.class) {
                 if (client == null) {
-                    okhttp3.Dispatcher dispatcher = new okhttp3.Dispatcher();
-                    dispatcher.setMaxRequests(24);
-                    dispatcher.setMaxRequestsPerHost(10);
                     client = pinned(new OkHttpClient.Builder())
                             .cache(diskCache())
-                            .dispatcher(dispatcher)
-                            .connectionPool(new okhttp3.ConnectionPool(10, 5, TimeUnit.MINUTES))
-                            .dns(cachedDns())
-                            .connectTimeout(10, TimeUnit.SECONDS)
+                            .connectTimeout(12, TimeUnit.SECONDS)
                             .readTimeout(20, TimeUnit.SECONDS)
                             .writeTimeout(20, TimeUnit.SECONDS)
                             .callTimeout(45, TimeUnit.SECONDS)
                             .retryOnConnectionFailure(true)
                             .followRedirects(true)
                             .followSslRedirects(true)
-                            .addNetworkInterceptor(Net::cacheable)
                             .build();
                 }
             }
@@ -92,70 +85,12 @@ public final class Net {
         }
     }
 
-    /**
-     * Прогрев соединения: DNS + TCP + TLS до первого запроса экрана.
-     * Стоит несколько сотен байт, зато список открывается без рукопожатий.
-     */
-    public static void preconnect(String url) {
-        try {
-            Request request = new Request.Builder().url(url).head().build();
-            try (Response response = client().newCall(request).execute()) {
-                response.code();
-            }
-        } catch (Throwable ignored) {
-        }
-    }
-
-    /** Кэш DNS на 5 минут: повторные запросы не резолвят хост заново. */
-    private static okhttp3.Dns cachedDns() {
-        return hostname -> {
-            long now = System.currentTimeMillis();
-            synchronized (DNS) {
-                DnsRow hit = DNS.get(hostname);
-                if (hit != null && now - hit.at < 5 * 60_000L) return hit.addresses;
-            }
-            java.util.List<java.net.InetAddress> found = okhttp3.Dns.SYSTEM.lookup(hostname);
-            synchronized (DNS) {
-                DNS.put(hostname, new DnsRow(found, now));
-                if (DNS.size() > 64) DNS.remove(DNS.keySet().iterator().next());
-            }
-            return found;
-        };
-    }
-
-    private static final class DnsRow {
-        final java.util.List<java.net.InetAddress> addresses;
-        final long at;
-
-        DnsRow(java.util.List<java.net.InetAddress> addresses, long at) {
-            this.addresses = addresses;
-            this.at = at;
-        }
-    }
-
-    private static final java.util.Map<String, DnsRow> DNS = new java.util.LinkedHashMap<>();
-
-    /**
-     * Если сервер не прислал директив кэширования, разрешаем дисковому кэшу
-     * хранить ответ 5 минут — повторный вход в приложение не качает заново.
-     */
-    private static Response cacheable(okhttp3.Interceptor.Chain chain) throws java.io.IOException {
-        Response response = chain.proceed(chain.request());
-        if (!"GET".equals(chain.request().method())) return response;
-        String control = response.header("Cache-Control");
-        if (control != null && !control.isEmpty()) return response;
-        if (response.header("Expires") != null) return response;
-        return response.newBuilder()
-                .header("Cache-Control", "public, max-age=300")
-                .build();
-    }
-
     /** Дисковый кэш ответов: повторные открытия экранов не ходят в сеть. */
     private static okhttp3.Cache diskCache() {
         try {
             java.io.File dir = new java.io.File(
                     ru.kelemnfno.anime.AnimeApp.get().getCacheDir(), "http");
-            return new okhttp3.Cache(dir, 50L * 1024L * 1024L);
+            return new okhttp3.Cache(dir, 30L * 1024L * 1024L);
         } catch (Throwable t) {
             return null;
         }
