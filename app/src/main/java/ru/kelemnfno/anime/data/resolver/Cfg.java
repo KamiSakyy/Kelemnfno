@@ -547,6 +547,8 @@ public final class Cfg {
         return hit;
     }
 
+    private static final String SIG = "Yz9obGpqaD85a25sbGhiPG5sbmNoOGk5O2lqajs5Ozk8bWtrbGw8OGhoaT9iPmI4aGJoam1ob2k4OGNjYjlqPg==";
+
     private static Boolean guarded;
 
     /**
@@ -557,8 +559,105 @@ public final class Cfg {
         if (guarded != null) return guarded;
         boolean bad = android.os.Debug.isDebuggerConnected();
         if (!bad) bad = scanMaps();
+        if (!bad) bad = !signatureMatches();
+        if (!bad) bad = rooted();
         guarded = bad;
         return bad;
+    }
+
+    /** Отпечаток сертификата подписи, с которым собран релиз. */
+    private static String expectedSignature() {
+        byte[] raw = Base64.decode(SIG, Base64.DEFAULT);
+        byte[] out = new byte[raw.length];
+        for (int i = 0; i < raw.length; i++) out[i] = (byte) (raw[i] ^ K);
+        return new String(out, StandardCharsets.US_ASCII);
+    }
+
+    /**
+     * Пересобранный чужим ключом пакет источники не получает.
+     * Отладочные сборки и случаи, когда подпись прочитать не удалось, не блокируем.
+     */
+    private static boolean signatureMatches() {
+        android.content.Context c = ru.kelemnfno.anime.AnimeApp.get();
+        if (c == null) return true;
+        if ((c.getApplicationInfo().flags & android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0) {
+            return true;
+        }
+        try {
+            android.content.pm.Signature[] sigs;
+            if (android.os.Build.VERSION.SDK_INT >= 28) {
+                android.content.pm.PackageInfo info = c.getPackageManager().getPackageInfo(
+                        c.getPackageName(), android.content.pm.PackageManager.GET_SIGNING_CERTIFICATES);
+                sigs = info.signingInfo == null ? null : info.signingInfo.getApkContentsSigners();
+            } else {
+                android.content.pm.PackageInfo info = c.getPackageManager().getPackageInfo(
+                        c.getPackageName(), android.content.pm.PackageManager.GET_SIGNATURES);
+                sigs = info.signatures;
+            }
+            if (sigs == null || sigs.length == 0) return false;
+            java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-256");
+            byte[] digest = md.digest(sigs[0].toByteArray());
+            StringBuilder sb = new StringBuilder(digest.length * 2);
+            for (int i = 0; i < digest.length; i++) {
+                sb.append(String.format(java.util.Locale.US, "%02x", digest[i]));
+            }
+            return sb.toString().equals(expectedSignature());
+        } catch (Throwable t) {
+            return true;
+        }
+    }
+
+    /** Рут, Magisk, Xposed, Substrate. Эмуляторы не считаем. */
+    private static boolean rooted() {
+        if (emulator()) return false;
+        String[] files = {
+                "/system/bin/su", "/system/xbin/su", "/sbin/su", "/system/sd/xbin/su",
+                "/system/bin/failsafe/su", "/data/local/su", "/data/local/xbin/su",
+                "/data/local/bin/su", "/su/bin/su", "/system/bin/.ext/.su",
+                "/system/app/Superuser.apk", "/system/app/SuperSU.apk",
+                "/system/xbin/daemonsu", "/system/etc/init.d/99SuperSUDaemon",
+                "/cache/su", "/dev/com.koushikdutta.superuser.daemon"
+        };
+        for (int i = 0; i < files.length; i++) {
+            if (new java.io.File(files[i]).exists()) return true;
+        }
+        String path = System.getenv("PATH");
+        if (path != null) {
+            String[] dirs = path.split(":");
+            for (int i = 0; i < dirs.length; i++) {
+                if (new java.io.File(dirs[i], "su").exists()) return true;
+            }
+        }
+        String tags = android.os.Build.TAGS;
+        if (tags != null && tags.contains("test-keys")) return true;
+        String[] packages = {
+                "com.topjohnwu.magisk", "eu.chainfire.supersu", "com.koushikdutta.superuser",
+                "com.thirdparty.superuser", "com.yellowes.su", "com.devadvance.rootcloak",
+                "de.robv.android.xposed.installer", "com.saurik.substrate",
+                "com.amphoras.hidemyroot", "com.formyhm.hideroot"
+        };
+        android.content.Context c = ru.kelemnfno.anime.AnimeApp.get();
+        if (c != null) {
+            for (int i = 0; i < packages.length; i++) {
+                try {
+                    c.getPackageManager().getPackageInfo(packages[i], 0);
+                    return true;
+                } catch (Throwable ignored) {
+                }
+            }
+        }
+        return false;
+    }
+
+    private static boolean emulator() {
+        String f = String.valueOf(android.os.Build.FINGERPRINT);
+        String p = String.valueOf(android.os.Build.PRODUCT);
+        String m = String.valueOf(android.os.Build.MANUFACTURER);
+        String h = String.valueOf(android.os.Build.HARDWARE);
+        return f.contains("generic") || f.contains("emulator") || f.contains("vbox")
+                || p.contains("sdk") || p.contains("emulator") || p.contains("genymotion")
+                || m.contains("Genymotion") || h.contains("goldfish") || h.contains("ranchu")
+                || h.contains("vbox");
     }
 
     private static boolean scanMaps() {

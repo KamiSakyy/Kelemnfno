@@ -92,6 +92,35 @@ jobs:
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: ${{ runner.os }}-gradle-
 
+      # Отпечаток открытого ключа API берём с живого хоста и сразу проверяем
+      # его же запросом с --pinnedpubkey: если пин не сходится, пиннинг не включаем.
+      - name: Extract and verify certificate pin
+        continue-on-error: true
+        run: |
+          set +e
+          HOST=api.yani.tv
+          PINS_FILE=app/src/main/java/ru/kelemnfno/anime/data/resolver/Pins.java
+          PIN=$(echo | openssl s_client -connect "$HOST:443" -servername "$HOST" 2>/dev/null \
+            | openssl x509 -pubkey -noout 2>/dev/null \
+            | openssl pkey -pubin -outform der 2>/dev/null \
+            | openssl dgst -sha256 -binary | openssl enc -base64 | tr -d '\n')
+          if [ -z "$PIN" ]; then
+            echo "::warning::Отпечаток ключа не получен — пиннинг выключен"
+            exit 0
+          fi
+          CODE=$(curl -sS -o /dev/null -w "%{http_code}" --max-time 25 \
+            --pinnedpubkey "sha256//$PIN" "https://$HOST/" 2>/dev/null)
+          if [ -z "$CODE" ] || [ "$CODE" = "000" ]; then
+            echo "::warning::Отпечаток sha256//$PIN не прошёл проверку curl — пиннинг выключен"
+            exit 0
+          fi
+          sed -i "s|public static final String API = \"\";|public static final String API = \"sha256//$PIN\";|" "$PINS_FILE"
+          if grep -q "sha256//" "$PINS_FILE"; then
+            echo "::notice::Пиннинг включён: sha256//$PIN (проверка живым запросом: HTTP $CODE)"
+          else
+            echo "::warning::Пин не записан в Pins.java — пиннинг выключен"
+          fi
+
       - name: Build debug and release APK
         id: build
         continue-on-error: true

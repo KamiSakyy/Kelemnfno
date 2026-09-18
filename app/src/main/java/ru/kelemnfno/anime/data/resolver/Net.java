@@ -49,7 +49,7 @@ public final class Net {
         if (client == null) {
             synchronized (Net.class) {
                 if (client == null) {
-                    client = new OkHttpClient.Builder()
+                    client = pinned(new OkHttpClient.Builder())
                             .cache(diskCache())
                             .connectTimeout(12, TimeUnit.SECONDS)
                             .readTimeout(20, TimeUnit.SECONDS)
@@ -63,6 +63,23 @@ public final class Net {
             }
         }
         return client;
+    }
+
+    /** Пиннинг сертификата API: подмена сертификата перехватчиком не проходит. */
+    private static OkHttpClient.Builder pinned(OkHttpClient.Builder builder) {
+        try {
+            String pin = Pins.API;
+            if (pin == null || pin.isEmpty()) return builder;
+            String base = Cfg.apiBase();
+            int from = base.indexOf("://");
+            int to = base.indexOf('/', from + 3);
+            String host = to > from ? base.substring(from + 3, to) : base.substring(from + 3);
+            if (host.isEmpty()) return builder;
+            return builder.certificatePinner(
+                    new okhttp3.CertificatePinner.Builder().add(host, pin).build());
+        } catch (Throwable t) {
+            return builder;
+        }
     }
 
     /** Дисковый кэш ответов: повторные открытия экранов не ходят в сеть. */
