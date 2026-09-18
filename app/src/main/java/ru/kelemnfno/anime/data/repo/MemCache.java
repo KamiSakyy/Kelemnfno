@@ -27,11 +27,21 @@ public final class MemCache {
     public synchronized <T> T get(String key, long ttlMs) {
         Row row = map.get(key);
         if (row == null) return null;
-        if (System.currentTimeMillis() - row.at > ttlMs) {
-            map.remove(key);
-            return null;
-        }
+        if (System.currentTimeMillis() - row.at > ttlMs) return null;
         return (T) row.value;
+    }
+
+    /** Значение без проверки срока — чтобы показать прошлые данные мгновенно. */
+    @SuppressWarnings("unchecked")
+    public synchronized <T> T peek(String key) {
+        Row row = map.get(key);
+        return row == null ? null : (T) row.value;
+    }
+
+    /** Сколько миллисекунд назад положено значение; -1, если его нет. */
+    public synchronized long age(String key) {
+        Row row = map.get(key);
+        return row == null ? -1L : System.currentTimeMillis() - row.at;
     }
 
     public synchronized void put(String key, Object value) {

@@ -203,6 +203,7 @@ public class DetailActivity extends AppCompatActivity {
         }
 
         renderGenres();
+        renderQuickEpisodes();
         setupInlinePlayer();
         renderInfo();
         renderFavoriteState();
@@ -316,6 +317,24 @@ public class DetailActivity extends AppCompatActivity {
             for (ru.kelemnfno.anime.data.model.GenreShort g : a.genres) l.genres.add(g.title);
         }
         return l;
+    }
+
+    /**
+     * Список серий из ответа API — виден сразу, без ожидания подбора источников.
+     * Когда озвучки подобраны, renderVoices() уточнит список по выбранной дорожке.
+     */
+    private void renderQuickEpisodes() {
+        if (anime.videos == null || anime.videos.isEmpty()) return;
+        List<Integer> eps = new ArrayList<>();
+        for (ru.kelemnfno.anime.data.model.VideoItem v : anime.videos) {
+            int n = Fmt.numberIn(v.number, 0);
+            if (n > 0 && !eps.contains(n)) eps.add(n);
+        }
+        java.util.Collections.sort(eps);
+        if (eps.isEmpty()) return;
+        b.episodesBlock.setVisibility(View.VISIBLE);
+        b.episodesHint.setText(eps.size() + " серий · подбираем озвучки");
+        episodeAdapter.submit(eps);
     }
 
     private void renderVoices() {

@@ -23,8 +23,23 @@ public final class Fmt {
     }
 
     /** Постер нужного размера. Если его нет — перебираем все остальные, пустым не возвращаем. */
+    private static volatile boolean cellular;
+
+    /** Мобильный интернет: берём картинки на размер меньше. */
+    public static void setCellular(boolean value) {
+        cellular = value;
+    }
+
+    public static boolean isCellular() {
+        return cellular;
+    }
+
     public static String posterUrl(Poster p, String size) {
         if (p == null) return "";
+        if (cellular) {
+            if ("huge".equals(size) || "fullsize".equals(size)) size = "big";
+            else if ("big".equals(size)) size = "medium";
+        }
         String v = null;
         switch (size) {
             case "fullsize": v = p.fullsize; break;
