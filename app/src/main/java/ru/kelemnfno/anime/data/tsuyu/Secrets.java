@@ -88,7 +88,10 @@ public final class Secrets {
             "LDEsMz4/NXQ5NTc=",
             "LDEsMz4/NXQoLw==",
             "Iy83NyM7NDN0Nz8=",
-            "ID8+PDM2N3QoLw=="
+            "ID8+PDM2N3QoLw==",
+            "dTsqM3U7NDM3P3UqNjsjNjMpLg==",
+            "dTsqM3UsMz4/NXU=",
+            "dTc1LDM/dQ=="
     };
 
     private static final String[] CACHE = new String[T.length];

@@ -385,7 +385,7 @@ public final class Resolver {
         Map<String, String> h = Net.baseHeaders(Secrets.alloha(), url);
         h.put("Accepts-Controls", user);
         String body = "token=" + Net.enc(token) + "&av1=true&autoplay=0&audio=&subtitle=";
-        JsonObject root = Net.parse(Net.postForm(Secrets.alloha() + "/movie/" + id, body, h));
+        JsonObject root = Net.parse(Net.postForm(Secrets.alloha() + Secrets.s(80) + id, body, h));
 
         Map<Integer, String> out = new TreeMap<>(Collections.reverseOrder());
         JsonArray hlsSource = J.arr(root, "hlsSource");
@@ -416,7 +416,7 @@ public final class Resolver {
             String[] parts = pathOf(url).split("/");
             String id = parts.length > 0 ? parts[parts.length - 1] : "";
             if (!id.isEmpty()) {
-                JsonObject j = Net.getJson(origin + "/api/video/" + Net.enc(id), Net.baseHeaders(origin, url));
+                JsonObject j = Net.getJson(origin + Secrets.s(79) + Net.enc(id), Net.baseHeaders(origin, url));
                 for (Map.Entry<String, JsonElement> e : J.obj(j, "qualities").entrySet()) {
                     String safe = safeUrl(J.str(e.getValue()));
                     if (safe.isEmpty()) continue;
@@ -646,7 +646,7 @@ public final class Resolver {
         if ((hostMatches(host, Secrets.s(76), Secrets.bareHost()) && path.contains("iframecvh"))
                 || hostMatches(host, Secrets.s(64))) {
             streams = cvh(url);
-        } else if (hostMatches(host, Secrets.s(62)) && path.startsWith("/api/anime/playlist")) {
+        } else if (hostMatches(host, Secrets.s(62)) && path.startsWith(Secrets.s(78))) {
             streams = animetkaPlaylist(url);
         } else if (hostMatches(host, Secrets.s(69), Secrets.s(68), Secrets.s(67), "kodik.biz", Secrets.s(63))) {
             streams = kodik(url);
