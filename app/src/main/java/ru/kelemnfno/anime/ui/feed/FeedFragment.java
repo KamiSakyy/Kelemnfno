@@ -32,7 +32,7 @@ import ru.kelemnfno.anime.data.repo.AnimeRepository;
 import ru.kelemnfno.anime.data.resolver.SourceEngine;
 import ru.kelemnfno.anime.databinding.FragmentFeedBinding;
 import ru.kelemnfno.anime.ui.detail.DetailActivity;
-import ru.kelemnfno.anime.ui.player.PlaybackService;
+import ru.kelemnfno.anime.player.PlaybackService;
 import ru.kelemnfno.anime.util.AppExecutors;
 import ru.kelemnfno.anime.util.Fmt;
 import ru.kelemnfno.anime.util.Ui;
