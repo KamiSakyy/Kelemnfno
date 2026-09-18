@@ -17,9 +17,9 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import ru.kelemnfno.anime.data.repo.MemCache;
-import ru.kelemnfno.anime.data.tsuyu.J;
-import ru.kelemnfno.anime.data.tsuyu.Net;
-import ru.kelemnfno.anime.data.tsuyu.Secrets;
+import ru.kelemnfno.anime.data.resolver.J;
+import ru.kelemnfno.anime.data.resolver.Net;
+import ru.kelemnfno.anime.data.resolver.Cfg;
 
 /**
  * Кадры из серий под описанием.
@@ -52,23 +52,23 @@ public final class ScreenshotFetcher {
 
         List<String> shots = new ArrayList<>();
 
-        String encoded = Secrets.s(66) + shikimoriId + ".json%3Flang%3Dru";
+        String encoded = Cfg.s(66) + shikimoriId + ".json%3Flang%3Dru";
         if (shikimoriId > 0) {
-            shots = shikimori(Secrets.s(49) + shikimoriId + ".json?lang=ru");
+            shots = shikimori(Cfg.s(49) + shikimoriId + ".json?lang=ru");
             if (shots.isEmpty()) {
-                shots = shikimori(Secrets.s(47) + shikimoriId + ".json?lang=ru");
+                shots = shikimori(Cfg.s(47) + shikimoriId + ".json?lang=ru");
             }
             if (shots.isEmpty()) {
-                shots = shikimori(Secrets.s(50) + shikimoriId + "?lang=ru");
+                shots = shikimori(Cfg.s(50) + shikimoriId + "?lang=ru");
             }
             if (shots.isEmpty()) {
-                shots = shikimori(Secrets.s(28) + shikimoriId + "?lang=ru");
+                shots = shikimori(Cfg.s(28) + shikimoriId + "?lang=ru");
             }
             if (shots.isEmpty()) {
-                shots = shikimori(Secrets.s(19) + encoded);
+                shots = shikimori(Cfg.s(19) + encoded);
             }
             if (shots.isEmpty()) {
-                shots = shikimori(Secrets.s(29) + encoded);
+                shots = shikimori(Cfg.s(29) + encoded);
             }
         }
 
@@ -87,7 +87,7 @@ public final class ScreenshotFetcher {
     private static List<String> shikimori(String url) {
         List<String> out = new ArrayList<>();
         try {
-            Map<String, String> headers = Net.baseHeaders(Secrets.s(2), Secrets.s(48));
+            Map<String, String> headers = Net.baseHeaders(Cfg.s(2), Cfg.s(48));
             headers.put("Accept", "application/json");
             JsonObject json = Net.getJson(url, headers);
             for (JsonElement el : J.arr(json, "screenshots")) {
@@ -102,7 +102,7 @@ public final class ScreenshotFetcher {
     private static List<String> jikan(int malId) {
         List<String> out = new ArrayList<>();
         try {
-            JsonObject root = Net.getJson(Secrets.s(26) + malId + "/pictures",
+            JsonObject root = Net.getJson(Cfg.s(26) + malId + "/pictures",
                     Net.baseHeaders(null, null));
             for (JsonObject item : J.list(root, "data")) {
                 JsonObject jpg = J.obj(J.obj(item, "images"), "jpg");
@@ -120,12 +120,12 @@ public final class ScreenshotFetcher {
     private static List<String> malPictures(int malId) {
         List<String> out = new ArrayList<>();
         try {
-            String html = Net.get(Secrets.s(36) + malId + "/pictures",
-                    Net.baseHeaders(Secrets.s(35), Secrets.s(36) + malId));
+            String html = Net.get(Cfg.s(36) + malId + "/pictures",
+                    Net.baseHeaders(Cfg.s(35), Cfg.s(36) + malId));
             Document doc = Jsoup.parse(html);
             for (Element img : doc.select("img[data-src], img[src]")) {
                 String src = img.hasAttr("data-src") ? img.attr("data-src") : img.attr("src");
-                if (src.contains(Secrets.s(6))) add(out, src);
+                if (src.contains(Cfg.s(6))) add(out, src);
             }
         } catch (Exception ignored) {
         }
@@ -139,7 +139,7 @@ public final class ScreenshotFetcher {
             String body = "{\"query\":\"{ Media(idMAL: " + malId
                     + ", type: ANIME) { bannerImage coverImage { extraLarge large } } }\"}";
             Request request = new Request.Builder()
-                    .url(Secrets.s(30))
+                    .url(Cfg.s(30))
                     .header("User-Agent", Net.CHROME)
                     .post(RequestBody.create(body, JSON))
                     .build();
@@ -165,7 +165,7 @@ public final class ScreenshotFetcher {
         try {
             String q = URLEncoder.encode(title.trim(), "UTF-8");
             JsonObject root = Net.getJson(
-                    Secrets.s(27) + q + "&limit=1&type=anime",
+                    Cfg.s(27) + q + "&limit=1&type=anime",
                     Net.baseHeaders(null, null));
             List<JsonObject> items = J.list(root, "data");
             if (items.isEmpty()) return 0;
@@ -183,7 +183,7 @@ public final class ScreenshotFetcher {
             v = "https:" + v;
         } else if (v.startsWith("/")) {
             // Shikimori отдаёт кадры относительными путями: /system/screenshots/…
-            v = ru.kelemnfno.anime.data.tsuyu.Secrets.shikimori() + v;
+            v = ru.kelemnfno.anime.data.resolver.Cfg.shikimori() + v;
         }
         if (!v.startsWith("http://") && !v.startsWith("https://")) return;
         for (int i = 0; i < out.size(); i++) {

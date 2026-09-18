@@ -11,7 +11,7 @@ import java.util.Map;
 import retrofit2.Call;
 import retrofit2.Response;
 import ru.kelemnfno.anime.data.api.ApiClient;
-import ru.kelemnfno.anime.data.api.YummyApi;
+import ru.kelemnfno.anime.data.api.RemoteApi;
 import ru.kelemnfno.anime.data.model.AnimeFull;
 import ru.kelemnfno.anime.data.model.AnimeItem;
 import ru.kelemnfno.anime.data.model.ApiEnvelope;
@@ -29,7 +29,7 @@ public final class AnimeRepository {
 
     private static volatile AnimeRepository instance;
 
-    private final YummyApi api;
+    private final RemoteApi api;
     private final MemCache cache = new MemCache();
 
     private AnimeRepository(Context context) {

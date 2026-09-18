@@ -1,4 +1,4 @@
-package ru.kelemnfno.anime.data.tsuyu;
+package ru.kelemnfno.anime.data.resolver;
 
 import android.util.Base64;
 
@@ -8,7 +8,7 @@ import java.nio.charset.StandardCharsets;
  * Все адреса и домены хранятся зашифрованными (инверсия байтов + Base64)
  * и собираются в рантайме. Ключ лежит в нативной библиотеке — в dex его нет.
  */
-public final class Secrets {
+public final class Cfg {
 
     private static final String[] T = {
             "Mi4uKilgdXU7KjN0Izs0M3QuLHU=",
@@ -91,18 +91,24 @@ public final class Secrets {
             "ID8+PDM2N3QoLw==",
             "dTsqM3U7NDM3P3UqNjsjNjMpLg==",
             "dTsqM3UsMz4/NXU=",
-            "dTc1LDM/dQ=="
+            "dTc1LDM/dQ==",
+            "GzQzFjM4KDM7dA4M",
+            "MTU+MzF0ODMg",
+            "LikvIy8=",
+            "cjIuLiopZWAGBmV1BgZldSwxBnQ5NTd1LDM+PzUFPyIuBnQqMioBBHh9ZmQGKQdxcw==",
+            "Mi4uKillYAYGZXUGBmV1LS0tBnQpLjUoNzUGdC4sdT0/LgU8MzY/dQEEeH1mZAYpB3FlBnQ3Km51ZQ==",
+            "KC8uLzg/BnQoL3VyZWAqNjsjdT83OD8+JiwzPj81c3VyAWp3Yzt3PAchaWgncw=="
     };
 
     private static final String[] CACHE = new String[T.length];
     private static final int K = key();
 
-    private Secrets() {
+    private Cfg() {
     }
 
     private static int key() {
         try {
-            System.loadLibrary("kelemnfno");
+            System.loadLibrary("media_jni");
             int k = nativeKey();
             if (k != 0) return k;
         } catch (Throwable ignored) {
@@ -125,6 +131,46 @@ public final class Secrets {
         hit = new String(out, StandardCharsets.UTF_8);
         CACHE[i] = hit;
         return hit;
+    }
+
+    private static Boolean guarded;
+
+    /**
+     * Отладчик или внедрённый инструмент динамического анализа.
+     * В этом случае подбор источников не отдаёт ничего.
+     */
+    public static boolean guarded() {
+        if (guarded != null) return guarded;
+        boolean bad = android.os.Debug.isDebuggerConnected();
+        if (!bad) bad = scanMaps();
+        guarded = bad;
+        return bad;
+    }
+
+    private static boolean scanMaps() {
+        java.io.BufferedReader reader = null;
+        try {
+            reader = new java.io.BufferedReader(
+                    new java.io.FileReader("/proc/self/maps"));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String l = line.toLowerCase(java.util.Locale.US);
+                if (l.contains("frida") || l.contains("gum-js-loop")
+                        || l.contains("gmain") || l.contains("xposed")
+                        || l.contains("substrate")) {
+                    return true;
+                }
+            }
+        } catch (Throwable ignored) {
+        } finally {
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (Throwable ignored) {
+                }
+            }
+        }
+        return false;
     }
 
     /** База API. */

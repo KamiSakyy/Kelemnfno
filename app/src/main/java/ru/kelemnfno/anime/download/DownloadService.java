@@ -20,7 +20,7 @@ import java.util.concurrent.Executors;
 
 import ru.kelemnfno.anime.data.db.AppDatabase;
 import ru.kelemnfno.anime.data.db.DownloadEntity;
-import ru.kelemnfno.anime.data.tsuyu.Net;
+import ru.kelemnfno.anime.data.resolver.Net;
 import ru.kelemnfno.anime.notify.NotificationHelper;
 
 /**

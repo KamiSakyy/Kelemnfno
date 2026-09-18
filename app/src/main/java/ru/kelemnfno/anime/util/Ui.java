@@ -26,7 +26,7 @@ import com.bumptech.glide.request.target.Target;
 import com.google.android.material.snackbar.Snackbar;
 
 import ru.kelemnfno.anime.R;
-import ru.kelemnfno.anime.data.tsuyu.Net;
+import ru.kelemnfno.anime.data.resolver.Net;
 
 import android.graphics.drawable.Drawable;
 
@@ -49,8 +49,8 @@ public final class Ui {
      */
     private static GlideUrl withHeaders(String url) {
         return new GlideUrl(url, new LazyHeaders.Builder()
-                .addHeader("User-Agent", ru.kelemnfno.anime.data.tsuyu.Net.CHROME)
-                .addHeader("Referer", ru.kelemnfno.anime.data.tsuyu.Secrets.referer())
+                .addHeader("User-Agent", ru.kelemnfno.anime.data.resolver.Net.CHROME)
+                .addHeader("Referer", ru.kelemnfno.anime.data.resolver.Cfg.referer())
                 .addHeader("Accept", "image/avif,image/webp,image/apng,image/*,*/*;q=0.8")
                 .build());
     }
@@ -123,7 +123,7 @@ public final class Ui {
                     Request req = new Request.Builder()
                             .url(url)
                             .header("User-Agent", Net.CHROME)
-                            .header("Referer", ru.kelemnfno.anime.data.tsuyu.Secrets.referer())
+                            .header("Referer", ru.kelemnfno.anime.data.resolver.Cfg.referer())
                             .header("Accept", "image/avif,image/webp,image/apng,image/*,*/*;q=0.8")
                             .build();
                     try (Response resp = Net.client().newCall(req).execute()) {

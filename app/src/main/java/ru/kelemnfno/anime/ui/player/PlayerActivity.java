@@ -48,7 +48,7 @@ import ru.kelemnfno.anime.data.model.AppSettings;
 import ru.kelemnfno.anime.data.model.StreamSource;
 import ru.kelemnfno.anime.data.model.Track;
 import ru.kelemnfno.anime.data.prefs.Prefs;
-import ru.kelemnfno.anime.data.tsuyu.TsuyuEngine;
+import ru.kelemnfno.anime.data.resolver.SourceEngine;
 import ru.kelemnfno.anime.databinding.ActivityPlayerBinding;
 import ru.kelemnfno.anime.player.PlaybackService;
 import ru.kelemnfno.anime.ui.Chips;
@@ -253,7 +253,7 @@ public class PlayerActivity extends AppCompatActivity {
             List<StreamSource> found;
             String message = null;
             try {
-                found = TsuyuEngine.streams(trackId, ep, retry);
+                found = SourceEngine.streams(trackId, ep, retry);
             } catch (Throwable t) {
                 found = new ArrayList<>();
                 message = t.getMessage() == null ? "Поток недоступен" : t.getMessage();

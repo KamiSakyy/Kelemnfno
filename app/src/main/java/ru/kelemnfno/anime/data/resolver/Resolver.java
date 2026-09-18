@@ -1,4 +1,4 @@
-package ru.kelemnfno.anime.data.tsuyu;
+package ru.kelemnfno.anime.data.resolver;
 
 import android.util.Base64;
 
@@ -21,16 +21,16 @@ import java.util.regex.Pattern;
 import okhttp3.Request;
 import okhttp3.Response;
 
-import static ru.kelemnfno.anime.data.tsuyu.TsuyuUtil.absolute;
-import static ru.kelemnfno.anime.data.tsuyu.TsuyuUtil.find;
-import static ru.kelemnfno.anime.data.tsuyu.TsuyuUtil.findAll;
-import static ru.kelemnfno.anime.data.tsuyu.TsuyuUtil.hostMatches;
-import static ru.kelemnfno.anime.data.tsuyu.TsuyuUtil.hostOf;
-import static ru.kelemnfno.anime.data.tsuyu.TsuyuUtil.originOf;
-import static ru.kelemnfno.anime.data.tsuyu.TsuyuUtil.param;
-import static ru.kelemnfno.anime.data.tsuyu.TsuyuUtil.pathOf;
-import static ru.kelemnfno.anime.data.tsuyu.TsuyuUtil.qualityOf;
-import static ru.kelemnfno.anime.data.tsuyu.TsuyuUtil.safeUrl;
+import static ru.kelemnfno.anime.data.resolver.SourceUtil.absolute;
+import static ru.kelemnfno.anime.data.resolver.SourceUtil.find;
+import static ru.kelemnfno.anime.data.resolver.SourceUtil.findAll;
+import static ru.kelemnfno.anime.data.resolver.SourceUtil.hostMatches;
+import static ru.kelemnfno.anime.data.resolver.SourceUtil.hostOf;
+import static ru.kelemnfno.anime.data.resolver.SourceUtil.originOf;
+import static ru.kelemnfno.anime.data.resolver.SourceUtil.param;
+import static ru.kelemnfno.anime.data.resolver.SourceUtil.pathOf;
+import static ru.kelemnfno.anime.data.resolver.SourceUtil.qualityOf;
+import static ru.kelemnfno.anime.data.resolver.SourceUtil.safeUrl;
 
 /**
  * Превращает ссылку плеера (Kodik, CDNVideoHub, Alloha, Aksor, Sibnet, Stormo, AniBoom,
@@ -181,7 +181,7 @@ public final class Resolver {
     }
 
     private static Map<Integer, String> kodik(String url) throws IOException {
-        String page = Net.get(url, Net.baseHeaders(originOf(url), Secrets.referer()), 15_000)
+        String page = Net.get(url, Net.baseHeaders(originOf(url), Cfg.referer()), 15_000)
                 .replaceAll("[\\n\\r]", "");
 
         Map<String, String> payload = new LinkedHashMap<>();
@@ -189,7 +189,7 @@ public final class Resolver {
         if (urlParams.isEmpty()) urlParams = find(page, "\\burlParams\\s*=\\s*\"([^\"]+)\"");
         if (!urlParams.isEmpty()) {
             try {
-                JsonObject p = Net.parse(TsuyuUtil.unescape(urlParams));
+                JsonObject p = Net.parse(SourceUtil.unescape(urlParams));
                 for (String k : new String[]{"d", "d_sign", "pd", "pd_sign", "ref", "ref_sign"}) {
                     payload.put(k, J.str(p, k));
                 }
@@ -250,7 +250,7 @@ public final class Resolver {
         List<String> bases = new ArrayList<>();
         bases.add(endpoint);
         bases.add(originOf(url) + "/ftor");
-        bases.add(Secrets.s(34));
+        bases.add(Cfg.s(34));
         JsonObject links = null;
         for (String base : new LinkedHashSet<String>(bases)) {
             try {
@@ -325,10 +325,10 @@ public final class Resolver {
         if (ep <= 0) ep = 1;
         String dubbing = param(url, "dubbing_code");
 
-        Map<String, String> h = Net.baseHeaders(Secrets.s(41), Secrets.s(42));
+        Map<String, String> h = Net.baseHeaders(Cfg.s(41), Cfg.s(42));
         h.put("Accept", "application/json");
         JsonObject playlist = Net.getJson(
-                Secrets.s(39) + Net.enc(animeId) + "&aggr=mali", h);
+                Cfg.s(39) + Net.enc(animeId) + "&aggr=mali", h);
 
         JsonObject chosen = null;
         for (JsonObject item : J.list(playlist, "items")) {
@@ -343,7 +343,7 @@ public final class Resolver {
         if (vkId.isEmpty()) throw new IOException("cvh: серия не найдена");
 
         JsonObject video = Net.getJson(
-                Secrets.s(40) + Net.enc(vkId), h);
+                Cfg.s(40) + Net.enc(vkId), h);
         String failover = J.str(video, "failoverHost");
         JsonObject s = J.obj(video, "sources");
 
@@ -374,7 +374,7 @@ public final class Resolver {
     /* ---------------- Alloha ---------------- */
 
     private static Map<Integer, String> alloha(String url) throws IOException {
-        String page = Net.get(url, Net.baseHeaders(originOf(url), Secrets.referer()), 15_000);
+        String page = Net.get(url, Net.baseHeaders(originOf(url), Cfg.referer()), 15_000);
         String id = find(page,
                 "const\\s+fileList\\s*=\\s*JSON\\.parse\\('\\{\"type\":\\s*\"serial\",\\s*\"active\":\\s*\\{\"id\":\\s*(\\d+)");
         if (id.isEmpty()) id = find(page, "\"active\"\\s*:\\s*\\{\\s*\"id\"\\s*:\\s*(\\d+)");
@@ -382,10 +382,10 @@ public final class Resolver {
         String user = find(page, "<meta\\s+name\\s*=\\s*[\"']user[\"']\\s+content\\s*=\\s*[\"'](.+?)[\"']");
         if (id.isEmpty() || token.isEmpty() || user.isEmpty()) throw new IOException("alloha: нет параметров");
 
-        Map<String, String> h = Net.baseHeaders(Secrets.alloha(), url);
+        Map<String, String> h = Net.baseHeaders(Cfg.alloha(), url);
         h.put("Accepts-Controls", user);
         String body = "token=" + Net.enc(token) + "&av1=true&autoplay=0&audio=&subtitle=";
-        JsonObject root = Net.parse(Net.postForm(Secrets.alloha() + Secrets.s(80) + id, body, h));
+        JsonObject root = Net.parse(Net.postForm(Cfg.alloha() + Cfg.s(80) + id, body, h));
 
         Map<Integer, String> out = new TreeMap<>(Collections.reverseOrder());
         JsonArray hlsSource = J.arr(root, "hlsSource");
@@ -416,7 +416,7 @@ public final class Resolver {
             String[] parts = pathOf(url).split("/");
             String id = parts.length > 0 ? parts[parts.length - 1] : "";
             if (!id.isEmpty()) {
-                JsonObject j = Net.getJson(origin + Secrets.s(79) + Net.enc(id), Net.baseHeaders(origin, url));
+                JsonObject j = Net.getJson(origin + Cfg.s(79) + Net.enc(id), Net.baseHeaders(origin, url));
                 for (Map.Entry<String, JsonElement> e : J.obj(j, "qualities").entrySet()) {
                     String safe = safeUrl(J.str(e.getValue()));
                     if (safe.isEmpty()) continue;
@@ -432,7 +432,7 @@ public final class Resolver {
         }
         if (!out.isEmpty()) return clean(out);
         try {
-            String page = Net.get(url, Net.baseHeaders(origin, Secrets.referer()), 12_000);
+            String page = Net.get(url, Net.baseHeaders(origin, Cfg.referer()), 12_000);
             String link = absolute(url, find(page, "var\\s+videoUrl\\s*=\\s*[\"'](.+?)[\"']"));
             if (!link.isEmpty()) put(out, qualityOf(link), link);
         } catch (Exception ignored) {
@@ -446,10 +446,10 @@ public final class Resolver {
         String page = Net.get(url, Net.baseHeaders(originOf(url), url), 12_000);
         Map<Integer, String> out = new TreeMap<>(Collections.reverseOrder());
         for (String m : findAll(page, "[\"'](\\/v\\/[a-z0-9]+\\/[^\"']+?\\.m3u8)[\"']")) {
-            put(out, 480, Secrets.s(51) + m);
+            put(out, 480, Cfg.s(51) + m);
         }
         for (String m : findAll(page, "src:\\s*[\"']\\/(.+?\\.mp4[^\"']*)[\"']")) {
-            put(out, 480, Secrets.s(52) + m.replace("\\/", "/"));
+            put(out, 480, Cfg.s(52) + m.replace("\\/", "/"));
         }
         if (out.isEmpty()) throw new IOException("sibnet: пусто");
         return clean(out);
@@ -458,7 +458,7 @@ public final class Resolver {
     private static Map<Integer, String> stormo(String url) throws IOException {
         String page = Net.get(url, Net.baseHeaders(originOf(url), url), 12_000);
         Map<Integer, String> out = new TreeMap<>(Collections.reverseOrder());
-        Matcher m = Pattern.compile("https?:\\\\?/\\\\?/www\\.stormo\\.tv/get_file/[^\"'<>\\s]+?\\.mp4/?",
+        Matcher m = Pattern.compile(Cfg.s(85),
                 Pattern.CASE_INSENSITIVE).matcher(page);
         while (m.find()) put(out, 480, m.group().replace("\\/", "/"));
         if (out.isEmpty()) return scan(url, null);
@@ -468,12 +468,12 @@ public final class Resolver {
     /* ---------------- AniBoom / AniLib ---------------- */
 
     private static Map<Integer, String> aniboom(String url) throws IOException {
-        String page = Net.get(url, Net.baseHeaders(originOf(url), Secrets.s(12)), 12_000);
+        String page = Net.get(url, Net.baseHeaders(originOf(url), Cfg.s(12)), 12_000);
         String raw = find(page, "data-parameters\\s*=\\s*\"([^\"]+)\"");
         Map<Integer, String> out = new TreeMap<>(Collections.reverseOrder());
         if (!raw.isEmpty()) {
             try {
-                JsonObject params = Net.parse(TsuyuUtil.unescape(raw));
+                JsonObject params = Net.parse(SourceUtil.unescape(raw));
                 JsonObject hls = Net.parse(J.str(params, "hls"));
                 for (Map.Entry<String, JsonElement> e : hls.entrySet()) {
                     String safe = safeUrl(J.str(e.getValue()));
@@ -482,14 +482,14 @@ public final class Resolver {
             } catch (Exception ignored) {
             }
         }
-        if (out.isEmpty()) return scan(url, Secrets.s(8));
+        if (out.isEmpty()) return scan(url, Cfg.s(8));
         return clean(out);
     }
 
     private static Map<Integer, String> anilib(String url) throws IOException {
         Map<Integer, String> out = new TreeMap<>(Collections.reverseOrder());
         String safe = safeUrl(url);
-        out.putAll(direct(safe, Secrets.s(9)));
+        out.putAll(direct(safe, Cfg.s(9)));
         if (out.isEmpty() && !safe.isEmpty()) put(out, qualityOf(safe), safe);
         return clean(out);
     }
@@ -497,7 +497,7 @@ public final class Resolver {
     /* ---------------- Animetka playlist ---------------- */
 
     private static Map<Integer, String> animetkaPlaylist(String url) throws IOException {
-        Map<String, String> h = Net.baseHeaders(Secrets.s(13), Secrets.s(14));
+        Map<String, String> h = Net.baseHeaders(Cfg.s(13), Cfg.s(14));
         h.put("Accept", "application/json, text/plain, */*");
         String text = Net.get(url, h, 12_000);
         Map<Integer, String> out = new TreeMap<>(Collections.reverseOrder());
@@ -534,12 +534,12 @@ public final class Resolver {
     /* ---------------- VK / Rutube ---------------- */
 
     private static Map<Integer, String> vk(String url) throws IOException {
-        String page = TsuyuUtil.unescape(Net.get(url, Net.baseHeaders(originOf(url), Secrets.referer()), 15_000));
+        String page = SourceUtil.unescape(Net.get(url, Net.baseHeaders(originOf(url), Cfg.referer()), 15_000));
         String ext = find(page, "(?:src|href)=[\"']([^\"']*video_ext\\.php[^\"']+)[\"']");
-        if (ext.isEmpty()) ext = find(page, "(https?:\\\\?/\\\\?/vk\\.com/video_ext\\.php[^\"'<>\\s]+)");
+        if (ext.isEmpty()) ext = find(page, Cfg.s(84));
         if (!ext.isEmpty()) {
             try {
-                page += "\n" + TsuyuUtil.unescape(Net.get(absolute(url, ext), Net.baseHeaders(Secrets.s(53), url), 12_000));
+                page += "\n" + SourceUtil.unescape(Net.get(absolute(url, ext), Net.baseHeaders(Cfg.s(53), url), 12_000));
             } catch (Exception ignored) {
             }
         }
@@ -561,7 +561,7 @@ public final class Resolver {
     }
 
     private static String rutubeId(String value) {
-        String id = find(value, "rutube\\.ru/(?:play/embed|video)/([0-9a-f]{32})");
+        String id = find(value, Cfg.s(86));
         if (id.isEmpty()) id = find(value, "([0-9a-f]{32})");
         return id;
     }
@@ -570,14 +570,14 @@ public final class Resolver {
         String id = rutubeId(url);
         if (id.isEmpty()) {
             try {
-                id = rutubeId(Net.get(url, Net.baseHeaders(Secrets.s(43), Secrets.s(44)), 12_000));
+                id = rutubeId(Net.get(url, Net.baseHeaders(Cfg.s(43), Cfg.s(44)), 12_000));
             } catch (Exception ignored) {
             }
         }
         if (id.isEmpty()) throw new IOException("rutube: нет id");
-        Map<String, String> h = Net.baseHeaders(Secrets.s(43), url);
+        Map<String, String> h = Net.baseHeaders(Cfg.s(43), url);
         h.put("Accept", "application/json,*/*");
-        JsonObject root = Net.getJson(Secrets.s(45) + Net.enc(id)
+        JsonObject root = Net.getJson(Cfg.s(45) + Net.enc(id)
                 + "/?no_404=true&referer=" + Net.enc(url) + "&pver=v2", h);
         Map<Integer, String> out = new TreeMap<>(Collections.reverseOrder());
         for (Map.Entry<String, JsonElement> e : J.obj(root, "video_balancer").entrySet()) {
@@ -607,7 +607,7 @@ public final class Resolver {
     static Map<Integer, String> scan(String url, String referer) throws IOException {
         String page = Net.get(url, Net.baseHeaders(originOf(url), referer == null ? url : referer), 15_000);
         Map<Integer, String> out = new TreeMap<>(Collections.reverseOrder());
-        String body = TsuyuUtil.unescape(page);
+        String body = SourceUtil.unescape(page);
         Matcher m = M3U8_RE.matcher(body);
         while (m.find()) put(out, 720, m.group().replace("\\/", "/"));
         if (out.isEmpty()) {
@@ -626,7 +626,7 @@ public final class Resolver {
     /* ---------------- Точка входа ---------------- */
 
     public static Resolved resolveStreams(String input) throws IOException {
-        String url = TsuyuUtil.embed(input);
+        String url = SourceUtil.embed(input);
         if (url.isEmpty()) url = safeUrl(input);
         if (url.isEmpty()) throw new IOException("пустая ссылка");
 
@@ -643,32 +643,32 @@ public final class Resolver {
         }
 
         Map<Integer, String> streams;
-        if ((hostMatches(host, Secrets.s(76), Secrets.bareHost()) && path.contains("iframecvh"))
-                || hostMatches(host, Secrets.s(64))) {
+        if ((hostMatches(host, Cfg.s(76), Cfg.bareHost()) && path.contains("iframecvh"))
+                || hostMatches(host, Cfg.s(64))) {
             streams = cvh(url);
-        } else if (hostMatches(host, Secrets.s(62)) && path.startsWith(Secrets.s(78))) {
+        } else if (hostMatches(host, Cfg.s(62)) && path.startsWith(Cfg.s(78))) {
             streams = animetkaPlaylist(url);
-        } else if (hostMatches(host, Secrets.s(69), Secrets.s(68), Secrets.s(67), "kodik.biz", Secrets.s(63))) {
+        } else if (hostMatches(host, Cfg.s(69), Cfg.s(68), Cfg.s(67), Cfg.s(82), Cfg.s(63))) {
             streams = kodik(url);
-        } else if (hostMatches(host, "alloha." + Secrets.bareHost(), Secrets.s(59))) {
+        } else if (hostMatches(host, "alloha." + Cfg.bareHost(), Cfg.s(59))) {
             streams = alloha(url);
-        } else if (hostMatches(host, Secrets.s(58), "aksor." + Secrets.bareHost(), Secrets.s(54))) {
+        } else if (hostMatches(host, Cfg.s(58), "aksor." + Cfg.bareHost(), Cfg.s(54))) {
             streams = aksor(url);
-        } else if (hostMatches(host, Secrets.s(55), Secrets.s(71))) {
+        } else if (hostMatches(host, Cfg.s(55), Cfg.s(71))) {
             streams = sibnet(url);
-        } else if (hostMatches(host, Secrets.s(72))) {
+        } else if (hostMatches(host, Cfg.s(72))) {
             streams = stormo(url);
         } else if (host.contains("ladony") || path.contains("vid.php")) {
-            streams = hlsEndpoint(url, Secrets.s(38));
-        } else if (hostMatches(host, Secrets.s(73), Secrets.s(75), Secrets.s(74)) || path.contains("iframevk")) {
+            streams = hlsEndpoint(url, Cfg.s(38));
+        } else if (hostMatches(host, Cfg.s(73), Cfg.s(75), Cfg.s(74)) || path.contains("iframevk")) {
             streams = vk(url);
-        } else if (hostMatches(host, Secrets.s(70))) {
+        } else if (hostMatches(host, Cfg.s(70))) {
             streams = rutube(url);
-        } else if (hostMatches(host, Secrets.s(77), Secrets.s(65))) {
+        } else if (hostMatches(host, Cfg.s(77), Cfg.s(65))) {
             streams = scan(url, null);
-        } else if (hostMatches(host, Secrets.s(60))) {
+        } else if (hostMatches(host, Cfg.s(60))) {
             streams = aniboom(url);
-        } else if (hostMatches(host, Secrets.s(56), Secrets.s(57), Secrets.s(61))) {
+        } else if (hostMatches(host, Cfg.s(56), Cfg.s(57), Cfg.s(61))) {
             streams = anilib(url);
         } else {
             streams = scan(url, null);

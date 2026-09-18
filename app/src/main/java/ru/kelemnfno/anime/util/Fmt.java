@@ -18,7 +18,7 @@ public final class Fmt {
     public static String absUrl(String u) {
         if (u == null || u.isEmpty()) return "";
         if (u.startsWith("//")) return "https:" + u;
-        if (u.startsWith("/")) return ru.kelemnfno.anime.data.tsuyu.Secrets.staticBase() + u;
+        if (u.startsWith("/")) return ru.kelemnfno.anime.data.resolver.Cfg.staticBase() + u;
         return u;
     }
 

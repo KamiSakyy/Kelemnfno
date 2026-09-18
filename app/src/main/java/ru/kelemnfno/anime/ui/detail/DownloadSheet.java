@@ -14,7 +14,7 @@ import ru.kelemnfno.anime.data.model.AnimeFull;
 import ru.kelemnfno.anime.data.model.StreamSource;
 import ru.kelemnfno.anime.data.model.Track;
 import ru.kelemnfno.anime.data.prefs.Prefs;
-import ru.kelemnfno.anime.data.tsuyu.TsuyuEngine;
+import ru.kelemnfno.anime.data.resolver.SourceEngine;
 import ru.kelemnfno.anime.databinding.SheetDownloadBinding;
 import ru.kelemnfno.anime.download.DownloadService;
 import ru.kelemnfno.anime.ui.Chips;
@@ -24,7 +24,7 @@ import ru.kelemnfno.anime.util.Ui;
 
 /**
  * Лист скачивания: выбор озвучки и качества.
- * Потоки берутся перехватом (TsuyuEngine.streams), файл пишется в папку приложения.
+ * Потоки берутся перехватом (SourceEngine.streams), файл пишется в папку приложения.
  */
 public final class DownloadSheet {
 
@@ -96,7 +96,7 @@ public final class DownloadSheet {
             List<StreamSource> found;
             String error = null;
             try {
-                found = TsuyuEngine.streams(track.id, episode);
+                found = SourceEngine.streams(track.id, episode);
             } catch (Throwable t) {
                 found = new ArrayList<>();
                 error = t.getMessage() == null ? "Источник недоступен" : t.getMessage();

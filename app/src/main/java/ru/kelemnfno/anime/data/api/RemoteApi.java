@@ -16,7 +16,7 @@ import ru.kelemnfno.anime.data.model.ScheduleItem;
 import ru.kelemnfno.anime.data.model.VideoItem;
 
 /** Публичное API Yummy Anime — https://api.yani.tv (Swagger: https://yummy-anime.ru/api/swagger). */
-public interface YummyApi {
+public interface RemoteApi {
 
     @GET("anime/schedule")
     Call<ApiEnvelope<List<ScheduleItem>>> schedule();

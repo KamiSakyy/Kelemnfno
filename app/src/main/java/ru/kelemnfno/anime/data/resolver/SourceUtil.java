@@ -1,4 +1,4 @@
-package ru.kelemnfno.anime.data.tsuyu;
+package ru.kelemnfno.anime.data.resolver;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -12,11 +12,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /** Нормализация ссылок и распознавание озвучек (порт src/server/tsuyu/util.ts). */
-public final class TsuyuUtil {
+public final class SourceUtil {
 
-    private static final List<String> KODIK_HOSTS = Arrays.asList(Secrets.s(63), Secrets.s(68), Secrets.s(67), "kodik.biz");
+    private static final List<String> KODIK_HOSTS = Arrays.asList(Cfg.s(63), Cfg.s(68), Cfg.s(67), Cfg.s(82));
 
-    private TsuyuUtil() {
+    private SourceUtil() {
     }
 
     public static String safeUrl(String value) {
@@ -56,7 +56,7 @@ public final class TsuyuUtil {
         try {
             URL u = new URL(safe);
             if (KODIK_HOSTS.contains(u.getHost())) {
-                URL fixed = new URL("https", Secrets.s(69), u.getPort(), u.getFile());
+                URL fixed = new URL("https", Cfg.s(69), u.getPort(), u.getFile());
                 return fixed.toString();
             }
             return u.toString();
@@ -93,7 +93,7 @@ public final class TsuyuUtil {
         String v = value.toLowerCase().replace("ё", "е");
         return v.contains("yoru") || v.contains("yummy") || v.contains("yani") || v.contains("kodik")
                 || v.contains("aniqit") || v.contains("cdnvideohub") || v.contains("anix") || v.contains("sekai")
-                || v.contains("tsuyu") || v.equals("player") || v.equals("iframe") || v.equals("плеер")
+                || v.contains(Cfg.s(83)) || v.equals("player") || v.equals("iframe") || v.equals("плеер")
                 || v.equals("вариант") || v.equals("оригинал");
     }
 
@@ -146,7 +146,7 @@ public final class TsuyuUtil {
             {"anilibria-classic", "AniLibria Classic"},
             {"anilibria-dub", "AniLibria Dub"},
             {"anilibria-hd", "AniLibria HD"},
-            {"anilibria", "AniLibria.TV"},
+            {"anilibria", Cfg.s(81)},
             {"animaunt", "AniMaunt"},
             {"anirise", "AniRise"},
             {"anifilm", "AniFilm"},

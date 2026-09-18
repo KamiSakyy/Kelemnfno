@@ -1,4 +1,4 @@
-package ru.kelemnfno.anime.data.tsuyu;
+package ru.kelemnfno.anime.data.resolver;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;

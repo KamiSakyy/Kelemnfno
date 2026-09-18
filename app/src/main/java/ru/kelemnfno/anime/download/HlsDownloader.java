@@ -26,8 +26,8 @@ import javax.crypto.spec.SecretKeySpec;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
-import ru.kelemnfno.anime.data.tsuyu.Net;
-import ru.kelemnfno.anime.data.tsuyu.TsuyuUtil;
+import ru.kelemnfno.anime.data.resolver.Net;
+import ru.kelemnfno.anime.data.resolver.SourceUtil;
 
 /**
  * Настоящее скачивание: HLS качается сегментами (4 потока) и склеивается в один файл,
@@ -201,7 +201,7 @@ public final class HlsDownloader {
             for (int j = i + 1; j < lines.length; j++) {
                 String next = lines[j].trim();
                 if (next.isEmpty() || next.startsWith("#")) continue;
-                candidate = TsuyuUtil.absolute(baseUrl, next);
+                candidate = SourceUtil.absolute(baseUrl, next);
                 break;
             }
             if (candidate.isEmpty()) continue;
@@ -237,7 +237,7 @@ public final class HlsDownloader {
                     keyIv = null;
                 } else if ("AES-128".equals(method)) {
                     Matcher u = KEY_URI.matcher(l);
-                    keyUri = u.find() ? TsuyuUtil.absolute(baseUrl, u.group(1)) : null;
+                    keyUri = u.find() ? SourceUtil.absolute(baseUrl, u.group(1)) : null;
                     Matcher iv = KEY_IV.matcher(l);
                     keyIv = iv.find() ? iv.group(1) : null;
                 } else {
@@ -246,7 +246,7 @@ public final class HlsDownloader {
                 continue;
             }
             if (l.isEmpty() || l.startsWith("#")) continue;
-            Segment seg = new Segment(TsuyuUtil.absolute(baseUrl, l), index);
+            Segment seg = new Segment(SourceUtil.absolute(baseUrl, l), index);
             seg.keyUri = keyUri;
             seg.keyIv = keyIv;
             seg.sequence = sequence + index;

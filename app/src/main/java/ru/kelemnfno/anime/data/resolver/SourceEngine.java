@@ -1,4 +1,4 @@
-package ru.kelemnfno.anime.data.tsuyu;
+package ru.kelemnfno.anime.data.resolver;
 
 import java.io.IOException;
 import java.security.MessageDigest;
@@ -31,9 +31,9 @@ import ru.kelemnfno.anime.data.repo.MemCache;
  * в «дорожки озвучки» и превращает их в прямые потоки.
  * Порт src/server/tsuyu/aggregate.ts.
  */
-public final class TsuyuEngine {
+public final class SourceEngine {
 
-    public static final String PREFIX = "tsuyu:";
+    public static final String PREFIX = "ksrc:";
 
     /** Общий дедлайн опроса источников. */
     private static final long DEADLINE_MS = 14_000L;
@@ -46,7 +46,7 @@ public final class TsuyuEngine {
     private static final MemCache TRACK_CACHE = new MemCache();
     private static final MemCache STREAM_CACHE = new MemCache();
 
-    private TsuyuEngine() {
+    private SourceEngine() {
     }
 
     /** Дорожка озвучки вместе со скрытыми маршрутами. */
@@ -80,6 +80,7 @@ public final class TsuyuEngine {
     /* ---------------- Дорожки озвучки ---------------- */
 
     public static List<Track> tracks(final Lookup lookup) {
+        if (Cfg.guarded()) return new java.util.ArrayList<>();
         String lookupKey = lookupKeyOf(lookup);
         List<Track> cached = TRACK_CACHE.get("tracks:" + lookupKey, 45 * 60_000L);
         if (cached != null) return cached;
@@ -175,9 +176,9 @@ public final class TsuyuEngine {
         for (EpisodeRow ep : scored.result.episodes) {
             for (VariantRow v : ep.variants) {
                 String rawVoice = v.voice == null || v.voice.isEmpty() ? "Оригинал" : v.voice;
-                String key = TsuyuUtil.voiceKey(rawVoice);
+                String key = SourceUtil.voiceKey(rawVoice);
                 if (key.isEmpty()) key = "src:" + scored.source;
-                String title = TsuyuUtil.voiceTitle(rawVoice);
+                String title = SourceUtil.voiceTitle(rawVoice);
                 if (title.isEmpty()) title = rawVoice;
 
                 Bucket bucket = buckets.get(key);
@@ -301,28 +302,28 @@ public final class TsuyuEngine {
     }
 
     private static String refererFor(String url) {
-        String origin = TsuyuUtil.originOf(url);
+        String origin = SourceUtil.originOf(url);
         return origin.isEmpty() ? "" : origin + "/";
     }
 
-    public static boolean isTsuyuRef(String url) {
+    public static boolean isSrcRef(String url) {
         return url != null && url.startsWith(PREFIX);
     }
 
-    /** "tsuyu:<trackId>:<episode>" */
+    /** "<prefix><trackId>:<episode>" */
     public static String makeRef(String trackId, int episode) {
         return PREFIX + trackId + ":" + episode;
     }
 
     public static String trackOf(String ref) {
-        if (!isTsuyuRef(ref)) return "";
+        if (!isSrcRef(ref)) return "";
         String rest = ref.substring(PREFIX.length());
         int i = rest.lastIndexOf(':');
         return i < 0 ? "" : rest.substring(0, i);
     }
 
     public static int episodeOf(String ref) {
-        if (!isTsuyuRef(ref)) return -1;
+        if (!isSrcRef(ref)) return -1;
         String rest = ref.substring(PREFIX.length());
         int i = rest.lastIndexOf(':');
         if (i < 0) return -1;

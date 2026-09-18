@@ -33,7 +33,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import ru.kelemnfno.anime.data.model.StreamSource;
-import ru.kelemnfno.anime.data.tsuyu.Net;
+import ru.kelemnfno.anime.data.resolver.Net;
 import ru.kelemnfno.anime.R;
 import ru.kelemnfno.anime.data.db.AppDatabase;
 import ru.kelemnfno.anime.data.db.DownloadEntity;
@@ -48,7 +48,7 @@ import ru.kelemnfno.anime.data.model.ViewingOrderItem;
 import ru.kelemnfno.anime.data.prefs.Prefs;
 import ru.kelemnfno.anime.data.repo.AnimeRepository;
 import ru.kelemnfno.anime.data.shots.ScreenshotFetcher;
-import ru.kelemnfno.anime.data.tsuyu.TsuyuEngine;
+import ru.kelemnfno.anime.data.resolver.SourceEngine;
 import ru.kelemnfno.anime.databinding.ActivityDetailBinding;
 import ru.kelemnfno.anime.databinding.ItemCardBinding;
 import ru.kelemnfno.anime.databinding.ItemEpisodeBinding;
@@ -287,7 +287,7 @@ public class DetailActivity extends AppCompatActivity {
         AppExecutors.get().heavy().execute(() -> {
             List<Track> result;
             try {
-                result = TsuyuEngine.tracks(lookup);
+                result = SourceEngine.tracks(lookup);
             } catch (Throwable t) {
                 result = new ArrayList<>();
             }
@@ -638,7 +638,7 @@ public class DetailActivity extends AppCompatActivity {
         AppExecutors.get().heavy().execute(() -> {
             List<StreamSource> found;
             try {
-                found = TsuyuEngine.streams(track.id, episode, false);
+                found = SourceEngine.streams(track.id, episode, false);
             } catch (Throwable t) {
                 found = new ArrayList<>();
             }

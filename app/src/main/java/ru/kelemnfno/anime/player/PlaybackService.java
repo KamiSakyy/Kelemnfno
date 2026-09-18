@@ -23,7 +23,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import ru.kelemnfno.anime.R;
-import ru.kelemnfno.anime.data.tsuyu.Net;
+import ru.kelemnfno.anime.data.resolver.Net;
 import ru.kelemnfno.anime.ui.MainActivity;
 
 /**
