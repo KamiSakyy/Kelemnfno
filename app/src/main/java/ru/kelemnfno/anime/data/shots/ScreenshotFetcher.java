@@ -19,6 +19,7 @@ import okhttp3.Response;
 import ru.kelemnfno.anime.data.repo.MemCache;
 import ru.kelemnfno.anime.data.tsuyu.J;
 import ru.kelemnfno.anime.data.tsuyu.Net;
+import ru.kelemnfno.anime.data.tsuyu.Secrets;
 
 /**
  * Кадры из серий под описанием.
