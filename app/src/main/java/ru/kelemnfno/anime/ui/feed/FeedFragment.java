@@ -58,6 +58,7 @@ public class FeedFragment extends Fragment {
     private boolean loadingBatch;
     private boolean muted;
     private boolean wantNext;
+    private int failStreak;
 
     private final Runnable ticker = new Runnable() {
         @Override
@@ -109,13 +110,22 @@ public class FeedFragment extends Fragment {
             }
         });
 
-        player = new ExoPlayer.Builder(requireContext()).build();
+        // Та же фабрика загрузки, что и у основного плеера: иначе Referer/Origin
+        // из applyHeaders() не попадают в запросы и источники отдают 403.
+        androidx.media3.datasource.DefaultDataSource.Factory dataSources =
+                new androidx.media3.datasource.DefaultDataSource.Factory(
+                        requireContext(), PlaybackService.HTTP);
+        player = new ExoPlayer.Builder(requireContext())
+                .setMediaSourceFactory(new androidx.media3.exoplayer.source
+                        .DefaultMediaSourceFactory(dataSources))
+                .build();
         player.setRepeatMode(Player.REPEAT_MODE_OFF);
         player.addListener(new Player.Listener() {
             @Override
             public void onPlaybackStateChanged(int state) {
                 if (state == Player.STATE_READY && attached != null) {
                     attached.b.feedLoading.setVisibility(View.GONE);
+                    failStreak = 0;
                 }
                 if (state == Player.STATE_ENDED) advance();
             }
@@ -123,6 +133,14 @@ public class FeedFragment extends Fragment {
             @Override
             public void onPlayerError(@NonNull PlaybackException error) {
                 if (attached != null) attached.b.feedLoading.setVisibility(View.GONE);
+                failStreak++;
+                if (failStreak >= 4) {
+                    if (b != null) {
+                        b.feedHint.setText("Источники не отдают видео. Проверьте интернет и попробуйте позже.");
+                        b.feedHint.setVisibility(View.VISIBLE);
+                    }
+                    return;
+                }
                 advance();
             }
         });
@@ -169,12 +187,28 @@ public class FeedFragment extends Fragment {
 
         List<AnimeItem> items = repo.list(params);
         Collections.shuffle(items, random);
-        List<FeedClip> out = new ArrayList<>();
+        if (items.size() > 12) items = items.subList(0, 12);
+
+        // Подбор озвучки — дело небыстрое, поэтому кандидатов разбираем
+        // одновременно и забираем первые подошедшие, а не ждём всех.
+        java.util.concurrent.ExecutorService pool = AppExecutors.get().heavy();
+        List<java.util.concurrent.Future<FeedClip>> futures = new ArrayList<>();
         for (AnimeItem item : items) {
-            if (out.size() >= wanted) break;
-            FeedClip clip = clipFor(item);
-            if (clip != null) out.add(clip);
+            futures.add(pool.submit(() -> clipFor(item)));
         }
+        List<FeedClip> out = new ArrayList<>();
+        long deadline = System.currentTimeMillis() + 20_000L;
+        for (java.util.concurrent.Future<FeedClip> future : futures) {
+            if (out.size() >= wanted) break;
+            long left = deadline - System.currentTimeMillis();
+            if (left <= 0) break;
+            try {
+                FeedClip clip = future.get(left, java.util.concurrent.TimeUnit.MILLISECONDS);
+                if (clip != null) out.add(clip);
+            } catch (Throwable ignored) {
+            }
+        }
+        for (java.util.concurrent.Future<FeedClip> future : futures) future.cancel(true);
         return out;
     }
 
@@ -191,7 +225,19 @@ public class FeedFragment extends Fragment {
             if (track.episodes == null || track.episodes.isEmpty()) return null;
             int episode = track.episodes.get(random.nextInt(track.episodes.size()));
 
-            List<StreamSource> sources = SourceEngine.streams(track.id, episode);
+            List<StreamSource> sources = null;
+            for (Track t : tracks) {
+                if (t.episodes == null || !t.episodes.contains(episode)) continue;
+                try {
+                    List<StreamSource> found = SourceEngine.streams(t.id, episode);
+                    if (found != null && !found.isEmpty()) {
+                        sources = found;
+                        track = t;
+                        break;
+                    }
+                } catch (Throwable ignored) {
+                }
+            }
             if (sources == null || sources.isEmpty()) return null;
             StreamSource chosen = null;
             for (StreamSource s : sources) {
