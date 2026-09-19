@@ -14,6 +14,7 @@ import ru.kelemnfno.anime.data.model.AnimeFull;
 import ru.kelemnfno.anime.data.model.StreamSource;
 import ru.kelemnfno.anime.data.model.Track;
 import ru.kelemnfno.anime.data.prefs.Prefs;
+import ru.kelemnfno.anime.data.resolver.Net;
 import ru.kelemnfno.anime.data.resolver.SourceEngine;
 import ru.kelemnfno.anime.databinding.SheetDownloadBinding;
 import ru.kelemnfno.anime.download.DownloadService;
@@ -85,8 +86,8 @@ public final class DownloadSheet {
             final Track track = t;
             Chips.add(b.voices, track.voice, track.id.equals(current[0].id), v -> {
                 current[0] = track;
-                renderVoices(b, allTracks, current, host, anime, episode, sources, chosen);
-                resolve(host, b, track, episode, sources, chosen);
+                renderVoices(b, allTracks, current, host, anime, episode, sources, chosen, chosenUrl);
+                resolve(host, b, track, episode, sources, chosen, chosenUrl);
             });
         }
         if (allTracks.size() < 2) b.voices.setVisibility(View.GONE);
