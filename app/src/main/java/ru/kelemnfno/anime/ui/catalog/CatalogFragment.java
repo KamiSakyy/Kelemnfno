@@ -26,6 +26,7 @@ import java.util.Map;
 import ru.kelemnfno.anime.R;
 import ru.kelemnfno.anime.data.model.AnimeItem;
 import ru.kelemnfno.anime.data.model.Genre;
+import ru.kelemnfno.anime.data.prefs.Prefs;
 import ru.kelemnfno.anime.data.repo.AnimeRepository;
 import ru.kelemnfno.anime.databinding.FragmentCatalogBinding;
 import ru.kelemnfno.anime.databinding.SheetFiltersBinding;
@@ -460,8 +461,11 @@ public class CatalogFragment extends Fragment {
             s.genreGroup.removeAllViews();
             s.adultGroup.removeAllViews();
             String q = s.genreQuery.getText() == null ? "" : s.genreQuery.getText().toString().trim().toLowerCase();
+            boolean adultAllowed = Prefs.get(requireContext()).settings().showAdult;
             for (Genre g : genres) {
                 boolean adult = ADULT.contains(g.href);
+                // Настройка «Показывать жанры 18+» раньше ни на что не влияла.
+                if (adult && !adultAllowed) continue;
                 if (!q.isEmpty() && !matches(g, q)) continue;
                 FlexboxLayout target = adult ? s.adultGroup : s.genreGroup;
                 Chips.add(target, g.title, genreIds.contains(g.value), v -> {
