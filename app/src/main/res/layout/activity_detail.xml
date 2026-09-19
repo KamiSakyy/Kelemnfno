@@ -277,7 +277,10 @@
                 android:layout_height="wrap_content"
                 android:paddingStart="16dp"
                 android:paddingTop="10dp"
-                android:paddingEnd="16dp" />
+                android:paddingEnd="16dp"
+                app:alignItems="flex_start"
+                app:flexWrap="wrap"
+                app:justifyContent="flex_start" />
 
             <LinearLayout
                 android:id="@+id/screenshots_block"

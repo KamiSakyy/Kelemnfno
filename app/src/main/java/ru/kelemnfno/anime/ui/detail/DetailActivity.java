@@ -327,6 +327,40 @@ public class DetailActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Скачивает ровно эту серию: озвучка — выбранная сейчас,
+     * качество — из настроек. Ничего лишнего не тянет.
+     */
+    private void downloadEpisode(final int episode) {
+        final Track track = currentTrack;
+        if (track == null) {
+            Ui.toast(this, "Озвучки ещё подбираются");
+            return;
+        }
+        final int wanted = Prefs.get(this).settings().downloadQuality;
+        AppExecutors.get().run(() -> {
+            List<StreamSource> sources = SourceEngine.streams(track.id, episode);
+            StreamSource best = null;
+            if (sources != null) {
+                for (StreamSource s : sources) {
+                    if (s.quality <= wanted && (best == null || s.quality > best.quality)) best = s;
+                }
+                if (best == null && !sources.isEmpty()) best = sources.get(0);
+            }
+            return best;
+        }, (value, error) -> {
+            if (isFinishing()) return;
+            if (value == null) {
+                Ui.toast(this, "Поток для серии не найден");
+                return;
+            }
+            ru.kelemnfno.anime.download.DownloadService.add(
+                    this, DownloadSheet.entity(anime, track, episode, value));
+            ru.kelemnfno.anime.download.DownloadService.startAll(this);
+            Ui.toast(this, "Серия " + episode + " · " + track.voice + " скачивается");
+        });
+    }
+
     private Lookup lookupOf(AnimeFull a) {
         Lookup l = new Lookup();
         l.title = a.title;
@@ -606,8 +640,12 @@ public class DetailActivity extends AppCompatActivity {
                 b.watched.setVisibility(isWatched ? View.VISIBLE : View.GONE);
                 b.state.setText(isWatched ? "просмотрено"
                         : downloadedEpisodes.contains(String.valueOf(episode)) ? "скачано" : "");
-                b.downloaded.setVisibility(downloadedEpisodes.contains(String.valueOf(episode))
-                        ? View.VISIBLE : View.GONE);
+                boolean saved = downloadedEpisodes.contains(String.valueOf(episode));
+                b.downloaded.setVisibility(View.VISIBLE);
+                b.downloaded.setImageTintList(android.content.res.ColorStateList.valueOf(
+                        getColor(saved ? R.color.emerald : R.color.text_mute)));
+                b.downloaded.setAlpha(saved ? 1f : 0.7f);
+                b.downloaded.setOnClickListener(v -> downloadEpisode(episode));
                 boolean playing = inlineStarted && episode == inlineEpisode;
                 b.getRoot().setAlpha(!playing && isWatched ? 0.55f : 1f);
                 b.number.setTextColor(getColor(playing ? R.color.accent : R.color.text));

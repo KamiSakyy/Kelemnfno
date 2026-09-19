@@ -31,9 +31,21 @@ public final class Chips {
     /** Добавляет чип с отступами в произвольный контейнер. */
     public static TextView add(ViewGroup parent, String text, boolean active, View.OnClickListener onClick) {
         TextView chip = chip(parent.getContext(), text, active, onClick);
+        int gap = Ui.dp(parent.getContext(), 8);
+        // Во FlexboxLayout нужны его собственные параметры, иначе чип сжимается
+        // и текст не помещается в кнопку.
+        if (parent instanceof com.google.android.flexbox.FlexboxLayout) {
+            com.google.android.flexbox.FlexboxLayout.LayoutParams lp =
+                    new com.google.android.flexbox.FlexboxLayout.LayoutParams(
+                            ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            lp.setFlexShrink(0f);
+            lp.setMargins(0, 0, gap, gap);
+            parent.addView(chip, lp);
+            return chip;
+        }
         ViewGroup.MarginLayoutParams lp = new ViewGroup.MarginLayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        lp.setMargins(0, 0, Ui.dp(parent.getContext(), 8), Ui.dp(parent.getContext(), 8));
+        lp.setMargins(0, 0, gap, gap);
         parent.addView(chip, lp);
         return chip;
     }
