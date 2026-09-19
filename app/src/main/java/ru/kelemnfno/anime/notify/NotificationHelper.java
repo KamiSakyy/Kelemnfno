@@ -66,6 +66,11 @@ public final class NotificationHelper {
     /* ---------------- Скачивание ---------------- */
 
     public static Notification downloadNotification(Context context, DownloadEntity d, boolean ongoing) {
+        return downloadNotification(context, d, ongoing, 1);
+    }
+
+    public static Notification downloadNotification(Context context, DownloadEntity d,
+                                                    boolean ongoing, int total) {
         Intent pause = new Intent(context, DownloadService.class)
                 .setAction(d.status == DownloadEntity.RUNNING ? DownloadService.ACTION_PAUSE
                         : DownloadService.ACTION_RESUME)
@@ -94,6 +99,8 @@ public final class NotificationHelper {
                 text = "В очереди";
                 break;
         }
+
+        if (total > 1) text = text + " · ещё " + (total - 1) + " в очереди";
 
         NotificationCompat.Builder b = new NotificationCompat.Builder(context, CHANNEL_DOWNLOADS)
                 .setSmallIcon(R.drawable.ic_download)
@@ -124,6 +131,24 @@ public final class NotificationHelper {
             NotificationManagerCompat.from(context).notify((int) (100 + d.id), downloadNotification(context, d, ongoing));
         } catch (SecurityException ignored) {
         }
+    }
+
+    /**
+     * Одно уведомление на все загрузки. Раньше фоновое уведомление сервиса
+     * и уведомление по конкретной серии имели разные id, поэтому загрузка
+     * показывалась дважды.
+     */
+    public static void notifyDownloads(Context context, DownloadEntity active, int total) {
+        if (active == null || !canNotify(context)) return;
+        try {
+            NotificationManagerCompat.from(context).notify(
+                    ID_DOWNLOAD_SUMMARY, downloadNotification(context, active, true, total));
+        } catch (SecurityException ignored) {
+        }
+    }
+
+    public static void cancelDownloads(Context context) {
+        NotificationManagerCompat.from(context).cancel(ID_DOWNLOAD_SUMMARY);
     }
 
     public static void cancelDownload(Context context, long id) {

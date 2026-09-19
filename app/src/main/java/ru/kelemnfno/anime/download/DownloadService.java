@@ -155,6 +155,15 @@ public class DownloadService extends Service {
         pool.execute(() -> runDownload(id));
     }
 
+    /** Сколько загрузок в работе и в очереди. */
+    private int queuedCount() {
+        try {
+            return Math.max(1, db().downloadDao().pending().size());
+        } catch (Throwable t) {
+            return 1;
+        }
+    }
+
     private void startForegroundIfNeeded() {
         DownloadEntity first = null;
         for (DownloadEntity d : db().downloadDao().pending()) {
@@ -162,14 +171,16 @@ public class DownloadService extends Service {
             break;
         }
         if (first == null) return;
+        // Тот же id, что и у обычного уведомления загрузок, иначе их два.
+        int id = NotificationHelper.ID_DOWNLOAD_SUMMARY;
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                ServiceCompat.startForeground(this, NOTIF_ID,
-                        NotificationHelper.downloadNotification(this, first, true),
+                ServiceCompat.startForeground(this, id,
+                        NotificationHelper.downloadNotification(this, first, true, queuedCount()),
                         ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC);
             } else {
-                ServiceCompat.startForeground(this, NOTIF_ID,
-                        NotificationHelper.downloadNotification(this, first, true), 0);
+                ServiceCompat.startForeground(this, id,
+                        NotificationHelper.downloadNotification(this, first, true, queuedCount()), 0);
             }
         } catch (Exception ignored) {
         }
@@ -217,7 +228,7 @@ public class DownloadService extends Service {
                         d.segmentsTotal = segmentsTotal;
                         d.updatedAt = System.currentTimeMillis();
                         db().downloadDao().update(d);
-                        NotificationHelper.notifyDownload(DownloadService.this, d, true);
+                        NotificationHelper.notifyDownloads(DownloadService.this, d, queuedCount());
                         DownloadBus.event(d);
                     });
 
@@ -230,7 +241,7 @@ public class DownloadService extends Service {
             d.error = "";
             d.updatedAt = System.currentTimeMillis();
             db().downloadDao().update(d);
-            NotificationHelper.notifyDownload(DownloadService.this, d, false);
+            NotificationHelper.notifyDownloads(DownloadService.this, d, queuedCount());
         } catch (Throwable t) {
             String message = t.getMessage() == null ? "Ошибка скачивания" : t.getMessage();
             if ("cancelled".equals(message)) {
@@ -238,7 +249,7 @@ public class DownloadService extends Service {
             } else {
                 d.status = DownloadEntity.ERROR;
                 d.error = message.length() > 140 ? message.substring(0, 140) : message;
-                NotificationHelper.notifyDownload(this, d, false);
+                NotificationHelper.notifyDownloads(this, d, queuedCount());
             }
             d.updatedAt = System.currentTimeMillis();
             db().downloadDao().update(d);
@@ -271,7 +282,7 @@ public class DownloadService extends Service {
             }
         }
         if (active != null) {
-            NotificationHelper.notifyDownload(this, active, true);
+            NotificationHelper.notifyDownloads(this, active, queuedCount());
         }
     }
 

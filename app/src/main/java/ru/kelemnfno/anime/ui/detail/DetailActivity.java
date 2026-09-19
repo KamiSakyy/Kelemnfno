@@ -122,7 +122,7 @@ public class DetailActivity extends AppCompatActivity {
         b.favButton.setOnClickListener(v -> toggleFavorite());
 
         episodeAdapter = new EpisodeAdapter();
-        b.episodes.setLayoutManager(new GridLayoutManager(this, 6));
+        b.episodes.setLayoutManager(new GridLayoutManager(this, 5));
         Ui.tuneList(b.episodes, false);
         b.episodes.setAdapter(episodeAdapter);
         b.resetProgress.setOnClickListener(v -> {
@@ -327,38 +327,13 @@ public class DetailActivity extends AppCompatActivity {
         });
     }
 
-    /**
-     * Скачивает ровно эту серию: озвучка — выбранная сейчас,
-     * качество — из настроек. Ничего лишнего не тянет.
-     */
-    private void downloadEpisode(final int episode) {
-        final Track track = currentTrack;
-        if (track == null) {
+    /** Выбор озвучки и качества для конкретной серии. */
+    private void openDownloadSheet(int episode) {
+        if (currentTrack == null || tracks.isEmpty()) {
             Ui.toast(this, "Озвучки ещё подбираются");
             return;
         }
-        final int wanted = Prefs.get(this).settings().downloadQuality;
-        AppExecutors.get().run(() -> {
-            List<StreamSource> sources = SourceEngine.streams(track.id, episode);
-            StreamSource best = null;
-            if (sources != null) {
-                for (StreamSource s : sources) {
-                    if (s.quality <= wanted && (best == null || s.quality > best.quality)) best = s;
-                }
-                if (best == null && !sources.isEmpty()) best = sources.get(0);
-            }
-            return best;
-        }, (value, error) -> {
-            if (isFinishing()) return;
-            if (value == null) {
-                Ui.toast(this, "Поток для серии не найден");
-                return;
-            }
-            ru.kelemnfno.anime.download.DownloadService.add(
-                    this, DownloadSheet.entity(anime, track, episode, value));
-            ru.kelemnfno.anime.download.DownloadService.startAll(this);
-            Ui.toast(this, "Серия " + episode + " · " + track.voice + " скачивается");
-        });
+        DownloadSheet.show(this, anime, tracks, currentTrack, episode);
     }
 
     private Lookup lookupOf(AnimeFull a) {
@@ -645,7 +620,7 @@ public class DetailActivity extends AppCompatActivity {
                 b.downloaded.setImageTintList(android.content.res.ColorStateList.valueOf(
                         getColor(saved ? R.color.emerald : R.color.text_mute)));
                 b.downloaded.setAlpha(saved ? 1f : 0.7f);
-                b.downloaded.setOnClickListener(v -> downloadEpisode(episode));
+                b.downloaded.setOnClickListener(v -> openDownloadSheet(episode));
                 boolean playing = inlineStarted && episode == inlineEpisode;
                 b.getRoot().setAlpha(!playing && isWatched ? 0.55f : 1f);
                 b.number.setTextColor(getColor(playing ? R.color.accent : R.color.text));
