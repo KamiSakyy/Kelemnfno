@@ -24,7 +24,7 @@
         android:layout_gravity="center"
         android:gravity="center"
         android:padding="32dp"
-        android:text="Готовим ленту…"
         android:textColor="@color/text_dim"
-        android:textSize="14sp" />
+        android:textSize="14sp"
+        android:visibility="gone" />
 </FrameLayout>

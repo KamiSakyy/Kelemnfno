@@ -107,7 +107,16 @@ public final class HlsDownloader {
             }
         }
 
-        List<Segment> segments = parsePlaylist(listText, playlistUrl);
+        List<Segment> segments;
+        if (DashParser.looksLikeDash(playlistUrl, listText)) {
+            // DASH: манифест разбирается в плоский список, init-сегмент первым.
+            List<String> urls = DashParser.segments(listText, playlistUrl, wantedQuality);
+            segments = new ArrayList<>();
+            for (int i = 0; i < urls.size(); i++) segments.add(new Segment(urls.get(i), i));
+            if (segments.isEmpty()) throw new IOException("В манифесте нет сегментов");
+        } else {
+            segments = parsePlaylist(listText, playlistUrl);
+        }
         if (segments.isEmpty()) throw new IOException("В плейлисте нет сегментов");
 
         int total = segments.size();

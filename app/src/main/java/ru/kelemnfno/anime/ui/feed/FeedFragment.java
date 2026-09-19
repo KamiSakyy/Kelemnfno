@@ -44,7 +44,7 @@ import ru.kelemnfno.anime.util.Ui;
 @OptIn(markerClass = UnstableApi.class)
 public class FeedFragment extends Fragment {
 
-    private static final int BATCH = 4;
+    private static final int BATCH = 3;
 
     private FragmentFeedBinding b;
     private final List<FeedClip> clips = new ArrayList<>();
@@ -59,17 +59,6 @@ public class FeedFragment extends Fragment {
     private boolean muted;
     private boolean wantNext;
     private int failStreak;
-
-    private final Runnable ticker = new Runnable() {
-        @Override
-        public void run() {
-            if (b == null || player == null) return;
-            if (player.isPlaying() && clipEnd > 0 && player.getCurrentPosition() >= clipEnd) {
-                advance();
-            }
-            if (b != null) b.getRoot().postDelayed(this, 250);
-        }
-    };
 
     @Nullable
     @Override
@@ -119,7 +108,8 @@ public class FeedFragment extends Fragment {
                 .setMediaSourceFactory(new androidx.media3.exoplayer.source
                         .DefaultMediaSourceFactory(dataSources))
                 .build();
-        player.setRepeatMode(Player.REPEAT_MODE_OFF);
+        // Без автоперехода: клип повторяется, ленту листает зритель.
+        player.setRepeatMode(Player.REPEAT_MODE_ONE);
         player.addListener(new Player.Listener() {
             @Override
             public void onPlaybackStateChanged(int state) {
@@ -127,24 +117,15 @@ public class FeedFragment extends Fragment {
                     attached.b.feedLoading.setVisibility(View.GONE);
                     failStreak = 0;
                 }
-                if (state == Player.STATE_ENDED) advance();
+
             }
 
             @Override
             public void onPlayerError(@NonNull PlaybackException error) {
                 if (attached != null) attached.b.feedLoading.setVisibility(View.GONE);
                 failStreak++;
-                if (failStreak >= 4) {
-                    if (b != null) {
-                        b.feedHint.setText("Источники не отдают видео. Проверьте интернет и попробуйте позже.");
-                        b.feedHint.setVisibility(View.VISIBLE);
-                    }
-                    return;
-                }
-                advance();
             }
         });
-        b.getRoot().postDelayed(ticker, 400);
         loadBatch();
     }
 
@@ -153,7 +134,6 @@ public class FeedFragment extends Fragment {
         if (loadingBatch || b == null) return;
         loadingBatch = true;
         b.feedProgress.setVisibility(View.VISIBLE);
-        if (clips.isEmpty()) b.feedHint.setVisibility(View.VISIBLE);
         AppExecutors.get().run(() -> buildBatch(BATCH),
                 (value, error) -> {
                     loadingBatch = false;
@@ -187,7 +167,7 @@ public class FeedFragment extends Fragment {
 
         List<AnimeItem> items = repo.list(params);
         Collections.shuffle(items, random);
-        if (items.size() > 12) items = items.subList(0, 12);
+        if (items.size() > 8) items = items.subList(0, 8);
 
         // Подбор озвучки — дело небыстрое, поэтому кандидатов разбираем
         // одновременно и забираем первые подошедшие, а не ждём всех.
@@ -197,7 +177,7 @@ public class FeedFragment extends Fragment {
             futures.add(pool.submit(() -> clipFor(item)));
         }
         List<FeedClip> out = new ArrayList<>();
-        long deadline = System.currentTimeMillis() + 20_000L;
+        long deadline = System.currentTimeMillis() + 12_000L;
         for (java.util.concurrent.Future<FeedClip> future : futures) {
             if (out.size() >= wanted) break;
             long left = deadline - System.currentTimeMillis();
@@ -288,7 +268,7 @@ public class FeedFragment extends Fragment {
         player.setPlayWhenReady(true);
         clipEnd = clip.startMs + clip.clipMs;
         wantNext = false;
-        if (position >= clips.size() - 3) loadBatch();
+        if (position >= clips.size() - 4) loadBatch();
     }
 
     private void advance() {
@@ -330,7 +310,6 @@ public class FeedFragment extends Fragment {
 
     @Override
     public void onDestroyView() {
-        b.getRoot().removeCallbacks(ticker);
         detach();
         if (player != null) {
             player.release();

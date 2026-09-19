@@ -132,22 +132,21 @@ jobs:
             echo "::warning::Пин не записан в Pins.java — пиннинг выключен"
           fi
 
-      - name: Build debug and release APK
+      - name: Build release APK
         id: build
         continue-on-error: true
         run: |
           set -o pipefail
-          ./gradlew --no-daemon --stacktrace assembleDebug assembleRelease 2>&1 | tee build.log
+          ./gradlew --no-daemon --stacktrace assembleRelease 2>&1 | tee build.log
 
       # Логи джоба снаружи не всегда доступны, поэтому дублируем ошибки в аннотации.
       - name: Publish build errors as annotations
         if: always()
         run: |
           set +e
-          DBG=app/build/outputs/apk/debug/app-debug.apk
           REL=app/build/outputs/apk/release/app-release.apk
-          if [ -f "$DBG" ] && [ -f "$REL" ]; then
-            echo "::notice::APK собраны: debug $(stat -c%s "$DBG") байт, release $(stat -c%s "$REL") байт"
+          if [ -f "$REL" ]; then
+            echo "::notice::APK собран: release $(stat -c%s "$REL") байт"
             exit 0
           fi
           echo "::error::APK не собран (outcome: ${{ steps.build.outcome }})"
@@ -172,7 +171,6 @@ jobs:
       - name: Rename artifacts
         run: |
           mkdir -p out
-          cp app/build/outputs/apk/debug/app-debug.apk out/Kelemnfno-debug.apk
           cp app/build/outputs/apk/release/app-release.apk out/Kelemnfno-release.apk
           ls -la out
 
@@ -181,7 +179,6 @@ jobs:
         with:
           name: Kelemnfno-apk
           path: |
-            out/Kelemnfno-debug.apk
             out/Kelemnfno-release.apk
           if-no-files-found: error
 
@@ -192,13 +189,14 @@ jobs:
         run: |
           git config user.name "kelemnfno-ci"
           git config user.email "ci@kelemnfno.local"
-          cp out/Kelemnfno-debug.apk Kelemnfno-debug.apk
           cp out/Kelemnfno-release.apk Kelemnfno-release.apk
-          git add -f Kelemnfno-debug.apk Kelemnfno-release.apk
-          git commit -m "APK ${GITHUB_SHA::7}: debug + подписанный release [skip ci]" || echo "APK не изменились"
+          git rm -q --cached --ignore-unmatch Kelemnfno-debug.apk
+          rm -f Kelemnfno-debug.apk
+          git add -f Kelemnfno-release.apk
+          git commit -m "APK ${GITHUB_SHA::7}: подписанный release [skip ci]" || echo "APK не изменились"
           git push origin "HEAD:${GITHUB_REF_NAME}"
 
-      - name: Publish APKs to release
+      - name: Publish APK to release
         if: github.event_name == 'push'
         continue-on-error: true
         env:
@@ -206,7 +204,7 @@ jobs:
         run: |
           set +e
           publish() {
-            gh release create nightly out/Kelemnfno-release.apk out/Kelemnfno-debug.apk \
+            gh release create nightly out/Kelemnfno-release.apk \
               --title "Kelemnfno nightly build" \
               --target "${GITHUB_REF_NAME}" \
               --notes "Сборка ветки ${GITHUB_REF_NAME}, commit ${GITHUB_SHA}. Kelemnfno-release.apk — подписанный релиз."

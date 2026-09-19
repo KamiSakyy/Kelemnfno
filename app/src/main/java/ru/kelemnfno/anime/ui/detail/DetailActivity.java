@@ -359,7 +359,7 @@ public class DetailActivity extends AppCompatActivity {
         java.util.Collections.sort(eps);
         if (eps.isEmpty()) return;
         b.episodesBlock.setVisibility(View.VISIBLE);
-        b.episodesHint.setText(eps.size() + " серий · подбираем озвучки");
+        b.episodesHint.setText(String.valueOf(eps.size()));
         episodeAdapter.submit(eps);
     }
 
