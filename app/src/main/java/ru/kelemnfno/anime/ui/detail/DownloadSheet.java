@@ -45,6 +45,8 @@ public final class DownloadSheet {
 
         final List<StreamSource> sources = new ArrayList<>();
         final int[] chosen = {Prefs.get(host).settings().downloadQuality};
+        // Адрес конкретного варианта, если качество выбрано из мастер-плейлиста.
+        final String[] chosenUrl = {null};
         final Track[] current = {initial};
 
         b.title.setText("Серия " + episode + " · " + anime.title);
@@ -56,23 +58,28 @@ public final class DownloadSheet {
                 showError(b, "Нет потока в этом качестве");
                 return;
             }
+            if (chosenUrl[0] != null && !chosenUrl[0].isEmpty()) {
+                picked = copyOf(picked, chosen[0], chosenUrl[0]);
+            }
             DownloadService.add(host, entity(anime, current[0], episode, picked));
             dialog.dismiss();
-            Ui.toast(host, "Серия " + episode + " · " + picked.label + " — в загрузках");
+            Ui.toast(host, "Серия " + episode + " · " + picked.quality + "p — в загрузках");
         });
-        b.retry.setOnClickListener(v -> resolve(host, b, current[0], episode, sources, chosen));
+        b.retry.setOnClickListener(v ->
+                resolve(host, b, current[0], episode, sources, chosen, chosenUrl));
 
-        renderVoices(b, allTracks, current, host, anime, episode, sources, chosen);
+        renderVoices(b, allTracks, current, host, anime, episode, sources, chosen, chosenUrl);
         expand(dialog);
         dialog.show();
         Ui.fadeIn(b.getRoot(), 160);
-        resolve(host, b, current[0], episode, sources, chosen);
+        resolve(host, b, current[0], episode, sources, chosen, chosenUrl);
     }
 
     private static void renderVoices(final SheetDownloadBinding b, final List<Track> allTracks,
                                      final Track[] current, final DetailActivity host,
                                      final AnimeFull anime, final int episode,
-                                     final List<StreamSource> sources, final int[] chosen) {
+                                     final List<StreamSource> sources, final int[] chosen,
+                                     final String[] chosenUrl) {
         b.voices.removeAllViews();
         for (Track t : allTracks) {
             final Track track = t;
@@ -87,7 +94,8 @@ public final class DownloadSheet {
 
     /** Подбирает прямые потоки серии и показывает доступные качества. */
     private static void resolve(final DetailActivity host, final SheetDownloadBinding b, final Track track,
-                                final int episode, final List<StreamSource> sources, final int[] chosen) {
+                                final int episode, final List<StreamSource> sources, final int[] chosen,
+                                final String[] chosenUrl) {
         b.subtitle.setText(track.voice);
         b.stateError.setVisibility(View.GONE);
         b.stateReady.setVisibility(View.GONE);
@@ -112,24 +120,94 @@ public final class DownloadSheet {
                     return;
                 }
                 chosen[0] = clamp(chosen[0], availableQualities(sources));
+                chosenUrl[0] = null;
                 b.stateResolving.setVisibility(View.GONE);
                 b.stateReady.setVisibility(View.VISIBLE);
                 StreamSource first = pick(sources, chosen[0]);
                 b.sourceInfo.setText((first == null ? "" : first.label) + " · " + track.voice);
-                renderQualities(b, sources, chosen);
+                renderQualities(b, sources, chosen, chosenUrl, new ArrayList<String[]>());
+                loadVariants(host, b, first, sources, chosen, chosenUrl, track);
             });
         });
     }
 
     private static void renderQualities(final SheetDownloadBinding b, final List<StreamSource> sources,
-                                        final int[] chosen) {
+                                        final int[] chosen, final String[] chosenUrl,
+                                        final List<String[]> variants) {
         b.qualities.removeAllViews();
-        for (int quality : availableQualities(sources)) {
+        if (variants != null && !variants.isEmpty()) {
+            for (final String[] variant : variants) {
+                final int height = parseInt(variant[0]);
+                if (height <= 0) continue;
+                Chips.add(b.qualities, height + "p", height == chosen[0], v -> {
+                    chosen[0] = height;
+                    chosenUrl[0] = variant[1];
+                    renderQualities(b, sources, chosen, chosenUrl, variants);
+                });
+            }
+            return;
+        }
+        chosenUrl[0] = null;
+        for (final int quality : availableQualities(sources)) {
             Chips.add(b.qualities, quality + "p", quality == chosen[0], v -> {
                 chosen[0] = quality;
-                renderQualities(b, sources, chosen);
+                renderQualities(b, sources, chosen, chosenUrl, variants);
             });
         }
+    }
+
+    /**
+     * Честный список качеств: берём варианты прямо из мастер-плейлиста,
+     * поэтому в списке есть и 360p, и всё, что реально отдаёт источник.
+     */
+    private static void loadVariants(final DetailActivity host, final SheetDownloadBinding b,
+                                     final StreamSource source, final List<StreamSource> sources,
+                                     final int[] chosen, final String[] chosenUrl, final Track track) {
+        if (source == null || !source.isHls()) return;
+        AppExecutors.get().run(() -> {
+            String text = Net.get(source.url,
+                    ru.kelemnfno.anime.download.HlsDownloader.headersFor(source.referer), 8000);
+            return ru.kelemnfno.anime.download.HlsDownloader.variants(text, source.url);
+        }, (value, error) -> {
+            if (host.isFinishing() || value == null || value.size() < 2) return;
+            List<Integer> heights = new ArrayList<>();
+            for (String[] v : value) {
+                int h = parseInt(v[0]);
+                if (h > 0 && !heights.contains(h)) heights.add(h);
+            }
+            if (heights.isEmpty()) return;
+            java.util.Collections.sort(heights, java.util.Collections.reverseOrder());
+            chosen[0] = clamp(chosen[0], heights);
+            for (String[] v : value) {
+                if (parseInt(v[0]) == chosen[0]) {
+                    chosenUrl[0] = v[1];
+                    break;
+                }
+            }
+            b.sourceInfo.setText((source.label == null ? "" : source.label)
+                    + " · " + track.voice + " · " + chosen[0] + "p");
+            renderQualities(b, sources, chosen, chosenUrl, value);
+        });
+    }
+
+    private static int parseInt(String value) {
+        try {
+            return Integer.parseInt(value.trim());
+        } catch (Throwable t) {
+            return 0;
+        }
+    }
+
+    /** Поток с подменёнными качеством и адресом — для выбранного варианта. */
+    private static StreamSource copyOf(StreamSource source, int quality, String url) {
+        StreamSource copy = new StreamSource();
+        copy.quality = quality;
+        copy.url = url;
+        copy.kind = source.kind;
+        copy.referer = source.referer;
+        copy.voice = source.voice;
+        copy.label = source.label;
+        return copy;
     }
 
     /** Доступные высоты потока, от больших к меньшим. */

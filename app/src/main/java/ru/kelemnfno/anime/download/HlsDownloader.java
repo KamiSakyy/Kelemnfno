@@ -189,6 +189,34 @@ public final class HlsDownloader {
 
     /* ---------------- Плейлист ---------------- */
 
+    /**
+     * Все варианты мастер-плейлиста: высота и адрес.
+     * По ним строится честный список качеств, включая 360p и ниже.
+     */
+    public static List<String[]> variants(String master, String baseUrl) {
+        List<String[]> out = new ArrayList<>();
+        if (master == null) return out;
+        String[] lines = master.split("\\r?\\n");
+        for (int i = 0; i < lines.length; i++) {
+            String l = lines[i].trim();
+            if (!l.startsWith("#EXT-X-STREAM-INF")) continue;
+            int height = 0;
+            Matcher m = RESOLUTION.matcher(l);
+            if (m.find()) height = Integer.parseInt(m.group(1));
+            if (height == 0) {
+                Matcher bw = BANDWIDTH.matcher(l);
+                if (bw.find()) height = Math.round(Integer.parseInt(bw.group(1)) / 1500f);
+            }
+            for (int j = i + 1; j < lines.length; j++) {
+                String next = lines[j].trim();
+                if (next.isEmpty() || next.startsWith("#")) continue;
+                out.add(new String[]{String.valueOf(height), SourceUtil.absolute(baseUrl, next)});
+                break;
+            }
+        }
+        return out;
+    }
+
     /** Выбор варианта мастер-плейлиста под запрошенное качество. */
     static String pickVariant(String master, String baseUrl, int wantedQuality) {
         String[] lines = master.split("\\r?\\n");

@@ -686,68 +686,17 @@ public class DetailActivity extends AppCompatActivity {
         return eps.get(0);
     }
 
+    /**
+     * Воспроизведение всегда в полноэкранном плеере — он один на всё
+     * приложение, с жестами, сменой озвучки и серий.
+     */
     private void playInline(final int episode) {
         if (currentTrack == null) {
             Ui.toast(this, getString(R.string.sources_pending));
             return;
         }
-        final Track track = currentTrack;
-        b.inlinePlay.setAlpha(0.4f);
-        AppExecutors.get().heavy().execute(() -> {
-            List<StreamSource> found;
-            try {
-                found = SourceEngine.streams(track.id, episode, false);
-            } catch (Throwable t) {
-                found = new ArrayList<>();
-            }
-            final List<StreamSource> sources = found == null ? new ArrayList<>() : found;
-            AppExecutors.get().post(() -> {
-                if (b == null || isFinishing()) return;
-                b.inlinePlay.setAlpha(1f);
-                if (sources.isEmpty()) {
-                    Ui.toast(this, "Не удалось подобрать поток");
-                    return;
-                }
-                inlineEpisode = episode;
-                startInline(sources.get(0), episode);
-            });
-        });
-    }
-
-    private void startInline(StreamSource source, int episode) {
-        String referer = source.referer == null ? "" : source.referer;
-        if (inlinePlayer == null || !referer.equals(inlineReferer)) {
-            releaseInline();
-            DefaultHttpDataSource.Factory http = new DefaultHttpDataSource.Factory()
-                    .setUserAgent(Net.CHROME)
-                    .setAllowCrossProtocolRedirects(true)
-                    .setConnectTimeoutMs(12_000)
-                    .setReadTimeoutMs(20_000);
-            Map<String, String> headers = new LinkedHashMap<>();
-            if (!referer.isEmpty()) {
-                headers.put("Referer", referer);
-                headers.put("Origin", originOf(referer));
-            }
-            http.setDefaultRequestProperties(headers);
-            inlinePlayer = new ExoPlayer.Builder(this)
-                    .setMediaSourceFactory(new DefaultMediaSourceFactory(
-                            new DefaultDataSource.Factory(this, http)))
-                    .build();
-            b.inlinePlayer.setPlayer(inlinePlayer);
-            inlineReferer = referer;
-        }
-        b.inlinePoster.setVisibility(View.GONE);
-        b.inlinePlay.setVisibility(View.GONE);
-        inlineStarted = true;
-        b.inlineEpLabel.setText(episodeLabel(episode));
-        if (episodeAdapter != null) episodeAdapter.notifyDataSetChanged();
-        saveHistory(String.valueOf(episode));
-        inlinePlayer.setMediaItem(new MediaItem.Builder()
-                .setUri(source.url)
-                .setMediaId(slug + ":" + episode)
-                .build());
-        inlinePlayer.prepare();
-        inlinePlayer.play();
+        ru.kelemnfno.anime.ui.player.PlayerActivity.start(this, anime.title, slug, anime.animeId,
+                Fmt.posterUrl(anime, "big"), currentTrack.id, episode, currentTrack.voice, tracks);
     }
 
     private String originOf(String referer) {
