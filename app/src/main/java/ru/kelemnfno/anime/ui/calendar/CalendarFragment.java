@@ -110,14 +110,27 @@ public class CalendarFragment extends Fragment {
 
     private void renderNext() {
         long now = System.currentTimeMillis();
+        // Сначала ищем ближайшую серию из избранного — её и показываем крупно.
         ScheduleItem best = null;
         long bestTs = Long.MAX_VALUE;
+        boolean fromFavorites = false;
         for (ScheduleItem it : items) {
-            if (onlyFav && !favSlugs.contains(it.animeUrl)) continue;
+            if (!favSlugs.contains(it.animeUrl)) continue;
             long ts = nextTs(it);
             if (ts > now && ts < bestTs) {
                 best = it;
                 bestTs = ts;
+                fromFavorites = true;
+            }
+        }
+        if (best == null) {
+            for (ScheduleItem it : items) {
+                if (onlyFav || !favSlugs.contains(it.animeUrl)) continue;
+                long ts = nextTs(it);
+                if (ts > now && ts < bestTs) {
+                    best = it;
+                    bestTs = ts;
+                }
             }
         }
         if (best == null) {
@@ -127,8 +140,11 @@ public class CalendarFragment extends Fragment {
         b.nextRelease.setVisibility(View.VISIBLE);
         final ScheduleItem target = best;
         int number = target.episodes.aired + 1;
-        b.nextReleaseText.setText("Следующий релиз: " + target.title + " · серия " + number
+        b.nextReleaseText.setText((fromFavorites ? "В избранном: " : "Следующий релиз: ")
+                + target.title + " · серия " + number
                 + " — " + Countdown.format(bestTs, now));
+        b.nextReleaseText.setTextColor(requireContext().getColor(
+                fromFavorites ? R.color.accent : R.color.text));
         b.nextRelease.setOnClickListener(v -> DetailActivity.open(requireContext(), target.animeUrl));
     }
 
@@ -223,7 +239,12 @@ public class CalendarFragment extends Fragment {
                         + (it.episodes.count > 0 ? " из " + it.episodes.count : "") + " · " + time
                         + " · " + WEEKDAYS_FULL[selectedDay]);
                 long now = System.currentTimeMillis();
-                b.countdown.setText(r.at > now ? Countdown.format(r.at, now) : "уже вышла");
+                boolean fav = favSlugs.contains(it.animeUrl);
+                b.countdown.setText((fav ? "\u2605 " : "")
+                        + (r.at > now ? Countdown.format(r.at, now) : "уже вышла"));
+                b.countdown.setTextColor(requireContext().getColor(
+                        fav ? R.color.accent : R.color.text_mute));
+                b.meta.setText((fav ? "В избранном · " : "") + b.meta.getText());
                 b.getRoot().setOnClickListener(v -> DetailActivity.open(requireContext(), it.animeUrl));
             }
         }
