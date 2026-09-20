@@ -27,7 +27,7 @@ public final class HentaiEngine {
 
     public HentaiEngine(ApiRepository api){this.api=api;}
 
-    public static boolean isHenta(){return "henta".equals(BuildConfig.FLAVOR);}
+    public static boolean isHenta(){return false;}
 
     private static String host(String site){if(site.equals("hs"))return "https://hentasis1.top";if(site.equals("ah"))return "https://allhentaii.fun";if(site.equals("hk"))return "https://v6.hentakli.org";return "https://porncado.com";}
 
