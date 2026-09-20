@@ -124,7 +124,7 @@ public final class CalendarApi {
         item.episode = premiere ? 1 : next;
         item.kind = premiere ? "Премьера" : "Новая серия";
         item.precision = precision;
-        item.source = "Yoru";
+        item.source = "Tsuyu";
         return item;
     }
 
@@ -293,7 +293,7 @@ public final class CalendarApi {
         item.episode = next;
         item.kind = "Новая серия";
         item.precision = "Точная дата";
-        item.source = "Yoru";
+        item.source = "Tsuyu";
         String key = (fav.malId > 0 ? "mal:" + fav.malId : fav.key()) + "|" + item.episode + "|" + startOfDay(at);
         ApiRepository.AiringItem old = map.get(key);
         if (old == null || !"Точная дата".equals(old.precision)) map.put(key, item);

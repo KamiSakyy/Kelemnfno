@@ -379,7 +379,7 @@ public final class HentaiEngine {
             e.number=n;
             e.lazy="henta";
             String lang=v.optString("language","");
-            e.variants.add(0,new Anime.Variant(lang.contains("Sub")?"Суб":"Оригинал","Yoru",file));
+            e.variants.add(0,new Anime.Variant(lang.contains("Sub")?"Суб":"Оригинал","Tsuyu",file));
             a.episodeList.add(e);
         }
     }
@@ -417,7 +417,7 @@ public final class HentaiEngine {
                 e.id="htv-"+n;
                 e.number=Integer.parseInt(en.getKey().sid);
                 e.lazy="henta";
-                e.variants.add(0,new Anime.Variant("Суб","Yoru",file));
+                e.variants.add(0,new Anime.Variant("Суб","Tsuyu",file));
                 a.episodeList.add(e);
             }
         }finally{pool.shutdownNow();}
@@ -456,7 +456,7 @@ public final class HentaiEngine {
             e.id="he-"+n;
             e.number=n;
             e.lazy="henta";
-            e.variants.add(0,new Anime.Variant("Суб","Yoru",file));
+            e.variants.add(0,new Anime.Variant("Суб","Tsuyu",file));
             a.episodeList.add(e);
         }
     }
@@ -972,8 +972,8 @@ public final class HentaiEngine {
                 e.lazy="henta";
                 map.put(n,e);
             }
-            if(nm.group(2).equals("rus"))e.variants.add(0,new Anime.Variant("Озвучка","Yoru",url));
-            else e.variants.add(new Anime.Variant("Суб","Yoru",url));
+            if(nm.group(2).equals("rus"))e.variants.add(0,new Anime.Variant("Озвучка","Tsuyu",url));
+            else e.variants.add(new Anime.Variant("Суб","Tsuyu",url));
         }
         for(Anime.Episode e:map.values())a.episodeList.add(e);
     }
@@ -992,7 +992,7 @@ public final class HentaiEngine {
             e.number=i+1;
             e.lazy="henta";
             e.name=o.optString("title","");
-            e.variants.add(new Anime.Variant("Файл","Yoru",u));
+            e.variants.add(new Anime.Variant("Файл","Tsuyu",u));
             a.episodeList.add(e);
         }
     }
@@ -1021,7 +1021,7 @@ public final class HentaiEngine {
                 e.number=i+1;
                 e.lazy="henta";
                 e.name=eps.get(i)[1];
-                e.variants.add(new Anime.Variant(label,"Yoru",url));
+                e.variants.add(new Anime.Variant(label,"Tsuyu",url));
                 a.episodeList.add(e);
             }
         }finally{pool.shutdownNow();}
@@ -1036,7 +1036,7 @@ public final class HentaiEngine {
             String t=attr(tag,"title");
             if(u.isEmpty())continue;
             String name=t.equalsIgnoreCase("high")||t.equalsIgnoreCase("hi")?"Высокое":(t.equalsIgnoreCase("low")||t.equalsIgnoreCase("lo")?"Низкое":"Файл");
-            vs.add(new Anime.Variant(name,"Yoru",u));
+            vs.add(new Anime.Variant(name,"Tsuyu",u));
         }
         if(vs.isEmpty())return;
         Anime.Episode e=new Anime.Episode();

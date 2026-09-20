@@ -132,7 +132,7 @@ final class ScheduledDownloads extends SQLiteOpenHelper {
         quality.setSelection(QualityPlus.index(YoruApp.app().store.downloadResolution()));
         col.addView(quality,Ui.lp(activity,-1,48));
         Ui.space(col,10);
-        col.addView(Ui.text(activity,"ÐÑÐ´ÐµÐ¼ Ð¶Ð´Ð°ÑÑ Ð¸Ð¼ÐµÐ½Ð½Ð¾ Ð²ÑÐ±ÑÐ°Ð½Ð½ÑÑ Ð¾Ð·Ð²ÑÑÐºÑ Ð¸ ÑÐ°Ð·ÑÐµÑÐµÐ½Ð¸Ðµ, Ð±ÐµÐ· Ð¿Ð¾Ð´Ð¼ÐµÐ½Ñ ÐÐ¾ÑÑÑÐ¿Ð½Ð¾ÑÑÑ Ð±ÑÐ´ÑÑÐµÐ¹ Ð¾Ð·Ð²ÑÑÐºÐ¸ Ð½Ðµ Ð³Ð°ÑÐ°Ð½ÑÐ¸ÑÐ¾Ð²Ð°Ð½Ð° ÐÑÐ¾Ð²ÐµÑÐºÐ¸ Ð¸Ð´ÑÑ Ð² ÑÐ¾Ð½Ðµ Ð¿ÑÐ¸ Ð½Ð°Ð»Ð¸ÑÐ¸Ð¸ ÑÐµÑÐ¸; Android Ð¼Ð¾Ð¶ÐµÑ Ð¸Ñ Ð·Ð°Ð´ÐµÑÐ¶Ð¸Ð²Ð°ÑÑ Ð£ÑÐ¸ÑÑÐ²Ð°ÐµÑÑÑ Ð½Ð°ÑÑÑÐ¾Ð¹ÐºÐ° Â«ÐÐ°Ð³ÑÑÐ·ÐºÐ¸ ÑÐ¾Ð»ÑÐºÐ¾ Ð¿Ð¾ Wi-FiÂ» ÐÐ¾ÑÐ»Ðµ Ð¿ÑÐ¸Ð½ÑÐ´Ð¸ÑÐµÐ»ÑÐ½Ð¾Ð¹ Ð¾ÑÑÐ°Ð½Ð¾Ð²ÐºÐ¸ Ð¿ÑÐ¸Ð»Ð¾Ð¶ÐµÐ½Ð¸Ñ Ð¾ÑÐºÑÐ¾Ð¹ÑÐµ Yoru ÑÐ½Ð¾Ð²Ð°",11,Ui.MUTED,false));
+        col.addView(Ui.text(activity,"ÐÑÐ´ÐµÐ¼ Ð¶Ð´Ð°ÑÑ Ð¸Ð¼ÐµÐ½Ð½Ð¾ Ð²ÑÐ±ÑÐ°Ð½Ð½ÑÑ Ð¾Ð·Ð²ÑÑÐºÑ Ð¸ ÑÐ°Ð·ÑÐµÑÐµÐ½Ð¸Ðµ, Ð±ÐµÐ· Ð¿Ð¾Ð´Ð¼ÐµÐ½Ñ ÐÐ¾ÑÑÑÐ¿Ð½Ð¾ÑÑÑ Ð±ÑÐ´ÑÑÐµÐ¹ Ð¾Ð·Ð²ÑÑÐºÐ¸ Ð½Ðµ Ð³Ð°ÑÐ°Ð½ÑÐ¸ÑÐ¾Ð²Ð°Ð½Ð° ÐÑÐ¾Ð²ÐµÑÐºÐ¸ Ð¸Ð´ÑÑ Ð² ÑÐ¾Ð½Ðµ Ð¿ÑÐ¸ Ð½Ð°Ð»Ð¸ÑÐ¸Ð¸ ÑÐµÑÐ¸; Android Ð¼Ð¾Ð¶ÐµÑ Ð¸Ñ Ð·Ð°Ð´ÐµÑÐ¶Ð¸Ð²Ð°ÑÑ Ð£ÑÐ¸ÑÑÐ²Ð°ÐµÑÑÑ Ð½Ð°ÑÑÑÐ¾Ð¹ÐºÐ° Â«ÐÐ°Ð³ÑÑÐ·ÐºÐ¸ ÑÐ¾Ð»ÑÐºÐ¾ Ð¿Ð¾ Wi-FiÂ» ÐÐ¾ÑÐ»Ðµ Ð¿ÑÐ¸Ð½ÑÐ´Ð¸ÑÐµÐ»ÑÐ½Ð¾Ð¹ Ð¾ÑÑÐ°Ð½Ð¾Ð²ÐºÐ¸ Ð¿ÑÐ¸Ð»Ð¾Ð¶ÐµÐ½Ð¸Ñ Ð¾ÑÐºÑÐ¾Ð¹ÑÐµ Tsuyu ÑÐ½Ð¾Ð²Ð°",11,Ui.MUTED,false));
         Ui.custom(activity,"Скачать серию " + Ui.number(episode) + " после выхода",col,"Запланировать",()->{
             String selectedVoice = ApiRepository.VOICE_PREF_VALUES[voice.getSelectedItemPosition()];
             int selectedQuality = QualityPlus.valuesWithBest()[quality.getSelectedItemPosition()];
@@ -144,7 +144,7 @@ final class ScheduledDownloads extends SQLiteOpenHelper {
                     try (ScheduledDownloads store = new ScheduledDownloads(activity)) {
                         store.add(anime,episode,selectedVoice,selectedQuality,due);
                         boolean scheduled=schedule(activity);
-                        message=scheduled?"Запланировано Карточка задания — в разделе «Загрузки»":"ÐÐ»Ð°Ð½ ÑÐ¾ÑÑÐ°Ð½ÑÐ½, Ð½Ð¾ Android Ð½Ðµ ÑÐ°Ð·ÑÐµÑÐ¸Ð» ÑÐ¾Ð½Ð¾Ð²ÑÑ Ð¿ÑÐ¾Ð²ÐµÑÐºÑ ÐÑÐºÑÐ¾Ð¹ÑÐµ Yoru Ð¿Ð¾Ð·Ð¶Ðµ";
+                        message=scheduled?"Запланировано Карточка задания — в разделе «Загрузки»":"ÐÐ»Ð°Ð½ ÑÐ¾ÑÑÐ°Ð½ÑÐ½, Ð½Ð¾ Android Ð½Ðµ ÑÐ°Ð·ÑÐµÑÐ¸Ð» ÑÐ¾Ð½Ð¾Ð²ÑÑ Ð¿ÑÐ¾Ð²ÐµÑÐºÑ ÐÑÐºÑÐ¾Ð¹ÑÐµ Tsuyu Ð¿Ð¾Ð·Ð¶Ðµ";
                     } catch (IllegalStateException e) { message="Эта серия уже запланирована Отмените задание на его карточке в «Загрузках»"; }
                     catch (Exception e) { message="Не удалось сохранить план скачивания"; }
                     String result=message;

@@ -162,7 +162,7 @@ public final class CalendarScreen extends FrameLayout {
         final TextView[] days=new TextView[DAYS],filters=new TextView[FILTERS.length];
         HeaderView() {
             super(activity);setOrientation(VERTICAL);setPadding(0,Ui.dp(activity,12),0,Ui.dp(activity,10));
-            addView(Ui.label(activity,"КАЛЕНДАРЬ Yoru"));Ui.space(this,9);addView(Ui.text(activity,"Выход серий",28,Ui.TEXT,true));
+            addView(Ui.label(activity,"КАЛЕНДАРЬ Tsuyu"));Ui.space(this,9);addView(Ui.text(activity,"Выход серий",28,Ui.TEXT,true));
             Ui.space(this,7);addView(Ui.text(activity,"Все ближайшие аниме одним списком · время — МСК",12,Ui.MUTED,false));Ui.space(this,12);
             Ui.space(this,13);LinearLayout dayRow=horizontal();
             all=chip(dayRow,()->{if(selected<0)return;selected=-1;select();});

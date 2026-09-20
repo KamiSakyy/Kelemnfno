@@ -153,7 +153,7 @@ public final class SourceResolver {
                 ep.name = "";
                 ep.lazy = "kodik";
                 ep.resolverUrl = Uri.parse(url).buildUpon().appendQueryParameter("episode", String.valueOf(i)).build().toString();
-                ep.variants.add(new Anime.Variant("", "Yoru", ep.resolverUrl));
+                ep.variants.add(new Anime.Variant("", "Tsuyu", ep.resolverUrl));
                 shell.episodeList.add(ep);
             }
         }

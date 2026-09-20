@@ -81,7 +81,7 @@ public final class ScheduledDownloadJob extends JobService {
                     if(SystemClock.elapsedRealtime()+5_000>=deadline)return;
                     boolean accepted=enqueue(p,best,stop,Math.min(30_000,deadline-SystemClock.elapsedRealtime()));
                     if(accepted)store.update(p.id,"queued","Передано в загрузки — управление в списке загрузок",0);
-                    else if(!stop.get())store.update(p.id,"waiting","ÐÐ¾Ð²ÑÐ¾ÑÐ¸Ð¼ Ð·Ð°Ð¿ÑÑÐº Ð¿Ð¾Ð·Ð¶Ðµ; Ð¿ÑÐ¸ Ð¾Ð³ÑÐ°Ð½Ð¸ÑÐµÐ½Ð¸ÑÑ Android Ð¾ÑÐºÑÐ¾Ð¹ÑÐµ Yoru",System.currentTimeMillis()+ScheduledDownloads.PERIOD);
+                    else if(!stop.get())store.update(p.id,"waiting","ÐÐ¾Ð²ÑÐ¾ÑÐ¸Ð¼ Ð·Ð°Ð¿ÑÑÐº Ð¿Ð¾Ð·Ð¶Ðµ; Ð¿ÑÐ¸ Ð¾Ð³ÑÐ°Ð½Ð¸ÑÐµÐ½Ð¸ÑÑ Android Ð¾ÑÐºÑÐ¾Ð¹ÑÐµ Tsuyu",System.currentTimeMillis()+ScheduledDownloads.PERIOD);
                 } catch(java.io.InterruptedIOException|InterruptedException e) { Thread.currentThread().interrupt();return; }
                 catch(Exception e) { store.update(p.id,"waiting","Источник пока недоступен — повторим проверку",System.currentTimeMillis()+ScheduledDownloads.PERIOD); }
             }
