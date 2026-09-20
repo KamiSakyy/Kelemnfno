@@ -1,8 +1,0 @@
-// Корневой build-файл. Версии плагинов объявлены здесь, применяются в :app.
-plugins {
-    id 'com.android.application' version '8.7.3' apply false
-}
-
-tasks.register('clean', Delete) {
-    delete rootProject.layout.buildDirectory
-}

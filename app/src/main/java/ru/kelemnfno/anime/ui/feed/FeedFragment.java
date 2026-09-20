@@ -100,11 +100,16 @@ public class FeedFragment extends Fragment {
 
         // Та же фабрика загрузки, что и у основного плеера: иначе Referer/Origin
         // из applyHeaders() не попадают в запросы и источники отдают 403.
-        androidx.media3.datasource.DefaultDataSource.Factory dataSources =
-                new androidx.media3.datasource.DefaultDataSource.Factory(
-                        requireContext(), PlaybackService.HTTP);
-        // Экономия трафика: самый дешёвый битрейт и крошечный буфер —
-        // лента качает только показываемый кусок, а не серию целиком.
+        // Плюс локальный кэш: первый просмотр качает фрагмент по сети,
+        // цикл и повторные просмотры читают из кэша — без трафика.
+        androidx.media3.datasource.cache.CacheDataSource.Factory dataSources =
+                new androidx.media3.datasource.cache.CacheDataSource.Factory()
+                        .setCache(feedCache(requireContext()))
+                        .setUpstreamDataSourceFactory(
+                                new androidx.media3.datasource.DefaultDataSource.Factory(
+                                        requireContext(), PlaybackService.HTTP));
+        // Экономия трафика: самый дешёвый битрейт, а буфер равен клипу —
+        // качается ровно показываемый кусок 15–30 с и играет без заиканий.
         androidx.media3.exoplayer.trackselection.DefaultTrackSelector trackSelector =
                 new androidx.media3.exoplayer.trackselection.DefaultTrackSelector(requireContext());
         trackSelector.setParameters(new androidx.media3.exoplayer.trackselection
@@ -113,7 +118,7 @@ public class FeedFragment extends Fragment {
                 .build());
         androidx.media3.exoplayer.DefaultLoadControl loadControl =
                 new androidx.media3.exoplayer.DefaultLoadControl.Builder()
-                        .setBufferDurationsMs(1500, 6000, 800, 1500)
+                        .setBufferDurationsMs(5000, 30000, 1500, 3000)
                         .build();
         player = new ExoPlayer.Builder(requireContext())
                 .setMediaSourceFactory(new androidx.media3.exoplayer.source
@@ -121,8 +126,8 @@ public class FeedFragment extends Fragment {
                 .setTrackSelector(trackSelector)
                 .setLoadControl(loadControl)
                 .build();
-        // Клип играется один раз (15–30 с) и останавливается: цикл удваивал бы трафик.
-        player.setRepeatMode(Player.REPEAT_MODE_OFF);
+        // Как в тик-токе: клип крутится циклом, но из кэша — трафик не тратится.
+        player.setRepeatMode(Player.REPEAT_MODE_ONE);
         player.addListener(new Player.Listener() {
             @Override
             public void onPlaybackStateChanged(int state) {
@@ -142,6 +147,20 @@ public class FeedFragment extends Fragment {
             }
         });
         loadBatch();
+    }
+
+    private static androidx.media3.datasource.cache.SimpleCache sCache;
+
+    /** Локальный кэш клипов (150 МБ, старое вытесняется): цикл и повторы — без сети. */
+    private static synchronized androidx.media3.datasource.cache.SimpleCache feedCache(
+            android.content.Context ctx) {
+        if (sCache == null) {
+            sCache = new androidx.media3.datasource.cache.SimpleCache(
+                    new java.io.File(ctx.getCacheDir(), "feed"),
+                    new androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor(
+                            150L * 1024 * 1024));
+        }
+        return sCache;
     }
 
     /** Готовит порцию клипов в фоне и добавляет её в ленту. */
