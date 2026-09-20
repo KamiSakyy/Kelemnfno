@@ -49,12 +49,19 @@ public final class Net {
         if (client == null) {
             synchronized (Net.class) {
                 if (client == null) {
+                    // Мобильный интернет: держим соединения открытыми и ходим
+                    // параллельно, чтобы каталог и карточки открывались сразу.
+                    okhttp3.Dispatcher dispatcher = new okhttp3.Dispatcher();
+                    dispatcher.setMaxRequests(24);
+                    dispatcher.setMaxRequestsPerHost(8);
                     client = pinned(new OkHttpClient.Builder())
+                            .dispatcher(dispatcher)
+                            .connectionPool(new okhttp3.ConnectionPool(10, 5, TimeUnit.MINUTES))
                             .cache(diskCache())
-                            .connectTimeout(12, TimeUnit.SECONDS)
-                            .readTimeout(20, TimeUnit.SECONDS)
-                            .writeTimeout(20, TimeUnit.SECONDS)
-                            .callTimeout(45, TimeUnit.SECONDS)
+                            .connectTimeout(8, TimeUnit.SECONDS)
+                            .readTimeout(15, TimeUnit.SECONDS)
+                            .writeTimeout(15, TimeUnit.SECONDS)
+                            .callTimeout(30, TimeUnit.SECONDS)
                             .retryOnConnectionFailure(true)
                             .followRedirects(true)
                             .followSslRedirects(true)

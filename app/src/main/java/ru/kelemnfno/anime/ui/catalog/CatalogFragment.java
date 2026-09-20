@@ -207,20 +207,21 @@ public class CatalogFragment extends Fragment {
     private void renderQuickFilters() {
         if (b == null) return;
         b.quickFilters.removeAllViews();
+        int gap = ru.kelemnfno.anime.util.Ui.dp(requireContext(), 16);
+        b.quickFilters.setPadding(gap, 0, gap, 0);
+        b.quickFilters.setClipToPadding(false);
         int active = genreIds.size() + typeIds.size() + (status.isEmpty() ? 0 : 1)
                 + (yearFrom != 0 || yearTo != 0 ? 1 : 0);
 
-        TextView filters = Chips.chip(requireContext(),
-                active > 0 ? "Фильтры · " + active : "Фильтры", active > 0, v -> openFilters());
-        b.quickFilters.addView(filters);
+        Chips.add(b.quickFilters, active > 0 ? "Фильтры · " + active : "Фильтры",
+                active > 0, v -> openFilters());
 
         for (int i = 0; i < SORTS.length; i++) {
             final String value = SORTS[i];
-            TextView chip = Chips.chip(requireContext(), SORT_LABELS[i], sort.equals(value), v -> {
+            Chips.add(b.quickFilters, SORT_LABELS[i], sort.equals(value), v -> {
                 sort = value;
                 restart();
             });
-            b.quickFilters.addView(chip);
         }
         renderActiveFilters();
     }
