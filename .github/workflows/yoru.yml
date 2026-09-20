@@ -95,7 +95,7 @@ jobs:
           cp out/Yoru-release.apk Yoru-release.apk
           git add -f Yoru-release.apk
           git commit -m "Yoru APK ${GITHUB_SHA::7} [skip ci]" || echo "APK не изменился"
-          git push origin "HEAD:${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}" || echo "push APK пропущен (не фатально)"
 
       - name: Publish APK to release
         if: github.event_name == 'push'
