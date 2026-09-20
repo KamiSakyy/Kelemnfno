@@ -140,11 +140,11 @@ public class MainActivity extends AppCompatActivity {
     /** Активный пункт подсвечиваем белой «пилюлей» — как на сайте. */
     private void renderNav() {
         bindNav(b.navHomeIcon, b.navHomeLabel, b.navHome, TAB_HOME, R.drawable.ic_home_filled, R.drawable.ic_home);
-        bindNav(b.navCatalogIcon, b.navCatalogLabel, b.navCatalog, TAB_CATALOG, R.drawable.ic_grid, R.drawable.ic_grid);
+        bindNav(b.navCatalogIcon, b.navCatalogLabel, b.navCatalog, TAB_CATALOG, R.drawable.ic_grid_filled, R.drawable.ic_grid);
         bindNav(b.navFavoritesIcon, b.navFavoritesLabel, b.navFavorites, TAB_FAVORITES,
                 R.drawable.ic_heart_filled, R.drawable.ic_heart);
         bindNav(b.navCalendarIcon, b.navCalendarLabel, b.navCalendar, TAB_CALENDAR,
-                R.drawable.ic_calendar, R.drawable.ic_calendar);
+                R.drawable.ic_calendar_filled, R.drawable.ic_calendar);
         bindNav(b.navFeedIcon, b.navFeedLabel, b.navFeed, TAB_FEED,
                 R.drawable.ic_feed, R.drawable.ic_feed);
     }
