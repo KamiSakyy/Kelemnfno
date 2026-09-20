@@ -54,21 +54,6 @@ public class FeedFragment extends Fragment {
     private FeedAdapter.Holder attached;
     private int current = -1;
     private int cursor;
-    private long clipEnd;
-    private long clipStart;
-    private final android.os.Handler watch =
-            new android.os.Handler(android.os.Looper.getMainLooper());
-    /** Держит воспроизведение внутри куска 15–30 с: целая серия в ленте не играет. */
-    private final Runnable watchTick = new Runnable() {
-        @Override
-        public void run() {
-            if (player != null && attached != null && clipEnd > 0
-                    && player.isPlaying() && player.getCurrentPosition() >= clipEnd) {
-                player.seekTo(clipStart);
-            }
-            watch.postDelayed(this, 400);
-        }
-    };
     private boolean loadingBatch;
     private boolean muted;
     private boolean wantNext;
@@ -118,12 +103,26 @@ public class FeedFragment extends Fragment {
         androidx.media3.datasource.DefaultDataSource.Factory dataSources =
                 new androidx.media3.datasource.DefaultDataSource.Factory(
                         requireContext(), PlaybackService.HTTP);
+        // Экономия трафика: самый дешёвый битрейт и крошечный буфер —
+        // лента качает только показываемый кусок, а не серию целиком.
+        androidx.media3.exoplayer.trackselection.DefaultTrackSelector trackSelector =
+                new androidx.media3.exoplayer.trackselection.DefaultTrackSelector(requireContext());
+        trackSelector.setParameters(new androidx.media3.exoplayer.trackselection
+                .DefaultTrackSelector.Parameters.Builder(requireContext())
+                .setForceLowestBitrate(true)
+                .build());
+        androidx.media3.exoplayer.DefaultLoadControl loadControl =
+                new androidx.media3.exoplayer.DefaultLoadControl.Builder()
+                        .setBufferDurationsMs(1500, 6000, 800, 1500)
+                        .build();
         player = new ExoPlayer.Builder(requireContext())
                 .setMediaSourceFactory(new androidx.media3.exoplayer.source
                         .DefaultMediaSourceFactory(dataSources))
+                .setTrackSelector(trackSelector)
+                .setLoadControl(loadControl)
                 .build();
-        // Без автоперехода: клип повторяется, ленту листает зритель.
-        player.setRepeatMode(Player.REPEAT_MODE_ONE);
+        // Клип играется один раз (15–30 с) и останавливается: цикл удваивал бы трафик.
+        player.setRepeatMode(Player.REPEAT_MODE_OFF);
         player.addListener(new Player.Listener() {
             @Override
             public void onPlaybackStateChanged(int state) {
@@ -138,6 +137,8 @@ public class FeedFragment extends Fragment {
             public void onPlayerError(@NonNull PlaybackException error) {
                 if (attached != null) attached.b.feedLoading.setVisibility(View.GONE);
                 failStreak++;
+                // Битый фрагмент не должен вешать ленту: пропускаем его сам.
+                if (failStreak <= 3) advance();
             }
         });
         loadBatch();
@@ -233,11 +234,14 @@ public class FeedFragment extends Fragment {
                 }
             }
             if (sources == null || sources.isEmpty()) return null;
+            // Предпочитаем HLS с минимальным качеством: он качается сегментами,
+            // то есть ровно показанным куском, и трафик минимален.
             StreamSource chosen = null;
             for (StreamSource s : sources) {
-                if (!s.isHls()) {
+                if (!s.isHls()) continue;
+                if (chosen == null
+                        || (s.quality > 0 && (chosen.quality == 0 || s.quality < chosen.quality))) {
                     chosen = s;
-                    break;
                 }
             }
             if (chosen == null) chosen = sources.get(0);
@@ -282,15 +286,19 @@ public class FeedFragment extends Fragment {
         attached.b.feedLoading.setVisibility(View.VISIBLE);
         attached.b.feedPlayer.setPlayer(player);
         PlaybackService.applyHeaders(clip.referer, null);
-        player.setMediaItem(MediaItem.fromUri(clip.url));
+        // В плеер отдаётся ТОЛЬКО окно 15–30 с: остальная серия не скачивается,
+        // мобильный трафик тратится ровно на показанный фрагмент.
+        MediaItem item = new MediaItem.Builder()
+                .setUri(clip.url)
+                .setClippingConfiguration(new MediaItem.ClippingConfiguration.Builder()
+                        .setStartPositionMs(clip.startMs)
+                        .setEndPositionMs(clip.startMs + clip.clipMs)
+                        .build())
+                .build();
+        player.setMediaItem(item);
         player.prepare();
-        player.seekTo(clip.startMs);
         player.setVolume(muted ? 0f : 1f);
         player.setPlayWhenReady(true);
-        clipStart = clip.startMs;
-        clipEnd = clip.startMs + clip.clipMs;
-        watch.removeCallbacks(watchTick);
-        watch.postDelayed(watchTick, 400);
         wantNext = false;
         if (position >= clips.size() - 4) loadBatch();
     }
@@ -334,7 +342,6 @@ public class FeedFragment extends Fragment {
 
     @Override
     public void onDestroyView() {
-        watch.removeCallbacksAndMessages(null);
         detach();
         if (player != null) {
             player.release();
