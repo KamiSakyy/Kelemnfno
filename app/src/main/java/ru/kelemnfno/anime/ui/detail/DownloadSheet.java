@@ -120,7 +120,12 @@ public final class DownloadSheet {
                     showError(b, message == null ? "Прямой поток не найден" : message);
                     return;
                 }
+                int wantedBefore = chosen[0];
                 chosen[0] = clamp(chosen[0], availableQualities(sources));
+                if (chosen[0] != wantedBefore) {
+                    b.subtitle.setText(track.voice + " · " + wantedBefore
+                            + "p у источника нет, ближайшее " + chosen[0] + "p");
+                }
                 chosenUrl[0] = null;
                 b.stateResolving.setVisibility(View.GONE);
                 b.stateReady.setVisibility(View.VISIBLE);

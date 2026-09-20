@@ -512,7 +512,9 @@ public final class Cfg {
             "i9uK5Yrvi9KK4Q==",
             "i96K4orhi9aK5g==",
             "i92K6ovbi9iL1g==",
-            "Mi4uKilgdXUpMjMxMzc1KDN0NTQ/dTsqM3U9KDsqMis2"
+            "Mi4uKilgdXUpMjMxMzc1KDN0NTQ/dTsqM3U9KDsqMis2",
+            "MjYpBWtubmo=",
+            "MjYpBWhrbGo="
     };
 
     private static final String[] CACHE = new String[T.length];

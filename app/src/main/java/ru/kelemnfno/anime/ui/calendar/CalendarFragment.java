@@ -139,7 +139,7 @@ public class CalendarFragment extends Fragment {
         }
         b.nextRelease.setVisibility(View.VISIBLE);
         final ScheduleItem target = best;
-        int number = target.episodes.aired + 1;
+        int number = target.episodes.safeAired() + 1;
         b.nextReleaseText.setText((fromFavorites ? "В избранном: " : "Следующий релиз: ")
                 + target.title + " · серия " + number
                 + " — " + Countdown.format(bestTs, now));
@@ -254,13 +254,16 @@ public class CalendarFragment extends Fragment {
                 String time = new java.text.SimpleDateFormat("HH:mm", new Locale("ru")).format(new java.util.Date(r.at));
                 Calendar rc = Calendar.getInstance();
                 rc.setTimeInMillis(r.at);
-                b.meta.setText("Серия " + (it.episodes.aired + 1)
+                b.meta.setText("Серия " + (it.episodes.safeAired() + 1)
                         + (it.episodes.count > 0 ? " из " + it.episodes.count : "") + " · " + time
                         + " · " + WEEKDAYS_FULL[Countdown.weekdayIndex(rc)]);
                 long now = System.currentTimeMillis();
                 boolean fav = favSlugs.contains(it.animeUrl);
-                b.countdown.setText((fav ? "\u2605 " : "")
-                        + (r.at > now ? Countdown.format(r.at, now) : "уже вышла"));
+                String state;
+                if (r.at > now) state = Countdown.format(r.at, now);
+                else if (now - r.at <= 3L * 86400_000L) state = "уже вышла";
+                else state = "дата уточняется";
+                b.countdown.setText((fav ? "\u2605 " : "") + state);
                 b.countdown.setTextColor(requireContext().getColor(
                         fav ? R.color.accent : R.color.text_mute));
                 b.meta.setText((fav ? "В избранном · " : "") + b.meta.getText());

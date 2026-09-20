@@ -207,8 +207,9 @@ public class CatalogFragment extends Fragment {
     private void renderQuickFilters() {
         if (b == null) return;
         b.quickFilters.removeAllViews();
-        int gap = ru.kelemnfno.anime.util.Ui.dp(requireContext(), 16);
-        b.quickFilters.setPadding(gap, 0, gap, 0);
+        // Отступы ряда даёт HorizontalScrollView в разметке — внутренний контейнер
+        // не добавляет своих, иначе первый чип уезжает в сторону от заголовка.
+        b.quickFilters.setPadding(0, 0, 0, 0);
         b.quickFilters.setClipToPadding(false);
         int active = genreIds.size() + typeIds.size() + (status.isEmpty() ? 0 : 1)
                 + (yearFrom != 0 || yearTo != 0 ? 1 : 0);

@@ -299,8 +299,8 @@ public final class Sources {
         JsonObject full = Net.getJson(Cfg.s(11) + Net.enc(alias), h);
         for (JsonObject e : J.list(full, Cfg.s(278))) {
             Map<Integer, String> streams = new LinkedHashMap<>();
-            int[][] pairs = {{480, 0}, {720, 1}, {1080, 2}};
-            String[] keys = {Cfg.s(294), Cfg.s(295), Cfg.s(293)};
+            int[][] pairs = {{480, 0}, {720, 1}, {1080, 2}, {1440, 3}, {2160, 4}};
+            String[] keys = {Cfg.s(294), Cfg.s(295), Cfg.s(293), Cfg.s(502), Cfg.s(503)};
             for (int i = 0; i < pairs.length; i++) {
                 String safe = safeUrl(str(e, keys[i]));
                 if (!safe.isEmpty()) streams.put(pairs[i][0], safe);

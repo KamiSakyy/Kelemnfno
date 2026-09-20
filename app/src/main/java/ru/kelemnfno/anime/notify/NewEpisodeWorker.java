@@ -76,7 +76,7 @@ public class NewEpisodeWorker extends Worker {
             long nextDate = 0;
             String status = fav.status;
             if (item != null && item.episodes != null) {
-                aired = item.episodes.aired;
+                aired = item.episodes.safeAired();
                 nextDate = item.episodes.nextDateMs();
                 if (item.episodes.count > 0 && item.episodes.aired >= item.episodes.count) status = "released";
                 else status = "ongoing";
@@ -101,9 +101,13 @@ public class NewEpisodeWorker extends Worker {
                 db.favoriteDao().updateEpisodeState(fav.slug, Math.max(aired, fav.episodeCount), nextDate, status);
             }
             if (aired > fav.episodeCount && fav.episodeCount > 0) {
-                NotificationHelper.notifyEpisode(context, fav, fav.episodeCount + 1, aired);
-                notified++;
-                episodes += aired - fav.episodeCount;
+                // Скачок больше двух серий за проверку — похож на ошибку источника:
+                // молча синхронизируем счётчик, без ложного «вышла серия».
+                if (aired - fav.episodeCount <= 2) {
+                    NotificationHelper.notifyEpisode(context, fav, fav.episodeCount + 1, aired);
+                    notified++;
+                    episodes += aired - fav.episodeCount;
+                }
             }
         }
         if (notified > 1) NotificationHelper.notifySummary(context, notified, episodes);

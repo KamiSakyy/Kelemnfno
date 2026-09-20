@@ -197,7 +197,8 @@ public class DetailActivity extends AppCompatActivity {
         if (anime.minAge != null && anime.minAge.title != null && !"Unknown".equals(anime.minAge.title)) {
             meta.add(anime.minAge.title);
         }
-        if (anime.videos != null && !anime.videos.isEmpty()) meta.add(anime.videos.size() + " сер.");
+        int quickCount = quickEpisodes().size();
+        if (quickCount > 0) meta.add(quickCount + " сер.");
         b.meta.setText(Fmt.join(meta, " · "));
 
         double rating = anime.rating == null ? 0 : anime.rating.average;
@@ -358,14 +359,20 @@ public class DetailActivity extends AppCompatActivity {
      * Список серий из ответа API — виден сразу, без ожидания подбора источников.
      * Когда озвучки подобраны, renderVoices() уточнит список по выбранной дорожке.
      */
-    private void renderQuickEpisodes() {
-        if (anime.videos == null || anime.videos.isEmpty()) return;
+    /** Уникальные номера серий из видео-списка источника (без дублей по озвучкам). */
+    private List<Integer> quickEpisodes() {
         List<Integer> eps = new ArrayList<>();
+        if (anime == null || anime.videos == null) return eps;
         for (ru.kelemnfno.anime.data.model.VideoItem v : anime.videos) {
             int n = Fmt.numberIn(v.number, 0);
             if (n > 0 && !eps.contains(n)) eps.add(n);
         }
         java.util.Collections.sort(eps);
+        return eps;
+    }
+
+    private void renderQuickEpisodes() {
+        List<Integer> eps = quickEpisodes();
         if (eps.isEmpty()) return;
         b.episodesBlock.setVisibility(View.VISIBLE);
         b.episodesHint.setText(String.valueOf(eps.size()));
@@ -440,7 +447,7 @@ public class DetailActivity extends AppCompatActivity {
                     getColor(fav ? R.color.rose : R.color.text)));
             b.favButton.setText(fav ? R.string.in_favorites : R.string.to_favorites);
             // Кнопку целиком не закрашиваем — цвет меняет только значок.
-            b.favButton.setBackgroundResource(R.drawable.bg_chip);
+            b.favButton.setBackgroundResource(R.drawable.bg_btn_secondary);
             b.favButton.setCompoundDrawablesRelativeWithIntrinsicBounds(
                     fav ? R.drawable.ic_heart_filled : R.drawable.ic_heart, 0, 0, 0);
             b.favButton.setCompoundDrawableTintList(android.content.res.ColorStateList.valueOf(
@@ -494,11 +501,14 @@ public class DetailActivity extends AppCompatActivity {
                 return;
             }
             nextEpisodeTs = value.episodes.nextDateMs();
-            nextEpisodeNumber = value.episodes.aired + 1;
+            nextEpisodeNumber = value.episodes.safeAired() + 1;
             b.countdown.setVisibility(View.VISIBLE);
+            String when = nextEpisodeTs > System.currentTimeMillis()
+                    ? Countdown.format(nextEpisodeTs) + " · " + Countdown.dateTime(nextEpisodeTs)
+                    : "дата уточняется";
             b.countdown.setText("Серия " + nextEpisodeNumber
                     + (value.episodes.count > 0 ? " из " + value.episodes.count : "")
-                    + " — " + Countdown.format(nextEpisodeTs) + " · " + Countdown.dateTime(nextEpisodeTs));
+                    + " — " + when);
         });
     }
 

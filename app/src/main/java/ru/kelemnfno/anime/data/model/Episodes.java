@@ -15,6 +15,11 @@ public class Episodes {
         return nextDate * 1000L;
     }
 
+    /** Источник иногда врёт: «вышло 15 из 14». Число вышедших не может превышать общее. */
+    public int safeAired() {
+        return count > 0 ? Math.min(aired, count) : aired;
+    }
+
     public long prevDateMs() {
         return prevDate * 1000L;
     }
