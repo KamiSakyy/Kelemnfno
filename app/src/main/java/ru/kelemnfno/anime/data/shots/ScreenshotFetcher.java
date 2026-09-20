@@ -33,7 +33,10 @@ public final class ScreenshotFetcher {
 
     private static final MemCache CACHE = new MemCache();
     private static final MediaType JSON = MediaType.get("application/json; charset=UTF-8");
-    private static final int LIMIT = 8;
+    /** Сколько кадров нужно набрать, чтобы больше не ходить в сеть. */
+    private static final int TARGET = 6;
+    /** Потолок: больше восьми в ленту всё равно не помещается. */
+    private static final int MAX = 8;
     private static final long GOOD_TTL = 12 * 60 * 60_000L;
     private static final long EMPTY_TTL = 60_000L;
 
@@ -60,17 +63,53 @@ public final class ScreenshotFetcher {
 
         String encoded = Cfg.s(66) + shikimoriId + ".json%3Flang%3Dru";
         // Канонический API первым: один запрос и полный ответ.
-        List<String> shots = shikimori(Cfg.s(50) + shikimoriId + ".json?lang=ru", shikimoriId);
-        if (shots.isEmpty()) shots = shikimoriGraph(shikimoriId);
-        if (shots.isEmpty()) shots = shikimori(Cfg.s(49) + shikimoriId + ".json?lang=ru", shikimoriId);
-        if (shots.isEmpty()) shots = shikimori(Cfg.s(47) + shikimoriId + ".json?lang=ru", shikimoriId);
-        if (shots.isEmpty()) shots = shikimori(Cfg.s(28) + shikimoriId + "?lang=ru", shikimoriId);
-        if (shots.isEmpty()) shots = shikimori(Cfg.s(19) + encoded, shikimoriId);
-        if (shots.isEmpty()) shots = shikimori(Cfg.s(29) + encoded, shikimoriId);
+        // Кадры копим, а не берём у первого ответившего: один источник
+        // может отдать только часть, а нужно TARGET штук.
+        // Зеркала и GraphQL хранят одну и ту же базу Shikimori, поэтому
+        // добиваем только пока идут новые кадры; если прямой запрос
+        // прошёл, а добавлять нечего — дальше ходить бессмысленно.
+        List<String> shots = new ArrayList<>();
+        boolean answered = false;
+
+        List<String> rest = shikimori(Cfg.s(50) + shikimoriId + ".json?lang=ru", shikimoriId);
+        if (rest != null) {
+            answered = true;
+            merge(shots, rest);
+        }
+
+        if (shots.size() < TARGET) {
+            List<String> graph = shikimoriGraph(shikimoriId);
+            if (graph != null) {
+                answered = true;
+                merge(shots, graph);
+            }
+        }
+
+        // Прямые запросы не прошли вообще — пробуем зеркала и прокси.
+        if (shots.size() < TARGET && !answered) {
+            List<String> alt = shikimori(Cfg.s(49) + shikimoriId + ".json?lang=ru", shikimoriId);
+            if (alt == null) alt = shikimori(Cfg.s(47) + shikimoriId + ".json?lang=ru", shikimoriId);
+            if (alt == null) alt = shikimori(Cfg.s(28) + shikimoriId + "?lang=ru", shikimoriId);
+            if (alt == null) alt = shikimori(Cfg.s(19) + encoded, shikimoriId);
+            if (alt == null) alt = shikimori(Cfg.s(29) + encoded, shikimoriId);
+            if (alt != null) merge(shots, alt);
+        }
 
         if (shots.isEmpty()) CACHE.put("empty_" + key, shots);
         else CACHE.put(key, shots);
         return shots;
+    }
+
+    /** Дописываем новые кадры, пропуская повторы; сверх MAX не кладём. */
+    private static List<String> merge(List<String> base, List<String> extra) {
+        if (extra == null || extra.isEmpty()) return base;
+        for (String url : extra) {
+            if (base.size() >= MAX) break;
+            if (url == null || url.isEmpty()) continue;
+            if (base.contains(url)) continue;
+            base.add(url);
+        }
+        return base;
     }
 
     /**
@@ -85,13 +124,16 @@ public final class ScreenshotFetcher {
             Map<String, String> headers = Net.baseHeaders(Cfg.s(2), Cfg.s(48));
             headers.put("Accept", "application/json");
             JsonObject json = Net.getJson(url, headers);
-            if (json == null) return out;
+            // null — запрос не прошёл, стоит попробовать другое зеркало;
+            // пустой список — ответ получен, просто кадров у тайтла мало.
+            if (json == null) return null;
             int id = J.intOf(json, "id");
-            if (id > 0 && id != expectedId) return out;
+            if (id > 0 && id != expectedId) return null;
             collect(out, json.getAsJsonArray("screenshots"));
+            return out;
         } catch (Exception ignored) {
+            return null;
         }
-        return out;
     }
 
     /**
@@ -110,23 +152,24 @@ public final class ScreenshotFetcher {
                     .post(RequestBody.create(body, JSON))
                     .build();
             try (Response response = Net.client().newCall(request).execute()) {
-                if (!response.isSuccessful() || response.body() == null) return out;
+                if (!response.isSuccessful() || response.body() == null) return null;
                 JsonObject data = J.obj(Net.parse(response.body().string()), "data");
-                if (data == null) return out;
+                if (data == null) return null;
                 JsonElement listEl = data.get("animes");
-                if (listEl == null || !listEl.isJsonArray()) return out;
+                if (listEl == null || !listEl.isJsonArray()) return null;
                 JsonArray list = listEl.getAsJsonArray();
                 if (list.size() == 0) return out;
                 JsonElement firstEl = list.get(0);
-                if (firstEl == null || !firstEl.isJsonObject()) return out;
+                if (firstEl == null || !firstEl.isJsonObject()) return null;
                 JsonObject first = firstEl.getAsJsonObject();
                 int id = J.intOf(first, "id");
-                if (id > 0 && id != shikimoriId) return out;
+                if (id > 0 && id != shikimoriId) return null;
                 collectGraph(out, first.getAsJsonArray("screenshots"));
             }
+            return out;
         } catch (Exception ignored) {
+            return null;
         }
-        return out;
     }
 
     /** Кадры REST-ответа: объекты с original / preview и относительными путями. */
@@ -160,7 +203,7 @@ public final class ScreenshotFetcher {
     }
 
     private static void add(List<String> out, String v) {
-        if (out.size() >= LIMIT || v == null) return;
+        if (out.size() >= MAX || v == null) return;
         v = v.trim();
         if (v.isEmpty()) return;
         if (v.startsWith("//")) {
