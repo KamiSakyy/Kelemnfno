@@ -41,6 +41,7 @@ public class CalendarFragment extends Fragment {
     private FragmentCalendarBinding b;
     private List<ScheduleItem> items = new ArrayList<>();
     private final List<String> favSlugs = new ArrayList<>();
+    private final java.util.Map<String, FavoriteEntity> favBySlug = new java.util.HashMap<>();
     private int selectedDay = -1;
     private boolean onlyFav;
     private final List<Row> rows = new ArrayList<>();
@@ -77,7 +78,11 @@ public class CalendarFragment extends Fragment {
 
         AppDatabase.get(requireContext()).favoriteDao().observeAll().observe(getViewLifecycleOwner(), favs -> {
             favSlugs.clear();
-            if (favs != null) for (FavoriteEntity f : favs) favSlugs.add(f.slug);
+            favBySlug.clear();
+            if (favs != null) for (FavoriteEntity f : favs) {
+                favSlugs.add(f.slug);
+                favBySlug.put(f.slug, f);
+            }
             renderWeekdays();
         });
 
@@ -139,13 +144,21 @@ public class CalendarFragment extends Fragment {
         }
         b.nextRelease.setVisibility(View.VISIBLE);
         final ScheduleItem target = best;
-        int number = target.episodes.safeAired() + 1;
+        int number = airedShown(target) + 1;
         b.nextReleaseText.setText((fromFavorites ? "В избранном: " : "Следующий релиз: ")
                 + target.title + " · серия " + number
                 + " — " + Countdown.format(bestTs, now));
         b.nextReleaseText.setTextColor(requireContext().getColor(
                 fromFavorites ? R.color.accent : R.color.text));
         b.nextRelease.setOnClickListener(v -> DetailActivity.open(requireContext(), target.animeUrl));
+    }
+
+    /** Не утверждать больше вышедших серий, чем проверено: для избранного — факт из карточки. */
+    private int airedShown(ScheduleItem it) {
+        int aired = it.episodes.safeAired();
+        FavoriteEntity fe = favBySlug.get(it.animeUrl);
+        if (fe != null && fe.episodeCount > 0 && fe.episodeCount < aired) aired = fe.episodeCount;
+        return aired;
     }
 
     private long nextTs(ScheduleItem it) {
@@ -254,7 +267,7 @@ public class CalendarFragment extends Fragment {
                 String time = new java.text.SimpleDateFormat("HH:mm", new Locale("ru")).format(new java.util.Date(r.at));
                 Calendar rc = Calendar.getInstance();
                 rc.setTimeInMillis(r.at);
-                b.meta.setText("Серия " + (it.episodes.safeAired() + 1)
+                b.meta.setText("Серия " + (airedShown(it) + 1)
                         + (it.episodes.count > 0 ? " из " + it.episodes.count : "") + " · " + time
                         + " · " + WEEKDAYS_FULL[Countdown.weekdayIndex(rc)]);
                 long now = System.currentTimeMillis();

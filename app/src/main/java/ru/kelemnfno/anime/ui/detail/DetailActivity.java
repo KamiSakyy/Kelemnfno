@@ -466,7 +466,7 @@ public class DetailActivity extends AppCompatActivity {
         draft.year = anime.year;
         draft.type = anime.type == null ? "" : anime.type.shortname;
         draft.addedAt = System.currentTimeMillis();
-        draft.episodeCount = anime.videos == null ? 0 : anime.videos.size();
+        draft.episodeCount = quickEpisodes().size();
         draft.dubbing = currentTrack == null ? "" : currentTrack.voice;
         draft.status = anime.animeStatus == null ? "" : anime.animeStatus.alias;
         draft.nextDate = nextEpisodeTs;
@@ -501,13 +501,17 @@ public class DetailActivity extends AppCompatActivity {
                 return;
             }
             nextEpisodeTs = value.episodes.nextDateMs();
-            nextEpisodeNumber = value.episodes.safeAired() + 1;
+            // Правда — фактически доступные серии в карточке, а не счётчик расписания.
+            int real = quickEpisodes().size();
+            int aired = real > 0 ? real : value.episodes.safeAired();
+            nextEpisodeNumber = aired + 1;
+            int total = Math.max(value.episodes.count, real);
             b.countdown.setVisibility(View.VISIBLE);
             String when = nextEpisodeTs > System.currentTimeMillis()
                     ? Countdown.format(nextEpisodeTs) + " · " + Countdown.dateTime(nextEpisodeTs)
                     : "дата уточняется";
             b.countdown.setText("Серия " + nextEpisodeNumber
-                    + (value.episodes.count > 0 ? " из " + value.episodes.count : "")
+                    + (total > aired ? " из " + total : "")
                     + " — " + when);
         });
     }

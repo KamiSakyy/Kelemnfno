@@ -157,8 +157,9 @@ public final class NotificationHelper {
 
     /* ---------------- Новые серии ---------------- */
 
-    /** Уведомление «вышла новая серия» для избранного тайтла. */
-    public static Notification episodeNotification(Context context, FavoriteEntity fav, int fromEpisode, int toEpisode) {
+    /** Уведомление «вышла новая серия»: постер, номер серии и озвучки. */
+    public static Notification episodeNotification(Context context, FavoriteEntity fav,
+                                                   int fromEpisode, int toEpisode, String dubs) {
         Intent open = new Intent(context, DetailActivity.class)
                 .putExtra(DetailActivity.EXTRA_SLUG, fav.slug)
                 .putExtra(DetailActivity.EXTRA_EPISODE, String.valueOf(toEpisode))
@@ -167,27 +168,55 @@ public final class NotificationHelper {
                 open, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
         int count = Math.max(1, toEpisode - fromEpisode + 1);
-        String text = count > 1
-                ? "Серии " + fromEpisode + "–" + toEpisode + " уже доступны"
-                : "Серия " + toEpisode + " уже доступна";
+        String head = count > 1
+                ? "Вышли серии " + fromEpisode + "–" + toEpisode
+                : "Вышла серия " + toEpisode;
+        String dubPart = dubs == null || dubs.isEmpty() ? "" : " · " + dubs;
+        String text = head + dubPart;
 
-        return new NotificationCompat.Builder(context, CHANNEL_EPISODES)
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_EPISODES)
                 .setSmallIcon(R.drawable.ic_bell)
                 .setContentTitle(fav.title)
                 .setContentText(text)
-                .setStyle(new NotificationCompat.BigTextStyle().bigText(text + "\n" + fav.title))
                 .setAutoCancel(true)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setCategory(NotificationCompat.CATEGORY_RECOMMENDATION)
-                .setContentIntent(pi)
-                .build();
+                .setColor(context.getColor(R.color.accent))
+                .setContentIntent(pi);
+
+        android.graphics.Bitmap poster = loadBitmap(fav.poster);
+        if (poster != null) {
+            builder.setLargeIcon(poster);
+            builder.setStyle(new NotificationCompat.BigPictureStyle()
+                    .bigPicture(poster)
+                    .setBigContentTitle(fav.title)
+                    .setSummaryText(text));
+        } else {
+            builder.setStyle(new NotificationCompat.BigTextStyle().bigText(text));
+        }
+        return builder.build();
     }
 
-    public static void notifyEpisode(Context context, FavoriteEntity fav, int fromEpisode, int toEpisode) {
+    /** Постер для уведомления; без сети или при ошибке — null (уведомление останется текстовым). */
+    private static android.graphics.Bitmap loadBitmap(String url) {
+        if (url == null || url.isEmpty()) return null;
+        try {
+            okhttp3.Request req = new okhttp3.Request.Builder().url(url).build();
+            try (okhttp3.Response r = ru.kelemnfno.anime.data.resolver.Net.client().newCall(req).execute()) {
+                if (!r.isSuccessful() || r.body() == null) return null;
+                return android.graphics.BitmapFactory.decodeStream(r.body().byteStream());
+            }
+        } catch (Throwable t) {
+            return null;
+        }
+    }
+
+    public static void notifyEpisode(Context context, FavoriteEntity fav, int fromEpisode, int toEpisode, String dubs) {
         if (!canNotify(context)) return;
         try {
             NotificationManagerCompat.from(context)
-                    .notify((int) (ID_EPISODE_SUMMARY + fav.animeId), episodeNotification(context, fav, fromEpisode, toEpisode));
+                    .notify((int) (ID_EPISODE_SUMMARY + fav.animeId),
+                            episodeNotification(context, fav, fromEpisode, toEpisode, dubs));
         } catch (SecurityException ignored) {
         }
     }
