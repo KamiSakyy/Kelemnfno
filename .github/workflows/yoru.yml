@@ -57,12 +57,7 @@ jobs:
               -keyalg RSA -keysize 2048 -validity 10000 \
               -storepass yoru -keypass yoru \
               -dname "CN=Yoru, OU=Yoru, O=Yoru, C=RU"
-            cat > keystore.properties <<PROPS
-          storeFile=keystore/release.keystore
-          storePassword=yoru
-          keyAlias=yoru
-          keyPassword=yoru
-          PROPS
+            { echo "storeFile=keystore/release.keystore"; echo "storePassword=yoru"; echo "keyAlias=yoru"; echo "keyPassword=yoru"; } > keystore.properties
             git config user.name "kelemnfno-ci"
             git config user.email "ci@kelemnfno.local"
             git add -f keystore/release.keystore keystore.properties
