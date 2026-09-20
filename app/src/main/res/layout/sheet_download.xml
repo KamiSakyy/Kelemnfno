@@ -153,13 +153,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@drawable/bg_chip_accent"
-            android:drawablePadding="8dp"
-            android:drawableTint="@color/emerald"
             android:padding="14dp"
             android:textColor="@color/text"
             android:textSize="13sp"
-            app:drawableStartCompat="@drawable/ic_check"
-            xmlns:app="http://schemas.android.com/apk/res-auto"
             tools:text="HLS · 720p" />
 
         <TextView
@@ -168,15 +164,11 @@
             android:layout_height="52dp"
             android:layout_marginTop="12dp"
             android:background="@drawable/bg_pill_white"
-            android:drawablePadding="8dp"
-            android:drawableTint="#FF0B0B10"
             android:gravity="center"
             android:text="Начать скачивание"
             android:textColor="#FF0B0B10"
             android:textSize="15sp"
-            android:textStyle="bold"
-            app:drawableStartCompat="@drawable/ic_download"
-            xmlns:app="http://schemas.android.com/apk/res-auto" />
+            android:textStyle="bold" />
     </LinearLayout>
 
     <LinearLayout

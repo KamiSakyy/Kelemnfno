@@ -159,24 +159,32 @@ public class CalendarFragment extends Fragment {
     private void renderWeekdays() {
         if (b == null) return;
         b.weekdays.removeAllViews();
+        addWeekdayChip(Chips.chip(requireContext(), "Все", selectedDay == -1, v -> {
+            selectedDay = -1;
+            renderWeekdays();
+        }));
         for (int i = 0; i < 7; i++) {
             final int day = i;
             int count = countFor(day);
-            TextView chip = Chips.chip(requireContext(), WEEKDAYS[i] + (count > 0 ? " · " + count : ""),
+            addWeekdayChip(Chips.chip(requireContext(), WEEKDAYS[i] + (count > 0 ? " · " + count : ""),
                     day == selectedDay, v -> {
                 selectedDay = day;
                 renderWeekdays();
-            });
-            android.widget.LinearLayout.LayoutParams lp =
-                    new android.widget.LinearLayout.LayoutParams(
-                            android.widget.LinearLayout.LayoutParams.WRAP_CONTENT,
-                            android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
-            int gap = Ui.dp(requireContext(), 8);
-            lp.setMargins(0, 0, gap, 0);
-            chip.setLayoutParams(lp);
-            b.weekdays.addView(chip);
+            }));
         }
         renderList();
+    }
+
+    /** Одинаковый отступ между чипами дней. */
+    private void addWeekdayChip(TextView chip) {
+        android.widget.LinearLayout.LayoutParams lp =
+                new android.widget.LinearLayout.LayoutParams(
+                        android.widget.LinearLayout.LayoutParams.WRAP_CONTENT,
+                        android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
+        int gap = Ui.dp(requireContext(), 8);
+        lp.setMargins(0, 0, gap, 0);
+        chip.setLayoutParams(lp);
+        b.weekdays.addView(chip);
     }
 
     private int countFor(int day) {
@@ -200,7 +208,7 @@ public class CalendarFragment extends Fragment {
             if (ts <= 0) continue;
             Calendar c = Calendar.getInstance();
             c.setTimeInMillis(ts);
-            if (Countdown.weekdayIndex(c) != selectedDay) continue;
+            if (selectedDay >= 0 && Countdown.weekdayIndex(c) != selectedDay) continue;
             Row r = new Row();
             r.item = it;
             r.at = ts;
@@ -210,6 +218,8 @@ public class CalendarFragment extends Fragment {
         b.list.getAdapter().notifyDataSetChanged();
         b.empty.getRoot().setVisibility(rows.isEmpty() ? View.VISIBLE : View.GONE);
         b.list.setVisibility(rows.isEmpty() ? View.GONE : View.VISIBLE);
+        b.empty.emptyText.setText(selectedDay == -1
+                ? "На этой неделе релизов нет" : "На этот день релизов нет");
     }
 
     private class Adapter extends RecyclerView.Adapter<Adapter.Holder> {
@@ -242,9 +252,11 @@ public class CalendarFragment extends Fragment {
                 Ui.poster(b.poster, Fmt.posterUrl(it.poster, "big"), 10);
                 b.title.setText(it.title);
                 String time = new java.text.SimpleDateFormat("HH:mm", new Locale("ru")).format(new java.util.Date(r.at));
+                Calendar rc = Calendar.getInstance();
+                rc.setTimeInMillis(r.at);
                 b.meta.setText("Серия " + (it.episodes.aired + 1)
                         + (it.episodes.count > 0 ? " из " + it.episodes.count : "") + " · " + time
-                        + " · " + WEEKDAYS_FULL[selectedDay]);
+                        + " · " + WEEKDAYS_FULL[Countdown.weekdayIndex(rc)]);
                 long now = System.currentTimeMillis();
                 boolean fav = favSlugs.contains(it.animeUrl);
                 b.countdown.setText((fav ? "\u2605 " : "")

@@ -439,7 +439,12 @@ public class DetailActivity extends AppCompatActivity {
             b.fav.setImageTintList(android.content.res.ColorStateList.valueOf(
                     getColor(fav ? R.color.rose : R.color.text)));
             b.favButton.setText(fav ? R.string.in_favorites : R.string.to_favorites);
-            b.favButton.setBackgroundResource(fav ? R.drawable.bg_chip_accent : R.drawable.bg_chip);
+            // Кнопку целиком не закрашиваем — цвет меняет только значок.
+            b.favButton.setBackgroundResource(R.drawable.bg_chip);
+            b.favButton.setCompoundDrawablesRelativeWithIntrinsicBounds(
+                    fav ? R.drawable.ic_heart_filled : R.drawable.ic_heart, 0, 0, 0);
+            b.favButton.setCompoundDrawableTintList(android.content.res.ColorStateList.valueOf(
+                    getColor(fav ? R.color.rose : R.color.text_mute)));
             Ui.pop(b.fav);
         });
     }
