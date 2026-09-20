@@ -57,7 +57,6 @@ public final class Net {
                     client = pinned(new OkHttpClient.Builder())
                             .dispatcher(dispatcher)
                             .connectionPool(new okhttp3.ConnectionPool(10, 5, TimeUnit.MINUTES))
-                            .cache(diskCache())
                             .connectTimeout(8, TimeUnit.SECONDS)
                             .readTimeout(15, TimeUnit.SECONDS)
                             .writeTimeout(15, TimeUnit.SECONDS)
@@ -89,17 +88,6 @@ public final class Net {
             return builder.certificatePinner(cb.build());
         } catch (Throwable t) {
             return builder;
-        }
-    }
-
-    /** Дисковый кэш ответов: повторные открытия экранов не ходят в сеть. */
-    private static okhttp3.Cache diskCache() {
-        try {
-            java.io.File dir = new java.io.File(
-                    ru.kelemnfno.anime.AnimeApp.get().getCacheDir(), "http");
-            return new okhttp3.Cache(dir, 30L * 1024L * 1024L);
-        } catch (Throwable t) {
-            return null;
         }
     }
 

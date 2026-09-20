@@ -2,10 +2,8 @@ package ru.kelemnfno.anime.data.api;
 
 import android.content.Context;
 
-import java.io.File;
 import java.util.concurrent.TimeUnit;
 
-import okhttp3.Cache;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import retrofit2.Retrofit;
@@ -29,11 +27,10 @@ public final class ApiClient {
         if (client == null) {
             synchronized (ApiClient.class) {
                 if (client == null) {
-                    Cache cache = new Cache(new File(context.getCacheDir(), "http"), 40L * 1024 * 1024);
+                    // HTTP-кэш отключён: текстовые данные всегда свежие из сети.
                     okhttp3.Dispatcher dispatcher = new okhttp3.Dispatcher();
                     dispatcher.setMaxRequestsPerHost(8);
                     client = new OkHttpClient.Builder()
-                            .cache(cache)
                             .dispatcher(dispatcher)
                             .connectionPool(new okhttp3.ConnectionPool(8, 5, TimeUnit.MINUTES))
                             .connectTimeout(15, TimeUnit.SECONDS)

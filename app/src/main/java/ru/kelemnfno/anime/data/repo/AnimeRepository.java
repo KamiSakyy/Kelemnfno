@@ -30,7 +30,6 @@ public final class AnimeRepository {
     private static volatile AnimeRepository instance;
 
     private final RemoteApi api;
-    private final MemCache cache = new MemCache();
     private final DiskCache disk;
     private static final com.google.gson.Gson GSON = new com.google.gson.Gson();
 
@@ -49,7 +48,7 @@ public final class AnimeRepository {
     }
 
     public void invalidate() {
-        cache.clear();
+        // Кэш памяти удалён: данные всегда свежие из сети.
     }
 
     private <T> T unwrap(Call<ApiEnvelope<T>> call) throws ApiException {
@@ -77,10 +76,7 @@ public final class AnimeRepository {
             }
         }
         String key = "list:" + query.toString();
-        List<AnimeItem> hit = cache.get(key, TTL_LIST);
-        if (hit != null) return hit;
         List<AnimeItem> data = unwrap(api.list(query));
-        cache.put(key, data);
         try {
             disk.put(key, GSON.toJson(data));
         } catch (Throwable ignored) {
@@ -93,8 +89,6 @@ public final class AnimeRepository {
      * свежие данные подтягиваются фоном.
      */
     public List<AnimeItem> listCached(Map<String, String> params) {
-        List<AnimeItem> hit = cache.get(listKey(params), TTL_LIST);
-        if (hit != null) return hit;
         return readItems(listKey(params));
     }
 
@@ -109,9 +103,7 @@ public final class AnimeRepository {
         try {
             AnimeItem[] items = GSON.fromJson(json, AnimeItem[].class);
             if (items == null || items.length == 0) return null;
-            List<AnimeItem> list = new ArrayList<>(java.util.Arrays.asList(items));
-            cache.put(key, list);
-            return list;
+            return new ArrayList<>(java.util.Arrays.asList(items));
         } catch (Throwable t) {
             return null;
         }
@@ -128,15 +120,10 @@ public final class AnimeRepository {
     }
 
     public List<AnimeItem> search(String q, int limit) throws ApiException {
-        String key = "search:" + q + ":" + limit;
-        List<AnimeItem> hit = cache.get(key, TTL_LIST);
-        if (hit != null) return hit;
         Map<String, String> p = new LinkedHashMap<>();
         p.put("q", q);
         p.put("limit", String.valueOf(limit));
-        List<AnimeItem> data = unwrap(api.list(p));
-        cache.put(key, data);
-        return data;
+        return unwrap(api.list(p));
     }
 
     public List<AnimeItem> byIds(List<Integer> ids) throws ApiException {
@@ -151,10 +138,7 @@ public final class AnimeRepository {
     }
 
     public List<ScheduleItem> schedule() throws ApiException {
-        List<ScheduleItem> hit = cache.get("schedule", TTL_SCHEDULE);
-        if (hit != null) return hit;
         List<ScheduleItem> data = unwrap(api.schedule());
-        cache.put("schedule", data);
         try {
             disk.put("schedule", GSON.toJson(data));
         } catch (Throwable ignored) {
@@ -164,33 +148,23 @@ public final class AnimeRepository {
 
     /** Расписание из кэша, без сети. */
     public List<ScheduleItem> scheduleCached() {
-        List<ScheduleItem> hit = cache.get("schedule", TTL_SCHEDULE);
-        if (hit != null) return hit;
         String json = disk.get("schedule");
         if (json == null) return null;
         try {
             ScheduleItem[] items = GSON.fromJson(json, ScheduleItem[].class);
             if (items == null || items.length == 0) return null;
-            List<ScheduleItem> list = new ArrayList<>(java.util.Arrays.asList(items));
-            cache.put("schedule", list);
-            return list;
+            return new ArrayList<>(java.util.Arrays.asList(items));
         } catch (Throwable t) {
             return null;
         }
     }
 
     public GenresData genres() throws ApiException {
-        GenresData hit = cache.get("genres", TTL_GENRES);
-        if (hit != null) return hit;
-        GenresData data = unwrap(api.genres());
-        cache.put("genres", data);
-        return data;
+        return unwrap(api.genres());
     }
 
     public AnimeFull anime(String slugOrId) throws ApiException {
         String key = "anime:" + slugOrId;
-        AnimeFull hit = cache.get(key, TTL_DETAIL);
-        if (hit != null) return hit;
         AnimeFull data = unwrap(api.anime(slugOrId, "true"));
         if (data.videos == null || data.videos.isEmpty()) {
             try {
@@ -199,7 +173,6 @@ public final class AnimeRepository {
                 data.videos = new ArrayList<>();
             }
         }
-        cache.put(key, data);
         try {
             disk.put(key, GSON.toJson(data));
         } catch (Throwable ignored) {
@@ -210,14 +183,10 @@ public final class AnimeRepository {
     /** Полная карточка из кэша, без сети. */
     public AnimeFull animeCached(String slugOrId) {
         String key = "anime:" + slugOrId;
-        AnimeFull hit = cache.get(key, TTL_DETAIL);
-        if (hit != null) return hit;
         String json = disk.get(key);
         if (json == null) return null;
         try {
             AnimeFull full = GSON.fromJson(json, AnimeFull.class);
-            if (full == null) return null;
-            cache.put(key, full);
             return full;
         } catch (Throwable t) {
             return null;
@@ -225,11 +194,6 @@ public final class AnimeRepository {
     }
 
     public List<VideoItem> videos(int animeId) throws ApiException {
-        String key = "videos:" + animeId;
-        List<VideoItem> hit = cache.get(key, TTL_DETAIL);
-        if (hit != null) return hit;
-        List<VideoItem> data = unwrap(api.videos(animeId));
-        cache.put(key, data);
-        return data;
+        return unwrap(api.videos(animeId));
     }
 }
