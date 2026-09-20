@@ -17,6 +17,7 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import ru.kelemnfno.anime.data.repo.MemCache;
+import ru.kelemnfno.anime.util.AppExecutors;
 import ru.kelemnfno.anime.data.resolver.J;
 import ru.kelemnfno.anime.data.resolver.Net;
 import ru.kelemnfno.anime.data.resolver.Cfg;
@@ -50,36 +51,62 @@ public final class ScreenshotFetcher {
         // Пустой ответ держим всего минуту: если источник отвиснет, кадры появятся сами.
         if (CACHE.get("empty_" + key, EMPTY_TTL) != null) return new ArrayList<>();
 
-        List<String> shots = new ArrayList<>();
+        final int malTrusted = malId;
+        final int shiki = shikimoriId;
 
-        String encoded = Cfg.s(66) + shikimoriId + ".json%3Flang%3Dru";
-        if (shikimoriId > 0) {
-            shots = shikimori(Cfg.s(49) + shikimoriId + ".json?lang=ru");
-            if (shots.isEmpty()) {
-                shots = shikimori(Cfg.s(47) + shikimoriId + ".json?lang=ru");
-            }
-            if (shots.isEmpty()) {
-                shots = shikimori(Cfg.s(50) + shikimoriId + "?lang=ru");
-            }
-            if (shots.isEmpty()) {
-                shots = shikimori(Cfg.s(28) + shikimoriId + "?lang=ru");
-            }
-            if (shots.isEmpty()) {
-                shots = shikimori(Cfg.s(19) + encoded);
-            }
-            if (shots.isEmpty()) {
-                shots = shikimori(Cfg.s(29) + encoded);
+        // Шики и MAL опрашиваем одновременно, а не по очереди: общая
+        // задержка равна максимуму из веток, а не их сумме.
+        java.util.concurrent.ExecutorService pool = AppExecutors.get().heavy();
+        java.util.concurrent.Future<List<String>> fShiki = shiki > 0
+                ? pool.submit(() -> shikimoriChain(shiki)) : null;
+        java.util.concurrent.Future<List<String>> fMal = malTrusted > 0
+                ? pool.submit(() -> malChain(malTrusted)) : null;
+
+        List<String> shots = await(fShiki);
+        if (shots.isEmpty()) shots = await(fMal);
+
+        // Только если id нет вообще — ищем по названию, но с проверкой,
+        // что найденное действительно наш тайтл, а не похожий.
+        if (shots.isEmpty() && shiki <= 0 && malTrusted <= 0) {
+            int mal = malIdByTitle(title);
+            if (mal > 0) {
+                shots = malChain(mal);
+                if (shots.isEmpty()) shots = anilist(mal);
             }
         }
 
-        int mal = malId;
-        if (mal <= 0) mal = malIdByTitle(title);
-        if (shots.isEmpty() && mal > 0) shots = jikan(mal);
-        if (shots.isEmpty() && mal > 0) shots = malPictures(mal);
-        if (shots.isEmpty() && mal > 0) shots = anilist(mal);
-
         if (shots.isEmpty()) CACHE.put("empty_" + key, shots);
         else CACHE.put(key, shots);
+        return shots;
+    }
+
+    private static List<String> await(java.util.concurrent.Future<List<String>> future) {
+        if (future == null) return new ArrayList<>();
+        try {
+            List<String> r = future.get(9, java.util.concurrent.TimeUnit.SECONDS);
+            return r == null ? new ArrayList<>() : r;
+        } catch (Throwable t) {
+            return new ArrayList<>();
+        }
+    }
+
+    /** Цепочка Shikimori по id: кадры нашего тайтла, перебор зеркал. */
+    private static List<String> shikimoriChain(int shikimoriId) {
+        String encoded = Cfg.s(66) + shikimoriId + ".json%3Flang%3Dru";
+        List<String> shots = shikimori(Cfg.s(49) + shikimoriId + ".json?lang=ru");
+        if (shots.isEmpty()) shots = shikimori(Cfg.s(47) + shikimoriId + ".json?lang=ru");
+        if (shots.isEmpty()) shots = shikimori(Cfg.s(50) + shikimoriId + "?lang=ru");
+        if (shots.isEmpty()) shots = shikimori(Cfg.s(28) + shikimoriId + "?lang=ru");
+        if (shots.isEmpty()) shots = shikimori(Cfg.s(19) + encoded);
+        if (shots.isEmpty()) shots = shikimori(Cfg.s(29) + encoded);
+        return shots;
+    }
+
+    /** Цепочка MyAnimeList по id. */
+    private static List<String> malChain(int mal) {
+        List<String> shots = jikan(mal);
+        if (shots.isEmpty()) shots = malPictures(mal);
+        if (shots.isEmpty()) shots = anilist(mal);
         return shots;
     }
 
@@ -160,16 +187,30 @@ public final class ScreenshotFetcher {
     }
 
     /** Если mal_id в ответе нет — ищем тайтл по названию. */
+    /** Ищем mal_id по названию, но берём только реально совпавший тайтл. */
     private static int malIdByTitle(String title) {
         if (title == null || title.trim().isEmpty()) return 0;
         try {
             String q = URLEncoder.encode(title.trim(), "UTF-8");
             JsonObject root = Net.getJson(
-                    Cfg.s(27) + q + "&limit=1&type=anime",
+                    Cfg.s(27) + q + "&limit=5&type=anime",
                     Net.baseHeaders(null, null));
             List<JsonObject> items = J.list(root, "data");
-            if (items.isEmpty()) return 0;
-            return J.intOf(items.get(0), "mal_id");
+            int bestId = 0;
+            double bestScore = 0;
+            for (JsonObject it : items) {
+                double score = Math.max(
+                        ru.kelemnfno.anime.data.resolver.Match.similarity(title, J.str(it, "title")),
+                        Math.max(
+                                ru.kelemnfno.anime.data.resolver.Match.similarity(title, J.str(it, "title_english")),
+                                ru.kelemnfno.anime.data.resolver.Match.similarity(title, J.str(it, "title_japanese"))));
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestId = J.intOf(it, "mal_id");
+                }
+            }
+            // Ниже порога — это другой тайтл, его кадры не берём.
+            return bestScore >= 0.6 ? bestId : 0;
         } catch (Exception ignored) {
         }
         return 0;
