@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+ <cache-path name="shared_video" path="shared-video/" />
+ <cache-path name="mp4_export_cache" path="mp4-export/" />
+ <files-path name="mp4_export_files" path="mp4-export/" />
+</paths>

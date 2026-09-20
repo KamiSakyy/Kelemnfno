@@ -1,0 +1,85 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.tsuyu.line'
+    compileSdk 36
+
+    defaultConfig {
+        applicationId "com.yoru.app"
+        minSdk 26
+        targetSdk 36
+        versionCode 21
+        versionName "1.20"
+        resValue "string", "app_name", "Yoru"
+        ndk { abiFilters 'arm64-v8a', 'armeabi-v7a' }
+    }
+
+    signingConfigs {
+        release {
+            def props = new Properties()
+            def propsFile = rootProject.file('keystore.properties')
+            if (propsFile.exists()) propsFile.withInputStream { props.load(it) }
+            def store = rootProject.file(props.getProperty('storeFile', 'keystore/release.keystore'))
+            if (store.exists()) {
+                storeFile store
+                storePassword props.getProperty('storePassword', 'yoru')
+                keyAlias props.getProperty('keyAlias', 'yoru')
+                keyPassword props.getProperty('keyPassword', 'yoru')
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            shrinkResources true
+            debuggable false
+            signingConfig signingConfigs.release
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            applicationIdSuffix '.debug'
+        }
+    }
+
+    externalNativeBuild {
+        cmake {
+            path file('src/main/cpp/CMakeLists.txt')
+            version '3.22.1'
+        }
+    }
+
+    buildFeatures { buildConfig true }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    packaging {
+        resources {
+            excludes += [
+                'META-INF/DEPENDENCIES', 'META-INF/LICENSE*', 'META-INF/NOTICE*',
+                'META-INF/*.version', 'META-INF/*.md', 'META-INF/*.txt',
+                'META-INF/androidx/**', 'META-INF/kotlinx/**', 'kotlin/**', '**.txt', '**.md'
+            ]
+        }
+        jniLibs { useLegacyPackaging true }
+    }
+}
+
+dependencies {
+    implementation 'androidx.media3:media3-exoplayer:1.5.1'
+    implementation 'androidx.media3:media3-exoplayer-hls:1.5.1'
+    implementation 'androidx.media3:media3-exoplayer-dash:1.5.1'
+    implementation 'androidx.media3:media3-ui:1.5.1'
+    implementation 'androidx.media3:media3-database:1.5.1'
+    implementation 'org.jsoup:jsoup:1.18.3'
+    implementation 'com.squareup.okhttp3:okhttp:5.4.0'
+    implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
+    implementation 'androidx.annotation:annotation:1.9.1'
+    implementation 'androidx.core:core:1.15.0'
+    implementation 'androidx.recyclerview:recyclerview:1.4.0'
+}

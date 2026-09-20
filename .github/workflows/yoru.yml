@@ -1,0 +1,109 @@
+name: Yoru CI
+
+on:
+  push:
+    branches: [ "**" ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: yoru-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Assemble Yoru APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    defaults:
+      run:
+        working-directory: yoru
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Accept licenses and install SDK packages
+        run: |
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -x "$SDKMANAGER" ]; then
+            SDKMANAGER="$(ls -d "$ANDROID_HOME"/cmdline-tools/*/bin/sdkmanager 2>/dev/null | head -1 || true)"
+          fi
+          yes | "$SDKMANAGER" --licenses > /dev/null 2>&1 || true
+          "$SDKMANAGER" --install "platform-tools" "platforms;android-36" "build-tools;35.0.0" \
+            "ndk;27.0.12077973" "cmake;3.22.1"
+
+      - name: Prepare release signing key
+        run: |
+          if [ ! -f keystore/release.keystore ]; then
+            mkdir -p keystore
+            keytool -genkeypair -v -keystore keystore/release.keystore -alias yoru \
+              -keyalg RSA -keysize 2048 -validity 10000 \
+              -storepass yoru -keypass yoru \
+              -dname "CN=Yoru, OU=Yoru, O=Yoru, C=RU"
+            cat > keystore.properties <<PROPS
+          storeFile=keystore/release.keystore
+          storePassword=yoru
+          keyAlias=yoru
+          keyPassword=yoru
+          PROPS
+            git config user.name "kelemnfno-ci"
+            git config user.email "ci@kelemnfno.local"
+            git add -f keystore/release.keystore keystore.properties
+            git commit -m "Yoru keystore [skip ci]" || true
+            git push origin "HEAD:${GITHUB_REF_NAME}" || true
+          fi
+
+      - name: Build release APK
+        run: |
+          chmod +x gradlew
+          ./gradlew :app:assembleRelease --no-daemon -Dorg.gradle.jvmargs="-Xmx3072m"
+          REL=app/build/outputs/apk/release/app-release.apk
+          if [ -f "$REL" ]; then echo "::notice::Yoru APK собран: $(stat -c%s "$REL") байт"; else echo "::error::APK не найден"; exit 1; fi
+
+      - name: Rename artifact
+        run: |
+          mkdir -p out
+          cp app/build/outputs/apk/release/app-release.apk out/Yoru-release.apk
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Yoru-apk
+          path: yoru/out/Yoru-release.apk
+          if-no-files-found: error
+
+      - name: Commit APK into branch
+        if: github.event_name == 'push'
+        run: |
+          git config user.name "kelemnfno-ci"
+          git config user.email "ci@kelemnfno.local"
+          cp out/Yoru-release.apk Yoru-release.apk
+          git add -f Yoru-release.apk
+          git commit -m "Yoru APK ${GITHUB_SHA::7} [skip ci]" || echo "APK не изменился"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+
+      - name: Publish APK to release
+        if: github.event_name == 'push'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set +e
+          for i in 1 2 3; do
+            gh release upload yoru-nightly out/Yoru-release.apk --clobber \
+              --target "${GITHUB_REF_NAME}" && break
+            gh release create yoru-nightly out/Yoru-release.apk \
+              --title "Yoru nightly build" --target "${GITHUB_REF_NAME}" \
+              --notes "Сборка второго приложения Yoru, commit ${GITHUB_SHA}." && break
+            sleep 5
+          done
