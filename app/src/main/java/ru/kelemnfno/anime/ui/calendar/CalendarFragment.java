@@ -167,6 +167,13 @@ public class CalendarFragment extends Fragment {
                 selectedDay = day;
                 renderWeekdays();
             });
+            android.widget.LinearLayout.LayoutParams lp =
+                    new android.widget.LinearLayout.LayoutParams(
+                            android.widget.LinearLayout.LayoutParams.WRAP_CONTENT,
+                            android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
+            int gap = Ui.dp(requireContext(), 8);
+            lp.setMargins(0, 0, gap, 0);
+            chip.setLayoutParams(lp);
             b.weekdays.addView(chip);
         }
         renderList();
