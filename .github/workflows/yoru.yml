@@ -38,6 +38,13 @@ jobs:
           if [ ! -x "$SDKMANAGER" ]; then
             SDKMANAGER="$(ls -d "$ANDROID_HOME"/cmdline-tools/*/bin/sdkmanager 2>/dev/null | head -1 || true)"
           fi
+          if [ -z "$SDKMANAGER" ] || [ ! -x "$SDKMANAGER" ]; then
+            SDKMANAGER="$(command -v sdkmanager || true)"
+          fi
+          if [ -z "$SDKMANAGER" ]; then
+            echo "::error::sdkmanager не найден в $ANDROID_HOME"
+            exit 1
+          fi
           yes | "$SDKMANAGER" --licenses > /dev/null 2>&1 || true
           "$SDKMANAGER" --install "platform-tools" "platforms;android-36" "build-tools;35.0.0" \
             "ndk;27.0.12077973" "cmake;3.22.1"
