@@ -97,7 +97,13 @@ public class CalendarFragment extends Fragment {
                 return;
             }
             items = new ArrayList<>();
-            for (ScheduleItem s : value) if (s.episodes != null) items.add(s);
+            for (ScheduleItem s : value) {
+                if (s.episodes == null) continue;
+                // Сезон завершён (вышло столько, сколько всего) — это не будущий релиз,
+                // иначе календарь врёт «серия 13 из 12 — уже вышла».
+                if (s.episodes.count > 0 && s.episodes.safeAired() >= s.episodes.count) continue;
+                items.add(s);
+            }
             renderRange();
             renderNext();
             renderWeekdays();

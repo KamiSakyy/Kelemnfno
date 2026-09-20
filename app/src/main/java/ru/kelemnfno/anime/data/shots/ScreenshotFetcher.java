@@ -32,6 +32,7 @@ import ru.kelemnfno.anime.data.resolver.Cfg;
 public final class ScreenshotFetcher {
 
     private static final MemCache CACHE = new MemCache();
+    private static final MemCache STATUS = new MemCache();
     private static final MediaType JSON = MediaType.get("application/json; charset=UTF-8");
     /** Сколько кадров нужно набрать, чтобы больше не ходить в сеть. */
     private static final int TARGET = 6;
@@ -98,6 +99,31 @@ public final class ScreenshotFetcher {
         if (shots.isEmpty()) CACHE.put("empty_" + key, shots);
         else CACHE.put(key, shots);
         return shots;
+    }
+
+    /**
+     * Точные счётчики серий из Shikimori: [вышло, всего] или null, если ответа нет.
+     * Shikimori считает фактически вышедшие серии — в отличие от счётчиков
+     * расписания и строк видео у источников, которые умеют завышать заранее.
+     */
+    public static int[] airedStatus(int shikimoriId) {
+        if (shikimoriId <= 0) return null;
+        String key = "status_" + shikimoriId;
+        Object hit = STATUS.get(key, 5 * 60_000L);
+        if (hit instanceof int[]) return (int[]) hit;
+        try {
+            Map<String, String> headers = Net.baseHeaders(Cfg.s(2), Cfg.s(48));
+            headers.put("Accept", "application/json");
+            JsonObject json = Net.getJson(Cfg.s(50) + shikimoriId + ".json?lang=ru", headers);
+            if (json == null) return null;
+            int id = J.intOf(json, "id");
+            if (id > 0 && id != shikimoriId) return null;
+            int[] res = new int[]{J.intOf(json, "episodes_aired"), J.intOf(json, "episodes")};
+            STATUS.put(key, res);
+            return res;
+        } catch (Exception ignored) {
+            return null;
+        }
     }
 
     /** Дописываем новые кадры, пропуская повторы; сверх MAX не кладём. */

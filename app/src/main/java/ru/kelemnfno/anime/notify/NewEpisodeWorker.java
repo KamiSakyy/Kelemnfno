@@ -104,6 +104,10 @@ public class NewEpisodeWorker extends Worker {
                     }
                 }
                 aired = numbers.size();
+                // Shikimori — источник правды: берём его счётчик вышедших, если ответил.
+                int shiki = full.remoteIds == null ? 0 : full.remoteIds.shikimoriId;
+                int[] st = ru.kelemnfno.anime.data.shots.ScreenshotFetcher.airedStatus(shiki);
+                if (st != null && st[0] > 0) aired = st[0];
                 if (full.episodes != null && full.episodes.nextDateMs() > 0) nextDate = full.episodes.nextDateMs();
             } catch (Exception ignored) {
                 // карточка не открылась — откат к счётчику расписания

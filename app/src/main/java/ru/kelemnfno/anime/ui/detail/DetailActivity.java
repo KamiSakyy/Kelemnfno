@@ -491,24 +491,50 @@ public class DetailActivity extends AppCompatActivity {
             return;
         }
         AppExecutors.get().run(() -> {
+            ScheduleItem s0 = null;
             for (ScheduleItem s : AnimeRepository.get(this).schedule()) {
-                if (s.animeId == anime.animeId && s.episodes != null) return s;
+                if (s.animeId == anime.animeId && s.episodes != null) {
+                    s0 = s;
+                    break;
+                }
             }
-            return null;
+            int shiki = anime.remoteIds == null ? 0 : anime.remoteIds.shikimoriId;
+            int[] st = ru.kelemnfno.anime.data.shots.ScreenshotFetcher.airedStatus(shiki);
+            return new Object[]{s0, st};
         }, (value, error) -> {
-            if (b == null || value == null || value.episodes == null || value.episodes.nextDate <= 0) {
+            if (b == null || value == null) {
                 b.countdown.setVisibility(View.GONE);
                 return;
             }
-            nextEpisodeTs = value.episodes.nextDateMs();
-            // Правда — фактически доступные серии в карточке, а не счётчик расписания.
+            ScheduleItem s0 = (ScheduleItem) value[0];
+            int[] st = (int[]) value[1];
+            long nextTs = s0 != null ? s0.episodes.nextDateMs() : 0;
             int real = quickEpisodes().size();
-            int aired = real > 0 ? real : value.episodes.safeAired();
-            nextEpisodeNumber = aired + 1;
-            int total = Math.max(value.episodes.count, real);
+            int aired;
+            int total;
+            if (st != null && st[0] > 0) {
+                // Shikimori — источник правды: сколько серий реально вышло.
+                aired = st[0];
+                total = Math.max(st[1], Math.max(st[0], real));
+            } else {
+                aired = real > 0 ? real : (s0 != null ? s0.episodes.safeAired() : 0);
+                total = Math.max(s0 != null ? s0.episodes.count : 0, real);
+            }
+            if (aired <= 0) {
+                b.countdown.setVisibility(View.GONE);
+                return;
+            }
             b.countdown.setVisibility(View.VISIBLE);
-            String when = nextEpisodeTs > System.currentTimeMillis()
-                    ? Countdown.format(nextEpisodeTs) + " · " + Countdown.dateTime(nextEpisodeTs)
+            if (total > 0 && aired >= total) {
+                // Сезон завершён: не обещаем новую серию.
+                nextEpisodeTs = 0;
+                b.countdown.setText("Вышли все " + total + " сер.");
+                return;
+            }
+            nextEpisodeTs = nextTs;
+            nextEpisodeNumber = aired + 1;
+            String when = nextTs > System.currentTimeMillis()
+                    ? Countdown.format(nextTs) + " · " + Countdown.dateTime(nextTs)
                     : "дата уточняется";
             b.countdown.setText("Серия " + nextEpisodeNumber
                     + (total > aired ? " из " + total : "")

@@ -55,6 +55,20 @@ public class FeedFragment extends Fragment {
     private int current = -1;
     private int cursor;
     private long clipEnd;
+    private long clipStart;
+    private final android.os.Handler watch =
+            new android.os.Handler(android.os.Looper.getMainLooper());
+    /** Держит воспроизведение внутри куска 15–30 с: целая серия в ленте не играет. */
+    private final Runnable watchTick = new Runnable() {
+        @Override
+        public void run() {
+            if (player != null && attached != null && clipEnd > 0
+                    && player.isPlaying() && player.getCurrentPosition() >= clipEnd) {
+                player.seekTo(clipStart);
+            }
+            watch.postDelayed(this, 400);
+        }
+    };
     private boolean loadingBatch;
     private boolean muted;
     private boolean wantNext;
@@ -255,18 +269,28 @@ public class FeedFragment extends Fragment {
         RecyclerView.ViewHolder holder = pages instanceof RecyclerView
                 ? ((RecyclerView) pages).findViewHolderForAdapterPosition(position)
                 : null;
-        if (holder instanceof FeedAdapter.Holder) {
-            attached = (FeedAdapter.Holder) holder;
-            attached.b.feedLoading.setVisibility(View.VISIBLE);
-            attached.b.feedPlayer.setPlayer(player);
+        if (!(holder instanceof FeedAdapter.Holder)) {
+            // Страница ещё не разложена — без ретрая плеер остался бы без экрана,
+            // и лента выглядела бы «мёртвой».
+            final int pos = position;
+            b.pager.post(() -> {
+                if (b != null && current == pos) playAt(pos);
+            });
+            return;
         }
+        attached = (FeedAdapter.Holder) holder;
+        attached.b.feedLoading.setVisibility(View.VISIBLE);
+        attached.b.feedPlayer.setPlayer(player);
         PlaybackService.applyHeaders(clip.referer, null);
         player.setMediaItem(MediaItem.fromUri(clip.url));
         player.prepare();
         player.seekTo(clip.startMs);
         player.setVolume(muted ? 0f : 1f);
         player.setPlayWhenReady(true);
+        clipStart = clip.startMs;
         clipEnd = clip.startMs + clip.clipMs;
+        watch.removeCallbacks(watchTick);
+        watch.postDelayed(watchTick, 400);
         wantNext = false;
         if (position >= clips.size() - 4) loadBatch();
     }
@@ -310,6 +334,7 @@ public class FeedFragment extends Fragment {
 
     @Override
     public void onDestroyView() {
+        watch.removeCallbacksAndMessages(null);
         detach();
         if (player != null) {
             player.release();
