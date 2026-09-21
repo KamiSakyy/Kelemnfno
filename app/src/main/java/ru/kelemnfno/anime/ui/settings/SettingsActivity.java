@@ -127,7 +127,8 @@ public class SettingsActivity extends AppCompatActivity {
                 });
 
         section(c, "О приложении");
-        TextView about = info(c, "Kelemnfno 1.2.0 · Android-порт сайта\n"
+        TextView about = info(c, "Kelemnfno " + ru.kelemnfno.anime.BuildConfig.VERSION_NAME
+                + " · Android-порт сайта\n"
                 + "Экраны, анимации, скачивание, уведомления и собственный плеер на ExoPlayer (Media3).");
         about.setOnLongClickListener(v -> {
             showLastCrash();
