@@ -122,7 +122,7 @@
                 android:background="@drawable/bg_chip"
                 android:gravity="center"
                 android:contentDescription="@string/delete"
-                app:drawableTintCompat="@color/rose"
+                android:drawableTint="@color/rose"
                 app:drawableStartCompat="@drawable/ic_trash" />
         </LinearLayout>
     </LinearLayout>
