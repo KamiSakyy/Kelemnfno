@@ -77,7 +77,7 @@
                 android:paddingEnd="5dp"
                 android:paddingBottom="2dp"
                 android:text="онгоинг"
-                android:textColor="@color/emerald"
+                android:textColor="@color/bg"
                 android:textSize="10sp"
                 android:visibility="gone"
                 app:layout_constraintEnd_toEndOf="parent"

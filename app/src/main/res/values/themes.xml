@@ -27,7 +27,7 @@
         <item name="android:enforceNavigationBarContrast" tools:targetApi="29">false</item>
         <item name="bottomSheetDialogTheme">@style/Theme.Kelemnfno.BottomSheet</item>
         <item name="materialAlertDialogTheme">@style/Theme.Kelemnfno.Dialog</item>
-        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:fontFamily">sans</item>
         <item name="android:windowActivityTransitions">true</item>
     </style>
 
