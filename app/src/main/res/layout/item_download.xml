@@ -116,18 +116,13 @@
 
             <TextView
                 android:id="@+id/action_delete"
-                android:layout_width="wrap_content"
+                android:layout_width="44dp"
                 android:layout_height="34dp"
                 android:layout_marginStart="8dp"
                 android:background="@drawable/bg_chip"
-                android:drawablePadding="6dp"
-                android:drawableTint="@color/rose"
                 android:gravity="center"
-                android:paddingStart="14dp"
-                android:paddingEnd="14dp"
-                android:text="@string/delete"
-                android:textColor="@color/rose"
-                android:textSize="12sp"
+                android:contentDescription="@string/delete"
+                app:drawableTintCompat="@color/rose"
                 app:drawableStartCompat="@drawable/ic_trash" />
         </LinearLayout>
     </LinearLayout>
