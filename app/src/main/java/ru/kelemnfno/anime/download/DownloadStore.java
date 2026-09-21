@@ -85,5 +85,14 @@ public final class DownloadStore {
         if (file == null) return;
         //noinspection ResultOfMethodCallIgnored
         file.delete();
+        // Вместе с файлом убираем локальный плейлист и сегменты перемотки.
+        //noinspection ResultOfMethodCallIgnored
+        new File(file.getAbsolutePath() + ".m3u8").delete();
+        File parts = new File(file.getParentFile(), ".parts_" + file.getName());
+        if (parts.isDirectory()) {
+            File[] inner = parts.listFiles();
+            if (inner != null) for (File f : inner) f.delete();
+            parts.delete();
+        }
     }
 }

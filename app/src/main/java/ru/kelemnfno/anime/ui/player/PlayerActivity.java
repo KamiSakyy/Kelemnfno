@@ -287,8 +287,11 @@ public class PlayerActivity extends AppCompatActivity {
         if (controller == null) return;
         long keep = controller.getCurrentPosition();
         PlaybackService.applyHeaders(source.referer, null);
+        String uri = source.url;
+        // Локальные файлы и плейлисты — через file://, иначе ExoPlayer не поймёт схему.
+        if (uri.startsWith("/")) uri = "file://" + uri;
         MediaItem item = new MediaItem.Builder()
-                .setUri(source.url)
+                .setUri(uri)
                 .setMediaId(slug + ":" + episode)
                 .setMediaMetadata(new androidx.media3.common.MediaMetadata.Builder()
                         .setTitle(title + " — серия " + episode)
@@ -494,6 +497,10 @@ public class PlayerActivity extends AppCompatActivity {
                 if (duration > 0) {
                     b.ctrlSeek.setMax((int) duration);
                     if (!b.ctrlSeek.isPressed()) b.ctrlSeek.setProgress((int) position);
+                    long buffered = controller.getBufferedPosition();
+                    if (buffered > 0) {
+                        b.ctrlSeek.setSecondaryProgress((int) Math.min(buffered, duration));
+                    }
                     long left = duration - position;
                     if (left < 25_000 && left > 0 && !nextShown && autoNext && episode < total) {
                         showNext(false);

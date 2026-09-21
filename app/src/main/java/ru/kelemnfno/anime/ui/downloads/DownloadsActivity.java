@@ -79,8 +79,11 @@ public class DownloadsActivity extends AppCompatActivity {
             Ui.toast(this, "Файл не найден");
             return;
         }
+        String play = d.path;
+        File localPlaylist = new File(d.path + ".m3u8");
+        if (localPlaylist.exists()) play = localPlaylist.getPath();
         ru.kelemnfno.anime.ui.player.PlayerActivity.startFile(this,
-                d.title + " · серия " + d.episode, d.path);
+                d.title + " · серия " + d.episode, play);
     }
 
     private void open(DownloadEntity d) {

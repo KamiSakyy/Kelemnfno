@@ -74,6 +74,7 @@ public final class HlsDownloader {
         String keyUri;
         String keyIv;
         int sequence;
+        float dur;
 
         Segment(String url, int index) {
             this.url = url;
@@ -165,7 +166,9 @@ public final class HlsDownloader {
         if (failure != null) throw failure;
 
         long written = merge(parts, target, total);
-        cleanup(parts);
+        // Сегменты не удаляем: локальный .m3u8 по ним даёт плееру длительность
+        // и честную перемотку скачанного видео (слитый .ts индекса не имеет).
+        writeLocalPlaylist(parts, target, segments);
         Result r = new Result();
         r.file = target;
         r.bytes = written;
@@ -264,6 +267,7 @@ public final class HlsDownloader {
         if (seqMatcher.find()) sequence = Integer.parseInt(seqMatcher.group(1));
 
         int index = 0;
+        float pendingDur = 0;
         for (String raw : lines) {
             String l = raw.trim();
             if (l.startsWith("#EXT-X-KEY")) {
@@ -282,11 +286,21 @@ public final class HlsDownloader {
                 }
                 continue;
             }
+            if (l.startsWith("#EXTINF:")) {
+                try {
+                    pendingDur = Float.parseFloat(l.substring(8).split(",")[0].trim());
+                } catch (Throwable t) {
+                    pendingDur = 0;
+                }
+                continue;
+            }
             if (l.isEmpty() || l.startsWith("#")) continue;
             Segment seg = new Segment(SourceUtil.absolute(baseUrl, l), index);
             seg.keyUri = keyUri;
             seg.keyIv = keyIv;
             seg.sequence = sequence + index;
+            seg.dur = pendingDur;
+            pendingDur = 0;
             out.add(seg);
             index++;
         }
@@ -392,6 +406,29 @@ public final class HlsDownloader {
     private static void write(File file, byte[] data) throws IOException {
         try (FileOutputStream out = new FileOutputStream(file)) {
             out.write(data);
+        }
+    }
+
+    /** Локальный плейлист по скачанным сегментам: файл лежит рядом как «<имя>.m3u8». */
+    private static void writeLocalPlaylist(File parts, File target, List<Segment> segments) {
+        try {
+            List<Segment> sorted = new ArrayList<>(segments);
+            sorted.sort((a, b) -> Integer.compare(a.index, b.index));
+            StringBuilder sb = new StringBuilder();
+            sb.append("#EXTM3U\n#EXT-X-VERSION:3\n#EXT-X-TARGETDURATION:15\n");
+            for (Segment s : sorted) {
+                File f = new File(parts, String.format("seg_%06d.ts", s.index));
+                if (!f.exists() || f.length() == 0) continue;
+                sb.append("#EXTINF:")
+                        .append(s.dur > 0 ? String.format(java.util.Locale.US, "%.3f", s.dur) : "6.000")
+                        .append(",\nfile://")
+                        .append(f.getAbsolutePath()).append('\n');
+            }
+            sb.append("#EXT-X-ENDLIST\n");
+            java.io.Writer w = new java.io.FileWriter(new File(target.getAbsolutePath() + ".m3u8"));
+            w.write(sb.toString());
+            w.close();
+        } catch (Throwable ignored) {
         }
     }
 
