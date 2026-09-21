@@ -1,25 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- iOS Dark: черный фон, серые карточки, systemBlue -->
-    <color name="bg">#FF000000</color>
-    <color name="surface">#FF1C1C1E</color>
-    <color name="surface2">#FF2C2C2E</color>
-    <color name="fill">#FF2C2C2E</color>
-    <color name="line">#2EFFFFFF</color>
-    <color name="accent">#FF0A84FF</color>
-    <color name="accent_soft">#260A84FF</color>
-    <color name="on_accent">#FFFFFFFF</color>
-    <color name="text">#FFFFFFFF</color>
-    <color name="text_dim">#99EBEBF5</color>
-    <color name="text_mute">#FF8E8E93</color>
-    <color name="emerald">#FF30D158</color>
-    <color name="amber">#FFFFD60A</color>
-    <color name="rose">#FFFF453A</color>
-    <color name="sky">#FF64D2FF</color>
-    <color name="scrim">#66000000</color>
-    <color name="nav_bg">#F21C1C1E</color>
-    <color name="white_soft">#14FFFFFF</color>
+    <!-- TSUYU: палитра сайта (globals.css) -->
+    <color name="bg">#FF09090B</color>
+    <color name="surface">#FF101012</color>
+    <color name="surface2">#FF17171A</color>
+    <color name="fill">#FF17171A</color>
+    <color name="line">#12FFFFFF</color>
+    <color name="accent">#FFA78BFA</color>
+    <color name="accent_soft">#1AA78BFA</color>
+    <color name="on_accent">#FF0B0B10</color>
+    <color name="text">#FFFAFAFA</color>
+    <color name="text_dim">#FFA1A1AA</color>
+    <color name="text_mute">#FF71717A</color>
+    <color name="emerald">#FF34D399</color>
+    <color name="amber">#FFFBBF24</color>
+    <color name="rose">#FFFB7185</color>
+    <color name="sky">#FF38BDF8</color>
+    <color name="scrim">#99000000</color>
+    <color name="nav_bg">#F20C0C0F</color>
+    <color name="white_soft">#0FFFFFFF</color>
     <color name="black_60">#99000000</color>
-    <color name="icon">#FFFFFFFF</color>
+    <color name="icon">#FFFAFAFA</color>
     <color name="on_media">#FFFFFFFF</color>
 </resources>

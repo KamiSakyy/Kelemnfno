@@ -6,25 +6,25 @@
     <path
         android:pathData="M5.8,3.9h2.4a1.9,1.9 0 0,1 1.9,1.9v2.4a1.9,1.9 0 0,1-1.9,1.9H5.8a1.9,1.9 0 0,1-1.9,-1.9V5.8a1.9,1.9 0 0,1 1.9,-1.9z"
         android:strokeColor="@color/icon"
-        android:strokeWidth="1.7"
+        android:strokeWidth="2"
         android:strokeLineCap="round"
         android:strokeLineJoin="round" />
     <path
         android:pathData="M15.7,3.9h2.4a1.9,1.9 0 0,1 1.9,1.9v2.4a1.9,1.9 0 0,1-1.9,1.9h-2.4a1.9,1.9 0 0,1-1.9,-1.9V5.8a1.9,1.9 0 0,1 1.9,-1.9z"
         android:strokeColor="@color/icon"
-        android:strokeWidth="1.7"
+        android:strokeWidth="2"
         android:strokeLineCap="round"
         android:strokeLineJoin="round" />
     <path
         android:pathData="M5.8,13.8h2.4a1.9,1.9 0 0,1 1.9,1.9v2.4a1.9,1.9 0 0,1-1.9,1.9H5.8a1.9,1.9 0 0,1-1.9,-1.9v-2.4a1.9,1.9 0 0,1 1.9,-1.9z"
         android:strokeColor="@color/icon"
-        android:strokeWidth="1.7"
+        android:strokeWidth="2"
         android:strokeLineCap="round"
         android:strokeLineJoin="round" />
     <path
         android:pathData="M15.7,13.8h2.4a1.9,1.9 0 0,1 1.9,1.9v2.4a1.9,1.9 0 0,1-1.9,1.9h-2.4a1.9,1.9 0 0,1-1.9,-1.9v-2.4a1.9,1.9 0 0,1 1.9,-1.9z"
         android:strokeColor="@color/icon"
-        android:strokeWidth="1.7"
+        android:strokeWidth="2"
         android:strokeLineCap="round"
         android:strokeLineJoin="round" />
 </vector>

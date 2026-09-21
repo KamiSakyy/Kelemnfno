@@ -6,13 +6,13 @@
     <path
         android:pathData="M17.6,11a6.6,6.6 0 1,1-13.2,0 6.6,6.6 0 0,1 13.2,0z"
         android:strokeColor="@color/icon"
-        android:strokeWidth="1.7"
+        android:strokeWidth="2"
         android:strokeLineCap="round"
         android:strokeLineJoin="round" />
     <path
         android:pathData="M16,16l4.4,4.4"
         android:strokeColor="@color/icon"
-        android:strokeWidth="1.7"
+        android:strokeWidth="2"
         android:strokeLineCap="round"
         android:strokeLineJoin="round" />
 </vector>
