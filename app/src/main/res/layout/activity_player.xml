@@ -405,8 +405,7 @@
                         android:drawablePadding="6dp"
                         android:drawableTint="@color/text"
                         android:text="@string/voice"
-                        app:drawableStartCompat="@drawable/ic_subtitle"
-                        android:drawableTint="@color/on_media" />
+                        app:drawableStartCompat="@drawable/ic_subtitle" />
 
                     <TextView
                         android:id="@+id/ctrl_quality"
@@ -417,8 +416,7 @@
                         android:drawablePadding="6dp"
                         android:drawableTint="@color/text"
                         android:text="@string/auto"
-                        app:drawableStartCompat="@drawable/ic_quality"
-                        android:drawableTint="@color/on_media" />
+                        app:drawableStartCompat="@drawable/ic_quality" />
 
                     <TextView
                         android:id="@+id/ctrl_speed"
@@ -429,8 +427,7 @@
                         android:drawablePadding="6dp"
                         android:drawableTint="@color/text"
                         android:text="1x"
-                        app:drawableStartCompat="@drawable/ic_speed"
-                        android:drawableTint="@color/on_media" />
+                        app:drawableStartCompat="@drawable/ic_speed" />
 
                     <TextView
                         android:id="@+id/ctrl_skip"
@@ -441,8 +438,7 @@
                         android:drawablePadding="6dp"
                         android:drawableTint="@color/text"
                         android:text="Пропустить опенинг"
-                        app:drawableStartCompat="@drawable/ic_skip_next"
-                        android:drawableTint="@color/on_media" />
+                        app:drawableStartCompat="@drawable/ic_skip_next" />
 
                     <TextView
                         android:id="@+id/ctrl_episodes"
@@ -452,8 +448,7 @@
                         android:drawablePadding="6dp"
                         android:drawableTint="@color/text"
                         android:text="@string/episodes"
-                        app:drawableStartCompat="@drawable/ic_grid"
-                        android:drawableTint="@color/on_media" />
+                        app:drawableStartCompat="@drawable/ic_grid" />
                 </LinearLayout>
             </HorizontalScrollView>
         </LinearLayout>
