@@ -415,7 +415,7 @@ public final class HlsDownloader {
             List<Segment> sorted = new ArrayList<>(segments);
             sorted.sort((a, b) -> Integer.compare(a.index, b.index));
             StringBuilder sb = new StringBuilder();
-            sb.append("#EXTM3U\n#EXT-X-VERSION:3\n#EXT-X-TARGETDURATION:15\n");
+            sb.append("#EXTM3U\n#EXT-X-VERSION:3\n#EXT-X-TARGETDURATION:30\n#EXT-X-PLAYLIST-TYPE:VOD\n");
             for (Segment s : sorted) {
                 File f = new File(parts, String.format("seg_%06d.ts", s.index));
                 if (!f.exists() || f.length() == 0) continue;

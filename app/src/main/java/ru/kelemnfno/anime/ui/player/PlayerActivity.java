@@ -768,8 +768,8 @@ public class PlayerActivity extends AppCompatActivity {
     private void saveProgress() {
         if (controller == null || slug.isEmpty()) return;
         final long position = controller.getCurrentPosition();
-        final long duration = controller.getDuration();
-        if (position <= 0 || duration <= 0) return;
+        final long duration = Math.max(0, controller.getDuration());
+        if (position <= 0) return;
         savedPosition = position;
         AppExecutors.get().io().execute(() -> {
             HistoryEntity old = AppDatabase.get(this).historyDao().bySlug(slug);
