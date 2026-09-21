@@ -79,11 +79,20 @@ public class DownloadsActivity extends AppCompatActivity {
             Ui.toast(this, "Файл не найден");
             return;
         }
-        String play = d.path;
-        File localPlaylist = new File(d.path + ".m3u8");
-        if (localPlaylist.exists()) play = localPlaylist.getPath();
-        ru.kelemnfno.anime.ui.player.PlayerActivity.startFile(this,
-                d.title + " · серия " + d.episode, play);
+        final String label = d.title + " · серия " + d.episode;
+        final String path = d.path;
+        // Плейлист даёт длительность и перемотку; для старых загрузок создаётся нарезкой .ts.
+        ru.kelemnfno.anime.util.AppExecutors.get().heavy().execute(() -> {
+            File localPlaylist = new File(path + ".m3u8");
+            if (!localPlaylist.exists()) {
+                File built = ru.kelemnfno.anime.download.LocalPlaylist.ensure(new File(path));
+                if (built != null) localPlaylist = built;
+            }
+            final String play = localPlaylist.exists() ? localPlaylist.getPath() : path;
+            ru.kelemnfno.anime.util.Ui.post(() ->
+                    ru.kelemnfno.anime.ui.player.PlayerActivity.startFile(
+                            DownloadsActivity.this, label, play));
+        });
     }
 
     private void open(DownloadEntity d) {

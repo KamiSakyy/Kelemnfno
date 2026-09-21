@@ -99,6 +99,7 @@ public class PlayerActivity extends AppCompatActivity {
     private boolean nextShown;
     private int errorAttempts;
     private long savedPosition;
+    private long resumePos;
 
     private AudioManager audio;
     private int maxVolume = 15;
@@ -138,6 +139,8 @@ public class PlayerActivity extends AppCompatActivity {
         trackId = str(EXTRA_TRACK_ID);
         voice = str(EXTRA_VOICE);
         episode = Math.max(1, getIntent().getIntExtra(EXTRA_EPISODE, 1));
+        // Локальный файл тоже имеет историю: позиция сохраняется под ключом пути.
+        if (slug.isEmpty() && !str(EXTRA_FILE).isEmpty()) slug = "file:" + str(EXTRA_FILE);
         Serializable raw = getIntent().getSerializableExtra(EXTRA_TRACKS);
         if (raw instanceof ArrayList) {
             for (Object o : (ArrayList<?>) raw) if (o instanceof Track) tracks.add((Track) o);
@@ -207,7 +210,10 @@ public class PlayerActivity extends AppCompatActivity {
                 local.kind = "mp4";
                 local.voice = "Локально";
                 local.label = "Файл";
-                apply(local);
+                AppExecutors.get().io().execute(() -> {
+                    loadResume();
+                    Ui.post(() -> apply(local));
+                });
             } else {
                 resolve(episode, quality, false);
             }
@@ -269,7 +275,10 @@ public class PlayerActivity extends AppCompatActivity {
                 }
                 StreamSource picked = pick(wantedQuality);
                 quality = picked.quality > 0 ? picked.quality : quality;
-                apply(picked);
+                AppExecutors.get().io().execute(() -> {
+                    loadResume();
+                    Ui.post(() -> apply(picked));
+                });
             });
         });
     }
@@ -286,6 +295,8 @@ public class PlayerActivity extends AppCompatActivity {
     private void apply(StreamSource source) {
         if (controller == null) return;
         long keep = controller.getCurrentPosition();
+        long start = keep > 3000 ? keep : resumePos;
+        resumePos = 0;
         PlaybackService.applyHeaders(source.referer, null);
         String uri = source.url;
         // Локальные файлы и плейлисты — через file://, иначе ExoPlayer не поймёт схему.
@@ -299,7 +310,7 @@ public class PlayerActivity extends AppCompatActivity {
                         .build())
                 .build();
         b.buffering.setVisibility(View.VISIBLE);
-        controller.setMediaItem(item, keep > 3000 ? keep : 0);
+        controller.setMediaItem(item, start);
         controller.prepare();
         controller.play();
         b.ctrlSubtitle.setText(episodeLabel()
@@ -719,6 +730,20 @@ public class PlayerActivity extends AppCompatActivity {
     }
 
     /* ---------------- История и позиция ---------------- */
+
+    /** Сохранённая позиция текущего видео (ключ — slug или путь файла). */
+    private void loadResume() {
+        resumePos = 0;
+        if (slug.isEmpty() || !Prefs.get(this).settings().resumePlayback) return;
+        try {
+            HistoryEntity h = AppDatabase.get(this).historyDao().bySlug(slug);
+            if (h != null && h.positionMs > 5000
+                    && (h.durationMs <= 0 || h.durationMs - h.positionMs > 30_000)) {
+                resumePos = h.positionMs;
+            }
+        } catch (Throwable ignored) {
+        }
+    }
 
     private void saveHistory() {
         if (slug.isEmpty()) return;
