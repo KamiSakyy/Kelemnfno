@@ -146,7 +146,7 @@ public class MainActivity extends AppCompatActivity {
         bindNav(b.navCalendarIcon, b.navCalendarLabel, b.navCalendar, TAB_CALENDAR,
                 R.drawable.ic_calendar_filled, R.drawable.ic_calendar);
         bindNav(b.navFeedIcon, b.navFeedLabel, b.navFeed, TAB_FEED,
-                R.drawable.ic_feed, R.drawable.ic_feed);
+                R.drawable.ic_feed_filled, R.drawable.ic_feed);
     }
 
     private void bindNav(android.widget.ImageView icon, android.widget.TextView label, View container,
@@ -154,10 +154,10 @@ public class MainActivity extends AppCompatActivity {
         boolean active = currentTab.equals(tab);
         icon.setImageResource(active ? activeIcon : inactiveIcon);
         icon.setImageTintList(android.content.res.ColorStateList.valueOf(
-                getColor(active ? R.color.bg : R.color.text_mute)));
-        icon.setBackgroundResource(active ? R.drawable.bg_pill_white : 0);
-        label.setTextColor(getColor(active ? R.color.text : R.color.text_mute));
-        container.setAlpha(active ? 1f : 0.9f);
+                getColor(active ? R.color.accent : R.color.text_mute)));
+        icon.setBackgroundResource(0);
+        label.setTextColor(getColor(active ? R.color.accent : R.color.text_mute));
+        container.setAlpha(1f);
         if (active) Ui.pop(icon);
     }
 }

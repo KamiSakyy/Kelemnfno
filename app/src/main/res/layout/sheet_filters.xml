@@ -167,7 +167,7 @@
         android:background="@drawable/bg_pill_white"
         android:gravity="center"
         android:text="@string/show_results"
-        android:textColor="#FF0B0B10"
+        android:textColor="@color/on_accent"
         android:textSize="15sp"
         android:textStyle="bold" />
 </LinearLayout>

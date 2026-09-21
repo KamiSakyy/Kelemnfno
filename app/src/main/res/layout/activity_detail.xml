@@ -50,6 +50,7 @@
 
                     <ImageView
                         android:id="@+id/back"
+            android:tint="@color/on_media"
                         style="@style/Widget.Kelemnfno.IconButton"
                         android:layout_width="44dp"
                         android:layout_height="44dp"
@@ -63,6 +64,7 @@
 
                     <ImageView
                         android:id="@+id/fav"
+            android:tint="@color/on_media"
                         style="@style/Widget.Kelemnfno.IconButton"
                         android:layout_width="44dp"
                         android:layout_height="44dp"
@@ -367,6 +369,7 @@
 
                     <ImageView
                         android:id="@+id/inline_play"
+            android:tint="@color/on_media"
                         android:layout_width="66dp"
                         android:layout_height="66dp"
                         android:layout_gravity="center"
@@ -377,6 +380,7 @@
 
                     <ImageView
                         android:id="@+id/inline_fullscreen"
+            android:tint="@color/on_media"
                         android:layout_width="40dp"
                         android:layout_height="40dp"
                         android:layout_gravity="top|end"
@@ -398,6 +402,7 @@
 
                     <ImageView
                         android:id="@+id/inline_prev"
+            android:tint="@color/on_media"
                         android:layout_width="40dp"
                         android:layout_height="40dp"
                         android:background="@drawable/bg_circle_dark"
@@ -417,6 +422,7 @@
 
                     <ImageView
                         android:id="@+id/inline_next"
+            android:tint="@color/on_media"
                         android:layout_width="40dp"
                         android:layout_height="40dp"
                         android:background="@drawable/bg_circle_dark"

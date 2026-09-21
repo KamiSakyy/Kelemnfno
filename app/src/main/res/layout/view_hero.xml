@@ -79,7 +79,7 @@
                 android:paddingStart="24dp"
                 android:paddingEnd="24dp"
                 android:text="@string/watch"
-                android:textColor="#FF0B0B10"
+                android:textColor="@color/on_accent"
                 android:textSize="15sp"
                 android:textStyle="bold" />
 

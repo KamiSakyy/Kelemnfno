@@ -36,6 +36,6 @@
         android:paddingStart="26dp"
         android:paddingEnd="26dp"
         android:text="@string/retry"
-        android:textColor="#FF0B0B10"
+        android:textColor="@color/on_accent"
         android:textStyle="bold" />
 </LinearLayout>

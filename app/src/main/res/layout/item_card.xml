@@ -59,7 +59,7 @@
                 android:paddingEnd="5dp"
                 android:paddingBottom="2dp"
                 android:textAllCaps="true"
-                android:textColor="#FF0B0B10"
+                android:textColor="@color/on_accent"
                 android:textSize="10sp"
                 android:textStyle="bold"
                 app:layout_constraintEnd_toEndOf="parent"
@@ -85,6 +85,7 @@
 
             <ImageView
                 android:id="@+id/downloaded"
+            android:tint="@color/on_media"
                 android:layout_width="16dp"
                 android:layout_height="16dp"
                 android:layout_margin="6dp"

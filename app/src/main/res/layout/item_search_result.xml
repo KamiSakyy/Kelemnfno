@@ -76,5 +76,5 @@
         android:contentDescription="@string/watch"
         android:padding="9dp"
         android:src="@drawable/ic_play"
-        android:tint="#FF0B0B10" />
+        android:tint="@color/on_accent" />
 </LinearLayout>

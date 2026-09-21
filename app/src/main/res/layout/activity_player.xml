@@ -138,7 +138,7 @@
             android:paddingStart="26dp"
             android:paddingEnd="26dp"
             android:text="@string/retry"
-            android:textColor="#FF0B0B10"
+            android:textColor="@color/on_accent"
             android:textStyle="bold" />
 
         <TextView
@@ -187,7 +187,7 @@
             android:paddingEnd="16dp"
             android:paddingBottom="8dp"
             android:text="Сейчас"
-            android:textColor="#FF0B0B10"
+            android:textColor="@color/on_accent"
             android:textSize="12sp"
             android:textStyle="bold" />
     </LinearLayout>
@@ -222,6 +222,7 @@
             android:paddingEnd="6dp">
 
             <ImageView
+            android:tint="@color/on_media"
                 android:id="@+id/ctrl_back"
                 style="@style/Widget.Kelemnfno.IconButton"
                 android:layout_width="44dp"
@@ -260,6 +261,7 @@
             </LinearLayout>
 
             <ImageView
+            android:tint="@color/on_media"
                 android:id="@+id/ctrl_lock"
                 style="@style/Widget.Kelemnfno.IconButton"
                 android:layout_width="44dp"
@@ -268,6 +270,7 @@
                 android:src="@drawable/ic_lock" />
 
             <ImageView
+            android:tint="@color/on_media"
                 android:id="@+id/ctrl_pip"
                 style="@style/Widget.Kelemnfno.IconButton"
                 android:layout_width="44dp"
@@ -285,6 +288,7 @@
             android:orientation="horizontal">
 
             <ImageView
+            android:tint="@color/on_media"
                 android:id="@+id/ctrl_prev"
                 style="@style/Widget.Kelemnfno.IconButton"
                 android:layout_width="56dp"
@@ -294,6 +298,7 @@
                 android:src="@drawable/ic_skip_prev" />
 
             <ImageView
+            android:tint="@color/on_media"
                 android:id="@+id/ctrl_back10"
                 style="@style/Widget.Kelemnfno.IconButton"
                 android:layout_width="56dp"
@@ -313,9 +318,10 @@
                 android:contentDescription="@string/watch"
                 android:padding="20dp"
                 android:src="@drawable/ic_pause"
-                android:tint="#FF0B0B10" />
+                android:tint="@color/on_accent" />
 
             <ImageView
+            android:tint="@color/on_media"
                 android:id="@+id/ctrl_forward10"
                 style="@style/Widget.Kelemnfno.IconButton"
                 android:layout_width="56dp"
@@ -326,6 +332,7 @@
                 android:src="@drawable/ic_forward10" />
 
             <ImageView
+            android:tint="@color/on_media"
                 android:id="@+id/ctrl_next"
                 style="@style/Widget.Kelemnfno.IconButton"
                 android:layout_width="56dp"
@@ -398,7 +405,8 @@
                         android:drawablePadding="6dp"
                         android:drawableTint="@color/text"
                         android:text="@string/voice"
-                        app:drawableStartCompat="@drawable/ic_subtitle" />
+                        app:drawableStartCompat="@drawable/ic_subtitle"
+                        android:drawableTint="@color/on_media" />
 
                     <TextView
                         android:id="@+id/ctrl_quality"
@@ -409,7 +417,8 @@
                         android:drawablePadding="6dp"
                         android:drawableTint="@color/text"
                         android:text="@string/auto"
-                        app:drawableStartCompat="@drawable/ic_quality" />
+                        app:drawableStartCompat="@drawable/ic_quality"
+                        android:drawableTint="@color/on_media" />
 
                     <TextView
                         android:id="@+id/ctrl_speed"
@@ -420,7 +429,8 @@
                         android:drawablePadding="6dp"
                         android:drawableTint="@color/text"
                         android:text="1x"
-                        app:drawableStartCompat="@drawable/ic_speed" />
+                        app:drawableStartCompat="@drawable/ic_speed"
+                        android:drawableTint="@color/on_media" />
 
                     <TextView
                         android:id="@+id/ctrl_skip"
@@ -431,7 +441,8 @@
                         android:drawablePadding="6dp"
                         android:drawableTint="@color/text"
                         android:text="Пропустить опенинг"
-                        app:drawableStartCompat="@drawable/ic_skip_next" />
+                        app:drawableStartCompat="@drawable/ic_skip_next"
+                        android:drawableTint="@color/on_media" />
 
                     <TextView
                         android:id="@+id/ctrl_episodes"
@@ -441,7 +452,8 @@
                         android:drawablePadding="6dp"
                         android:drawableTint="@color/text"
                         android:text="@string/episodes"
-                        app:drawableStartCompat="@drawable/ic_grid" />
+                        app:drawableStartCompat="@drawable/ic_grid"
+                        android:drawableTint="@color/on_media" />
                 </LinearLayout>
             </HorizontalScrollView>
         </LinearLayout>

@@ -65,6 +65,7 @@
 
         <ImageView
             android:id="@+id/feed_mute"
+            android:tint="@color/on_media"
             android:layout_width="46dp"
             android:layout_height="46dp"
             android:background="@drawable/bg_ripple_circle"
@@ -74,6 +75,7 @@
 
         <ImageView
             android:id="@+id/feed_open"
+            android:tint="@color/on_media"
             android:layout_width="46dp"
             android:layout_height="46dp"
             android:layout_marginTop="12dp"

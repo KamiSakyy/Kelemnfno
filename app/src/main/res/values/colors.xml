@@ -1,20 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="bg">#FF09090B</color>
-    <color name="surface">#FF101012</color>
-    <color name="surface2">#FF17171A</color>
-    <color name="line">#12FFFFFF</color>
-    <color name="accent">#FFA78BFA</color>
-    <color name="accent_soft">#1AA78BFA</color>
-    <color name="text">#FFFAFAFA</color>
-    <color name="text_dim">#FFA1A1AA</color>
-    <color name="text_mute">#FF71717A</color>
-    <color name="emerald">#FF34D399</color>
-    <color name="amber">#FFFBBF24</color>
-    <color name="rose">#FFFB7185</color>
-    <color name="sky">#FF38BDF8</color>
-    <color name="scrim">#99000000</color>
-    <color name="nav_bg">#F20C0C0F</color>
-    <color name="white_soft">#0FFFFFFF</color>
+    <!-- iOS-палитра: systemGroupedBackground / label / systemBlue -->
+    <color name="bg">#FFF2F2F7</color>
+    <color name="surface">#FFFFFFFF</color>
+    <color name="surface2">#FFF2F2F7</color>
+    <color name="fill">#FFE9E9EE</color>
+    <color name="line">#263C3C43</color>
+    <color name="accent">#FF007AFF</color>
+    <color name="accent_soft">#1F007AFF</color>
+    <color name="on_accent">#FFFFFFFF</color>
+    <color name="text">#FF1C1C1E</color>
+    <color name="text_dim">#993C3C43</color>
+    <color name="text_mute">#FF8E8E93</color>
+    <color name="emerald">#FF34C759</color>
+    <color name="amber">#FFFF9F0A</color>
+    <color name="rose">#FFFF3B30</color>
+    <color name="sky">#FF32ADE6</color>
+    <color name="scrim">#66000000</color>
+    <color name="nav_bg">#F7FFFFFF</color>
+    <color name="white_soft">#0A000000</color>
     <color name="black_60">#99000000</color>
+    <color name="icon">#FF1C1C1E</color>
+    <color name="on_media">#FFFFFFFF</color>
 </resources>
