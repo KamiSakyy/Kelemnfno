@@ -1,0 +1,221 @@
+name: Android CI
+
+on:
+  push:
+    branches: [ "**" ]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Assemble APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Inspect preinstalled Android SDK
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          ls "$ANDROID_HOME/platforms" || true
+          ls "$ANDROID_HOME/build-tools" || true
+          echo "sdkinfo=platforms=[$(ls "$ANDROID_HOME/platforms" 2>/dev/null | tr '\n' ' ')] build-tools=[$(ls "$ANDROID_HOME/build-tools" 2>/dev/null | tr '\n' ' ')]" >> "$GITHUB_ENV"
+
+      - name: Report SDK info
+        run: echo "::notice::$sdkinfo"
+
+      - name: Accept licenses and install SDK packages
+        run: |
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -x "$SDKMANAGER" ]; then
+            SDKMANAGER="$(ls -d "$ANDROID_HOME"/cmdline-tools/*/bin/sdkmanager 2>/dev/null | head -1 || true)"
+          fi
+          if [ -z "$SDKMANAGER" ] || [ ! -x "$SDKMANAGER" ]; then
+            SDKMANAGER="$(command -v sdkmanager || true)"
+          fi
+          if [ -z "$SDKMANAGER" ]; then
+            echo "::error::sdkmanager не найден в $ANDROID_HOME"
+            exit 1
+          fi
+          yes | "$SDKMANAGER" --licenses > /dev/null 2>&1 || true
+          "$SDKMANAGER" --install "platform-tools" "platforms;android-35" "build-tools;35.0.0" \
+            "ndk;27.0.12077973" "cmake;3.22.1"
+
+      # Ключ создаётся один раз и хранится в репозитории, чтобы подпись релиза
+      # не менялась от сборки к сборке и обновления вставали поверх.
+      - name: Prepare release signing key
+        run: |
+          set -e
+          if [ ! -f keystore/release.keystore ]; then
+            mkdir -p keystore
+            keytool -genkeypair -v -keystore keystore/release.keystore -alias kelemnfno \
+              -keyalg RSA -keysize 2048 -validity 10950 \
+              -storepass kelemnfno -keypass kelemnfno \
+              -dname "CN=Kelemnfno, OU=Mobile, O=Kelemnfno, L=Unknown, ST=Unknown, C=RU"
+            git config user.name "kelemnfno-ci"
+            git config user.email "ci@kelemnfno.local"
+            git add -f keystore/release.keystore keystore.properties
+            git commit -m "Ключ подписи релиза [skip ci]"
+            git pull --rebase origin "${GITHUB_REF_NAME}" || true
+            git push origin "HEAD:${GITHUB_REF_NAME}" || echo "::warning::ключ не запушен, но сборка подписана локально"
+            echo "::notice::Ключ подписи создан и сохранён в репозиторий"
+          else
+            echo "::notice::Ключ подписи уже есть"
+          fi
+          keytool -list -keystore keystore/release.keystore -storepass kelemnfno \
+            | sed -n '1,8p' | tr '\n' ' ' | sed 's|^|::notice::keystore: |'
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: ${{ runner.os }}-gradle-
+
+      # Отпечаток открытого ключа API берём с живого хоста и сразу проверяем
+      # его же запросом с --pinnedpubkey: если пин не сходится, пиннинг не включаем.
+      - name: Extract and verify certificate pin
+        continue-on-error: true
+        run: |
+          set +e
+          HOST=api.yani.tv
+          PINS_FILE=app/src/main/java/ru/kelemnfno/anime/data/resolver/Pins.java
+          PIN=$(echo | openssl s_client -connect "$HOST:443" -servername "$HOST" 2>/dev/null \
+            | openssl x509 -pubkey -noout 2>/dev/null \
+            | openssl pkey -pubin -outform der 2>/dev/null \
+            | openssl dgst -sha256 -binary | openssl enc -base64 | tr -d '\n')
+          if [ -z "$PIN" ]; then
+            echo "::warning::Отпечаток ключа не получен — пиннинг выключен"
+            exit 0
+          fi
+          # промежуточный центр — чтобы замена листового сертификата не сломала приложение
+          CAPIN=$(echo | openssl s_client -connect "$HOST:443" -servername "$HOST" -showcerts 2>/dev/null \
+            | awk 'BEGIN{n=0} /BEGIN CERT/{n++} n==2' \
+            | openssl x509 -pubkey -noout 2>/dev/null \
+            | openssl pkey -pubin -outform der 2>/dev/null \
+            | openssl dgst -sha256 -binary | openssl enc -base64 | tr -d '\n')
+          CHECK="sha256//$PIN"
+          if [ -n "$CAPIN" ]; then CHECK="sha256//$PIN;sha256//$CAPIN"; fi
+          CODE=$(curl -sS -o /dev/null -w "%{http_code}" --max-time 25 \
+            --pinnedpubkey "$CHECK" "https://$HOST/" 2>/dev/null)
+          if [ -z "$CODE" ] || [ "$CODE" = "000" ]; then
+            echo "::warning::Отпечатки $CHECK не прошли проверку curl — пиннинг выключен"
+            exit 0
+          fi
+          sed -i "s|public static final String API = \"\";|public static final String API = \"sha256//$PIN\";|" "$PINS_FILE"
+          if [ -n "$CAPIN" ]; then
+            sed -i "s|public static final String API_CA = \"\";|public static final String API_CA = \"sha256//$CAPIN\";|" "$PINS_FILE"
+          fi
+          if grep -q "sha256//" "$PINS_FILE"; then
+            echo "::notice::Пиннинг включён: $CHECK (проверка живым запросом: HTTP $CODE)"
+          else
+            echo "::warning::Пин не записан в Pins.java — пиннинг выключен"
+          fi
+
+      - name: Build release APK
+        id: build
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          ./gradlew --no-daemon --stacktrace assembleRelease 2>&1 | tee build.log
+
+      # Логи джоба снаружи не всегда доступны, поэтому дублируем ошибки в аннотации.
+      - name: Publish build errors as annotations
+        if: always()
+        run: |
+          set +e
+          REL=app/build/outputs/apk/release/app-release.apk
+          if [ -f "$REL" ]; then
+            echo "::notice::APK собран: release $(stat -c%s "$REL") байт"
+            exit 0
+          fi
+          echo "::error::APK не собран (outcome: ${{ steps.build.outcome }})"
+          grep -A2 -E "[^ ]+\.java:[0-9]+: error:" build.log 2>/dev/null | tr '\n' '~' | sed 's/~~/~/g' \
+            | tr '~' '\n' | grep -E "\.java:[0-9]+: error:|symbol:|location:" | head -n 90 \
+            | while IFS= read -r l; do printf '::error::JAVA %s\n' "${l:0:400}"; done
+          grep -oE "[^ ]+\.java:[0-9]+: (warning|error)" build.log 2>/dev/null | sort -u | wc -l \
+            | sed 's/^/::notice::Всего уникальных строк с ошибками в .java: /'
+          grep -nE "error:|FAILURE|Caused by|What went wrong|Execution failed|AAPT" build.log 2>/dev/null \
+            | grep -v "\.java:" | head -n 15 | while IFS= read -r l; do printf '::error::%s\n' "${l:0:400}"; done
+          exit 1
+
+      - name: Verify native key library is packed
+        run: |
+          APK=app/build/outputs/apk/release/app-release.apk
+          if ! unzip -l "$APK" | grep -q "libz.so"; then
+            echo "::error::В релизном APK нет libz.so — нативный ключ не собрался"
+            exit 1
+          fi
+          unzip -l "$APK" | grep "libz.so" | tr -s ' ' | sed 's/^/::notice::so: /'
+
+      - name: Rename artifacts
+        run: |
+          mkdir -p out
+          cp app/build/outputs/apk/release/app-release.apk out/Kelemnfno-release.apk
+          ls -la out
+
+      - name: Upload APK artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Kelemnfno-apk
+          path: |
+            out/Kelemnfno-release.apk
+          if-no-files-found: error
+
+      # Прямая отдача файлов: релиз-ассеты наружу не всегда достижимы,
+      # поэтому кладём APK ещё и в саму ветку (git-протокол доступен всегда).
+      - name: Commit APKs into branch
+        if: github.event_name == 'push'
+        run: |
+          git config user.name "kelemnfno-ci"
+          git config user.email "ci@kelemnfno.local"
+          cp out/Kelemnfno-release.apk Kelemnfno-release.apk
+          git rm -q --cached --ignore-unmatch Kelemnfno-debug.apk
+          rm -f Kelemnfno-debug.apk
+          git add -f Kelemnfno-release.apk
+          git commit -m "APK ${GITHUB_SHA::7}: подписанный release [skip ci]" || echo "APK не изменились"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+
+      - name: Publish APK to release
+        if: github.event_name == 'push'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set +e
+          publish() {
+            gh release create nightly out/Kelemnfno-release.apk \
+              --title "Kelemnfno nightly build" \
+              --target "${GITHUB_REF_NAME}" \
+              --notes "Сборка ветки ${GITHUB_REF_NAME}, commit ${GITHUB_SHA}. Kelemnfno-release.apk — подписанный релиз."
+          }
+          gh release delete nightly --yes --cleanup-tag
+          sleep 5
+          for i in 1 2 3; do
+            publish && break
+            echo "::notice::Публикация релиза не удалась с раза $i, повтор"
+            sleep 15
+            gh release delete nightly --yes --cleanup-tag 2>/dev/null
+            sleep 5
+          done
+          gh release view nightly --json assets --jq '.assets[] | "release asset: \(.name) \(.size) байт"'
