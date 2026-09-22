@@ -273,9 +273,13 @@ public class DetailActivity extends AppCompatActivity {
         for (String q : new String[]{en, ru}) {
             if (q == null || q.isEmpty()) continue;
             try {
-                JsonObject sr = Net.getJson("https://anilibria.top/api/v1/app/search/releases?query="
-                        + Net.enc(q) + "&limit=6", Net.baseHeaders(null, null));
-                JsonArray arr = sr.has("data") ? sr.getAsJsonArray("data") : null;
+                JsonElement se = JsonParser.parseString(Net.get(
+                        "https://anilibria.top/api/v1/app/search/releases?query="
+                        + Net.enc(q) + "&limit=6", Net.baseHeaders(null, null)));
+                JsonArray arr = null;
+                if (se.isJsonArray()) arr = se.getAsJsonArray();
+                else if (se.isJsonObject() && se.getAsJsonObject().has("data"))
+                    arr = se.getAsJsonObject().getAsJsonArray("data");
                 if (arr == null) continue;
                 for (JsonElement rel : arr) {
                     if (!rel.isJsonObject()) continue;
