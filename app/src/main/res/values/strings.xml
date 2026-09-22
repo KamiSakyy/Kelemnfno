@@ -31,7 +31,7 @@
     <string name="collapse">Свернуть</string>
     <string name="screenshots">Скриншоты</string>
     <string name="watch_now">Смотреть</string>
-    <string name="sources_pending">Источники ещё подбираются</string>
+    <string name="sources_pending">…</string>
     <string name="screenshots_subtitle">Кадры из серий</string>
     <string name="viewing_order">Порядок просмотра</string>
     <string name="episodes">Серии</string>
@@ -68,6 +68,6 @@
     <string name="external">Сайт</string>
     <string name="copy_crash">Скопировать</string>
     <string name="close">Закрыть</string>
-    <string name="resolving">Ищем рабочий источник…</string>
-    <string name="no_sources">Рабочие источники не найдены</string>
+    <string name="resolving">…</string>
+    <string name="no_sources">Серии пока недоступны</string>
 </resources>

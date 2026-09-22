@@ -56,8 +56,8 @@ public class CatalogFragment extends Fragment {
             {2020, 2021}, {2015, 2019}, {2010, 2014}, {2000, 2009}, {1900, 1999}};
     private static final String[] YEAR_LABELS = {"2026", "2025", "2024", "2023", "2022", "2020–2021",
             "2015–2019", "2010–2014", "2000-е", "До 2000"};
-    private static final List<String> ADULT = Arrays.asList("etti", "erotica", "garem", "garem-dlya-devochek",
-            "sukkuby", "lolikon", "trap", "sedze-aj", "senen-aj");
+    private static final List<String> ADULT = Arrays.asList("erotica", "sukkuby", "lolikon");
+
 
     private FragmentCatalogBinding b;
     private AnimeCardAdapter adapter;
@@ -339,7 +339,12 @@ public class CatalogFragment extends Fragment {
                 for (int t : typeIds) p.put("types", p.containsKey("types") ? p.get("types") + "," + t : String.valueOf(t));
                 List<AnimeItem> page = AnimeRepository.get(requireContext()).list(p);
                 cursor += page.size();
-                for (AnimeItem a : page) if (yearOk(a)) collected.add(a);
+                for (AnimeItem a : page) {
+                    if (!yearOk(a)) continue;
+                    // топы/просмотры/рейтинг не должны показывать невышедшие анонсы
+                    if (status.isEmpty() && a.animeStatus != null && a.animeStatus.isAnnouncement()) continue;
+                    collected.add(a);
+                }
                 added += collected.size();
                 if (page.size() < PAGE) {
                     more = false;
@@ -462,6 +467,8 @@ public class CatalogFragment extends Fragment {
         Runnable renderGenres = () -> {
             s.genreGroup.removeAllViews();
             s.adultGroup.removeAllViews();
+            // отдельный настоящий жанр «хентай» — каталог из AniLibria, вход через 18+
+            Chips.add(s.adultGroup, "Хентай", false, v -> openHentaiGate());
             String q = s.genreQuery.getText() == null ? "" : s.genreQuery.getText().toString().trim().toLowerCase();
             boolean adultAllowed = Prefs.get(requireContext()).settings().showAdult;
             for (Genre g : genres) {
@@ -504,6 +511,26 @@ public class CatalogFragment extends Fragment {
             restart();
         });
         dialog.show();
+    }
+
+    /** Диалог возраста: «Тебе есть 18 лет?» Да — открыть каталог, Нет — закрыть. */
+    private void openHentaiGate() {
+        ru.kelemnfno.anime.data.prefs.Prefs prefs = ru.kelemnfno.anime.data.prefs.Prefs.get(requireContext());
+        if (prefs.settings().adultConfirmed) {
+            HentaiActivity.start(requireContext());
+            return;
+        }
+        new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+                .setTitle("Тебе есть 18 лет?")
+                .setMessage("Раздел «Хентай» доступен только взрослым.")
+                .setPositiveButton("Да", (d, w) -> {
+                    ru.kelemnfno.anime.data.model.AppSettings st = prefs.settings();
+                    st.adultConfirmed = true;
+                    prefs.saveSettings(st);
+                    HentaiActivity.start(requireContext());
+                })
+                .setNegativeButton("Нет", null)
+                .show();
     }
 
     private boolean matches(Genre g, String q) {

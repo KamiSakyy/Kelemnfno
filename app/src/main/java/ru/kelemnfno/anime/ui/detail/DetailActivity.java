@@ -238,7 +238,7 @@ public class DetailActivity extends AppCompatActivity {
 
         b.watch.setOnClickListener(v -> {
             if (currentTrack == null || currentTrack.episodes.isEmpty()) {
-                Ui.toast(this, getString(R.string.resolving));
+                // без лишних надписей
                 return;
             }
             // чтение истории — вне главного потока
@@ -310,7 +310,7 @@ public class DetailActivity extends AppCompatActivity {
     /* ---------------- Озвучки и серии ---------------- */
 
     private void loadTracks() {
-        b.episodesHint.setText(R.string.resolving);
+        b.episodesHint.setText("");
         final Lookup lookup = lookupOf(anime);
         AppExecutors.get().heavy().execute(() -> {
             List<Track> result;
@@ -697,7 +697,7 @@ public class DetailActivity extends AppCompatActivity {
         b.inlineEpLabel.setText(episodeLabel(defaultEpisode()));
         b.inlineFullscreen.setOnClickListener(v -> {
             if (currentTrack == null) {
-                Ui.toast(this, getString(R.string.sources_pending));
+                // тихо
                 return;
             }
             play(currentTrack, inlineStarted ? inlineEpisode : defaultEpisode());
@@ -707,7 +707,7 @@ public class DetailActivity extends AppCompatActivity {
     /** Предыдущая/следующая серия в пределах выбранной озвучки. */
     private void stepEpisode(int delta) {
         if (currentTrack == null || currentTrack.episodes.isEmpty()) {
-            Ui.toast(this, getString(R.string.sources_pending));
+            // тихо
             return;
         }
         List<Integer> eps = new ArrayList<>(currentTrack.episodes);
@@ -737,7 +737,7 @@ public class DetailActivity extends AppCompatActivity {
      */
     private void playInline(final int episode) {
         if (currentTrack == null) {
-            Ui.toast(this, getString(R.string.sources_pending));
+            // тихо
             return;
         }
         ru.kelemnfno.anime.ui.player.PlayerActivity.start(this, anime.title, slug, anime.animeId,

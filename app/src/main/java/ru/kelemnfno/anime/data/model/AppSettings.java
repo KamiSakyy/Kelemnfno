@@ -22,6 +22,8 @@ public class AppSettings {
     public boolean playOnMobile = true;
     /** Показывать 18+ жанры в фильтрах. */
     public boolean showAdult = true;
+    /** Пользователь подтвердил, что ему есть 18 лет. */
+    public boolean adultConfirmed = false;
     /** Жесты в плеере. */
     public boolean gestures = true;
     /** Субтитры. */

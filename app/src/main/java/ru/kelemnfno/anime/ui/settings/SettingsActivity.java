@@ -115,7 +115,7 @@ public class SettingsActivity extends AppCompatActivity {
                 + "\nСвободно: " + Fmt.formatBytes(DownloadStore.freeBytes(this)));
 
         section(c, "Каталог");
-        toggle(c, "Показывать жанры 18+", "Раздел «этти» и другие взрослые жанры в фильтрах",
+        toggle(c, "Показывать жанры 18+", "Взрослые жанры в фильтрах каталога",
                 settings.showAdult, v -> {
                     settings.showAdult = v;
                     save();

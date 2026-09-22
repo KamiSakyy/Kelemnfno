@@ -29,6 +29,14 @@
         <item name="materialAlertDialogTheme">@style/Theme.Kelemnfno.Dialog</item>
         <item name="android:fontFamily">sans</item>
         <item name="android:windowActivityTransitions">true</item>
+        <item name="android:windowAnimationStyle">@style/WindowAnim.Kelemnfno</item>
+    </style>
+
+    <style name="WindowAnim.Kelemnfno">
+        <item name="android:activityOpenEnterAnimation">@anim/enter_right</item>
+        <item name="android:activityOpenExitAnimation">@anim/exit_left</item>
+        <item name="android:activityCloseEnterAnimation">@anim/enter_left</item>
+        <item name="android:activityCloseExitAnimation">@anim/exit_right</item>
     </style>
 
     <style name="Theme.Kelemnfno.Player" parent="Theme.Kelemnfno">
