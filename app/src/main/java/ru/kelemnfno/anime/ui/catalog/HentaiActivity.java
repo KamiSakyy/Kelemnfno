@@ -295,56 +295,9 @@ public class HentaiActivity extends AppCompatActivity {
         });
     }
 
-    /** Тап: карточка как у всех тайтлов; прямой плеер — только если тайтла нет в каталоге. */
+    /** Тап: полная карточка на данных Shikimori (описание, серии, просмотр, скачивание). */
     private void open(Row r) {
-        AppExecutors.get().run(() -> {
-            Map<String, String> p = new LinkedHashMap<>();
-            p.put("search", r.title);
-            p.put("limit", "3");
-            List<AnimeItem> found = AnimeRepository.get(this).list(p);
-            if (!found.isEmpty()) return new Object[]{"item", null, found.get(0)};
-            Object[] direct = anilibriaDirect(r);
-            if (direct != null) return direct;
-            Lookup l = new Lookup();
-            l.title = r.title;
-            l.original = r.original.isEmpty() ? null : r.original;
-            l.year = r.year;
-            l.shikimoriId = r.shikiId;
-            l.genres.add("хентай");
-            List<Track> tracks = SourceEngine.tracks(l);
-            if (tracks != null && !tracks.isEmpty()) {
-                return new Object[]{"tracks", tracks, null};
-            }
-            return null;
-        }, (res, error) -> {
-            if (isFinishing()) return;
-            if (error != null || res == null) {
-                Ui.toast(this, "Тайтл не найден в каталоге");
-                return;
-            }
-            String mode = (String) res[0];
-            if ("item".equals(mode)) {
-                DetailActivity.open(this, ((AnimeItem) res[2]).animeUrl);
-            } else if ("direct".equals(mode)) {
-                Track t = (Track) res[1];
-                List<Track> one = new ArrayList<>();
-                one.add(t);
-                PlayerActivity.start(this, r.title, "hentai_" + r.shikiId, r.shikiId, r.poster,
-                        t.id, t.firstEpisode(), t.voice, one);
-            } else if ("tracks".equals(mode)) {
-                @SuppressWarnings("unchecked")
-                List<Track> tracks = (List<Track>) res[1];
-                Track t = tracks.get(0);
-                PlayerActivity.start(this, r.title, "hentai_" + r.shikiId, r.shikiId, r.poster,
-                        t.id, t.firstEpisode(), t.voice, tracks);
-            } else {
-                @SuppressWarnings("unchecked")
-                List<Track> tracks = (List<Track>) res[1];
-                Track t = tracks.get(0);
-                PlayerActivity.start(this, r.title, "hentai_" + r.shikiId, r.shikiId, r.poster,
-                        t.id, t.firstEpisode(), t.voice, tracks);
-            }
-        });
+        HentaiDetailActivity.start(this, r.shikiId, r.title, r.original, r.year, r.poster);
     }
 
     private class Adapter extends RecyclerView.Adapter<Holder> {

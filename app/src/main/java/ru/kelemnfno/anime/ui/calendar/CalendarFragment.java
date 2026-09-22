@@ -154,8 +154,7 @@ public class CalendarFragment extends Fragment {
         b.nextReleaseText.setText((fromFavorites ? "В избранном: " : "Следующий релиз: ")
                 + target.title + " · серия " + number
                 + " — " + Countdown.format(bestTs, now));
-        b.nextReleaseText.setTextColor(requireContext().getColor(
-                fromFavorites ? R.color.accent : R.color.text));
+        b.nextReleaseText.setTextColor(requireContext().getColor(R.color.on_accent));
         b.nextRelease.setOnClickListener(v -> DetailActivity.open(requireContext(), target.animeUrl));
     }
 
@@ -283,8 +282,7 @@ public class CalendarFragment extends Fragment {
                 else if (now - r.at <= 3L * 86400_000L) state = "уже вышла";
                 else state = "дата уточняется";
                 b.countdown.setText((fav ? "\u2605 " : "") + state);
-                b.countdown.setTextColor(requireContext().getColor(
-                        fav ? R.color.accent : R.color.text_mute));
+                b.countdown.setTextColor(requireContext().getColor(R.color.on_accent));
                 b.meta.setText((fav ? "В избранном · " : "") + b.meta.getText());
                 b.getRoot().setOnClickListener(v -> DetailActivity.open(requireContext(), it.animeUrl));
             }

@@ -61,7 +61,7 @@
             android:paddingTop="3dp"
             android:paddingEnd="10dp"
             android:paddingBottom="3dp"
-            android:textColor="@color/accent"
+            android:textColor="@color/on_accent"
             android:textSize="11sp"
             tools:text="через 3 ч 12 мин" />
     </LinearLayout>
