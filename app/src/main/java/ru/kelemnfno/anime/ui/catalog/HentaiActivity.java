@@ -20,14 +20,19 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import ru.kelemnfno.anime.R;
+import ru.kelemnfno.anime.data.api.DirectHentai;
 import ru.kelemnfno.anime.data.model.AnimeItem;
 import ru.kelemnfno.anime.data.model.Lookup;
 import ru.kelemnfno.anime.data.model.Track;
@@ -41,13 +46,20 @@ import ru.kelemnfno.anime.util.Ui;
 
 /**
  * Раздел 18+: настоящий хентай-каталог Shikimori (жанр 12, без цензуры),
- * полноразмерные обложки. Просмотр — через общие источники приложения,
- * AniLibria (API v1) подключается как дополнительный источник с настоящими
- * видео, как у обычных тайтлов.
+ * полноразмерные обложки. Тап — сразу просмотр: настоящие HLS-видео
+ * AniLibria (API v1), запасные пути — общие источники и основной каталог.
  */
 public class HentaiActivity extends AppCompatActivity {
 
     private static final String[] SHIKI = {"https://shikimori.io/api", "https://shikimori.one/api"};
+    private static final String ANILIB = "https://anilibria.top/api/v1";
+
+    /** Тайтлы, которые обязаны быть в разделе (со скриншота пользователя). */
+    private static final String[] PINNED = {
+            "Issho ni Ecchi",
+            "Incha Couple",
+            "Usamimi Bouken-tan"
+    };
 
     public static void start(android.content.Context context) {
         context.startActivity(new android.content.Intent(context, HentaiActivity.class));
@@ -96,6 +108,62 @@ public class HentaiActivity extends AppCompatActivity {
         }
     }
 
+    private static String enc(String s) {
+        try {
+            return URLEncoder.encode(s, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            return s;
+        }
+    }
+
+    private static Row parseShiki(JsonObject o) {
+        Row r = new Row();
+        r.shikiId = o.has("id") ? o.get("id").getAsInt() : 0;
+        String ru = o.has("russian") && o.get("russian").isJsonPrimitive()
+                ? o.get("russian").getAsString() : "";
+        String en = o.has("name") && o.get("name").isJsonPrimitive()
+                ? o.get("name").getAsString() : "";
+        r.title = ru.isEmpty() ? en : ru;
+        r.original = en;
+        String iso = o.has("released_on") && o.get("released_on").isJsonPrimitive()
+                ? o.get("released_on").getAsString()
+                : (o.has("aired_on") && o.get("aired_on").isJsonPrimitive()
+                ? o.get("aired_on").getAsString() : "");
+        try {
+            r.year = iso.length() >= 4 ? Integer.parseInt(iso.substring(0, 4)) : 0;
+        } catch (NumberFormatException ignored) {
+        }
+        if (o.has("image") && o.get("image").isJsonObject()) {
+            JsonObject img = o.getAsJsonObject("image");
+            String p = img.has("original") && img.get("original").isJsonPrimitive()
+                    ? img.get("original").getAsString() : "";
+            if (p.isEmpty() && img.has("preview") && img.get("preview").isJsonPrimitive())
+                p = img.get("preview").getAsString();
+            if (!p.isEmpty()) r.poster = p.startsWith("http") ? p : "https://shikimori.io" + p;
+        }
+        return r.title.isEmpty() ? null : r;
+    }
+
+    /** Закреплённые тайтлы со скриншота — поиск по имени в Shikimori. */
+    private static List<Row> pinned() {
+        List<Row> out = new ArrayList<>();
+        for (String name : PINNED) {
+            for (String host : SHIKI) {
+                try {
+                    JsonElement root = JsonParser.parseString(
+                            get(host + "/animes?search=" + enc(name) + "&limit=1"));
+                    if (root.isJsonArray() && root.getAsJsonArray().size() > 0) {
+                        Row r = parseShiki(root.getAsJsonArray().get(0).getAsJsonObject());
+                        if (r != null) out.add(r);
+                        break;
+                    }
+                } catch (Exception ignored) {
+                }
+            }
+        }
+        return out;
+    }
+
     /** Страница настоящего хентай-каталога Shikimori (жанр 12). */
     private static List<Row> hentai(int page) throws IOException {
         IOException last = null;
@@ -108,29 +176,8 @@ public class HentaiActivity extends AppCompatActivity {
                 List<Row> out = new ArrayList<>();
                 for (JsonElement e : root.getAsJsonArray()) {
                     if (!e.isJsonObject()) continue;
-                    JsonObject o = e.getAsJsonObject();
-                    Row r = new Row();
-                    r.shikiId = o.has("id") ? o.get("id").getAsInt() : 0;
-                    String ru = o.has("russian") && o.get("russian").isJsonPrimitive()
-                            ? o.get("russian").getAsString() : "";
-                    String en = o.has("name") && o.get("name").isJsonPrimitive()
-                            ? o.get("name").getAsString() : "";
-                    r.title = ru.isEmpty() ? en : ru;
-                    r.original = en;
-                    r.year = o.has("released_on") && o.get("released_on").isJsonPrimitive()
-                            ? yearOf(o.get("released_on").getAsString())
-                            : (o.has("aired_on") && o.get("aired_on").isJsonPrimitive()
-                            ? yearOf(o.get("aired_on").getAsString()) : 0);
-                    if (o.has("image") && o.get("image").isJsonObject()) {
-                        JsonObject img = o.getAsJsonObject("image");
-                        String p = img.has("original") && img.get("original").isJsonPrimitive()
-                                ? img.get("original").getAsString() : "";
-                        if (p.isEmpty() && img.has("preview") && img.get("preview").isJsonPrimitive())
-                            p = img.get("preview").getAsString();
-                        if (!p.isEmpty())
-                            r.poster = p.startsWith("http") ? p : "https://shikimori.io" + p;
-                    }
-                    if (!r.title.isEmpty()) out.add(r);
+                    Row r = parseShiki(e.getAsJsonObject());
+                    if (r != null) out.add(r);
                 }
                 if (!out.isEmpty()) return out;
                 throw new IOException("пусто");
@@ -141,12 +188,59 @@ public class HentaiActivity extends AppCompatActivity {
         throw last != null ? last : new IOException("Shikimori недоступна");
     }
 
-    private static int yearOf(String iso) {
-        try {
-            return iso != null && iso.length() >= 4 ? Integer.parseInt(iso.substring(0, 4)) : 0;
-        } catch (NumberFormatException e) {
-            return 0;
+    private static String fixUrl(String v) {
+        if (v == null || v.isEmpty()) return "";
+        if (v.startsWith("http")) return v;
+        if (v.startsWith("/")) return "https://anilibria.top" + v;
+        if (v.startsWith("//")) return "https:" + v;
+        return "";
+    }
+
+    /** Прямой просмотр: AniLibria API v1 — поиск релиза и HLS-серии. */
+    private static Object[] anilibriaDirect(Row r) {
+        for (String q : new String[]{r.original, r.title}) {
+            if (q == null || q.isEmpty()) continue;
+            try {
+                JsonElement s = JsonParser.parseString(
+                        get(ANILIB + "/app/search/releases?query=" + enc(q) + "&limit=6"));
+                JsonArray arr = null;
+                if (s.isJsonObject() && s.getAsJsonObject().has("data"))
+                    arr = s.getAsJsonObject().getAsJsonArray("data");
+                else if (s.isJsonArray()) arr = s.getAsJsonArray();
+                if (arr == null) continue;
+                for (JsonElement rel : arr) {
+                    if (!rel.isJsonObject()) continue;
+                    int id = rel.getAsJsonObject().has("id")
+                            ? rel.getAsJsonObject().get("id").getAsInt() : 0;
+                    if (id <= 0) continue;
+                    JsonObject full = JsonParser.parseString(
+                            get(ANILIB + "/anime/releases/" + id)).getAsJsonObject();
+                    if (!full.has("episodes") || !full.get("episodes").isJsonArray()) continue;
+                    Map<Integer, Map<Integer, String>> epQ = new LinkedHashMap<>();
+                    for (JsonElement e : full.getAsJsonArray("episodes")) {
+                        if (!e.isJsonObject()) continue;
+                        JsonObject ep = e.getAsJsonObject();
+                        int ord = ep.has("ordinal") ? (int) ep.get("ordinal").getAsDouble() : 0;
+                        if (ord <= 0) continue;
+                        Map<Integer, String> qmap = new LinkedHashMap<>();
+                        String[][] keys = {{"480", "hls_480"}, {"720", "hls_720"},
+                                {"1080", "hls_1080"}, {"1440", "hls_1440"}, {"2160", "hls_2160"}};
+                        for (String[] kv : keys) {
+                            String u = fixUrl(ep.has(kv[1]) && ep.get(kv[1]).isJsonPrimitive()
+                                    ? ep.get(kv[1]).getAsString() : "");
+                            if (!u.isEmpty()) qmap.put(Integer.parseInt(kv[0]), u);
+                        }
+                        if (!qmap.isEmpty()) epQ.put(ord, qmap);
+                    }
+                    if (!epQ.isEmpty()) {
+                        Track t = DirectHentai.publish(epQ);
+                        return new Object[]{"direct", t, null};
+                    }
+                }
+            } catch (Exception ignored) {
+            }
         }
+        return null;
     }
 
     @Override
@@ -174,7 +268,20 @@ public class HentaiActivity extends AppCompatActivity {
         if (loading || !hasMore) return;
         loading = true;
         final int want = page;
-        AppExecutors.get().run(() -> hentai(want), (rows, error) -> {
+        AppExecutors.get().run(() -> {
+            if (want != 1) return hentai(want);
+            List<Row> merged = new ArrayList<>(pinned());
+            try {
+                for (Row r : hentai(1)) {
+                    boolean dup = false;
+                    for (Row p : merged) if (p.shikiId == r.shikiId) { dup = true; break; }
+                    if (!dup) merged.add(r);
+                }
+            } catch (IOException ignored) {
+                if (merged.isEmpty()) throw ignored;
+            }
+            return merged;
+        }, (rows, error) -> {
             loading = false;
             if (isFinishing()) return;
             if (error != null || rows == null || rows.isEmpty()) {
@@ -188,9 +295,11 @@ public class HentaiActivity extends AppCompatActivity {
         });
     }
 
-    /** Тап: подбор источников (включая AniLibria v1 с настоящими видео) и плеер. */
+    /** Тап: настоящие видео AniLibria, затем общие источники, затем каталог. */
     private void open(Row r) {
         AppExecutors.get().run(() -> {
+            Object[] direct = anilibriaDirect(r);
+            if (direct != null) return direct;
             Lookup l = new Lookup();
             l.title = r.title;
             l.original = r.original.isEmpty() ? null : r.original;
@@ -199,31 +308,36 @@ public class HentaiActivity extends AppCompatActivity {
             l.genres.add("хентай");
             List<Track> tracks = SourceEngine.tracks(l);
             if (tracks != null && !tracks.isEmpty()) {
-                Track t = tracks.get(0);
-                return new Object[]{tracks, t, null};
+                return new Object[]{"tracks", tracks, null};
             }
-            java.util.Map<String, String> p = new java.util.LinkedHashMap<>();
+            Map<String, String> p = new LinkedHashMap<>();
             p.put("search", r.title);
             p.put("limit", "1");
             List<AnimeItem> found = AnimeRepository.get(this).list(p);
-            return new Object[]{null, null, found.isEmpty() ? null : found.get(0)};
+            return new Object[]{"item", null, found.isEmpty() ? null : found.get(0)};
         }, (res, error) -> {
             if (isFinishing()) return;
             if (error != null || res == null) {
                 Ui.toast(this, "Тайтл не найден в каталоге");
                 return;
             }
-            @SuppressWarnings("unchecked")
-            List<Track> tracks = (List<Track>) res[0];
-            Track t = (Track) res[1];
-            AnimeItem item = (AnimeItem) res[2];
-            if (tracks != null && t != null) {
+            String mode = (String) res[0];
+            if ("direct".equals(mode)) {
+                Track t = (Track) res[1];
+                List<Track> one = new ArrayList<>();
+                one.add(t);
+                PlayerActivity.start(this, r.title, "hentai_" + r.shikiId, r.shikiId, r.poster,
+                        t.id, t.firstEpisode(), t.voice, one);
+            } else if ("tracks".equals(mode)) {
+                @SuppressWarnings("unchecked")
+                List<Track> tracks = (List<Track>) res[1];
+                Track t = tracks.get(0);
                 PlayerActivity.start(this, r.title, "hentai_" + r.shikiId, r.shikiId, r.poster,
                         t.id, t.firstEpisode(), t.voice, tracks);
-            } else if (item != null) {
-                DetailActivity.open(this, item.animeUrl);
             } else {
-                Ui.toast(this, "Тайтл не найден в каталоге");
+                AnimeItem item = (AnimeItem) res[2];
+                if (item != null) DetailActivity.open(this, item.animeUrl);
+                else Ui.toast(this, "Тайтл не найден в каталоге");
             }
         });
     }

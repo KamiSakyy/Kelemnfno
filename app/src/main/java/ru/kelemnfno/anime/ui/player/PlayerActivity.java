@@ -46,6 +46,7 @@ import ru.kelemnfno.anime.data.db.AppDatabase;
 import ru.kelemnfno.anime.data.db.HistoryEntity;
 import ru.kelemnfno.anime.data.model.AppSettings;
 import ru.kelemnfno.anime.data.model.StreamSource;
+import ru.kelemnfno.anime.data.api.DirectHentai;
 import ru.kelemnfno.anime.data.model.Track;
 import ru.kelemnfno.anime.data.prefs.Prefs;
 import ru.kelemnfno.anime.data.resolver.SourceEngine;
@@ -259,7 +260,8 @@ public class PlayerActivity extends AppCompatActivity {
             List<StreamSource> found;
             String message = null;
             try {
-                found = SourceEngine.streams(trackId, ep, retry);
+                found = DirectHentai.streams(trackId, ep);
+                if (found == null) found = SourceEngine.streams(trackId, ep, retry);
             } catch (Throwable t) {
                 found = new ArrayList<>();
                 message = t.getMessage() == null ? "Поток недоступен" : t.getMessage();
