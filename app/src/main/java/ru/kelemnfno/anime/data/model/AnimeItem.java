@@ -28,4 +28,6 @@ public class AnimeItem {
     public List<String> blockedIn;
     @SerializedName("remote_ids")
     public RemoteIds remoteIds;
+    /** Оригинальное (англ.) имя — заполняется только для карточек из поиска AniLibria/Shikimori. */
+    public transient String original;
 }

@@ -536,7 +536,7 @@ public class CatalogFragment extends Fragment {
         adapter.submit(new ArrayList<>());
         hasMore = true;
         offset = 0;
-        renderGenres();
+        renderQuickFilters();
         loadMore();
     }
 
