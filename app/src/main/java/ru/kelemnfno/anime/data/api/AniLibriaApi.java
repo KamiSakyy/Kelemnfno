@@ -34,7 +34,6 @@ public final class AniLibriaApi {
     }
 
     private static volatile OkHttpClient client;
-    private static volatile String hentaiGenreId = null;
 
     private AniLibriaApi() {
     }
@@ -74,13 +73,7 @@ public final class AniLibriaApi {
                     if (!v3.isEmpty()) return v3;
                     continue;
                 }
-                String gid = hentaiGenreId;
-                if (gid == null) {
-                    gid = findHentaiGenre(host);
-                    if (gid == null) throw new IOException("жанр не найден");
-                    hentaiGenreId = gid;
-                }
-                String url = host + "/anime/catalog/releases?f%5Bgenres%5D=" + gid
+                String url = host + "/anime/catalog/releases?f%5Bage_ratings%5D=R18_PLUS"
                         + "&page=" + page + "&limit=30";
                 List<Title> rows = parseCatalog(get(url), host);
                 if (!rows.isEmpty()) return rows;
@@ -89,27 +82,6 @@ public final class AniLibriaApi {
             }
         }
         throw last != null ? last : new IOException("AniLibria недоступна");
-    }
-
-    /** Идентификатор жанра «хентай» из справочника v1. */
-    private static String findHentaiGenre(String host) throws IOException {
-        JsonElement root = JsonParser.parseString(get(host + "/anime/catalog/references/genres"));
-        JsonArray arr = null;
-        if (root.isJsonObject() && root.getAsJsonObject().has("data"))
-            arr = root.getAsJsonObject().getAsJsonArray("data");
-        else if (root.isJsonArray()) arr = root.getAsJsonArray();
-        if (arr == null) return null;
-        for (JsonElement e : arr) {
-            if (!e.isJsonObject()) continue;
-            JsonObject o = e.getAsJsonObject();
-            String label = (o.has("value") ? o.get("value").getAsString() : "")
-                    + " " + (o.has("description") ? o.get("description").getAsString() : "")
-                    + " " + (o.has("name") ? o.get("name").getAsString() : "");
-            if (label.toLowerCase().contains("хентай")) {
-                return o.has("id") ? String.valueOf(o.get("id").getAsInt()) : null;
-            }
-        }
-        return null;
     }
 
     /** Ответ каталога v1: { data: [ { name:{ru,en}, poster/posters:{small:{url}} } ] }. */
@@ -127,8 +99,9 @@ public final class AniLibriaApi {
             Title t = new Title();
             if (o.has("name") && o.get("name").isJsonObject()) {
                 JsonObject n = o.getAsJsonObject("name");
-                t.name = str(n, "ru");
-                if (t.name.isEmpty()) t.name = str(n, "en");
+                t.name = str(n, "main");
+                if (t.name.isEmpty()) t.name = str(n, "ru");
+                if (t.name.isEmpty()) t.name = str(n, "english");
                 if (t.name.isEmpty()) t.name = str(n, "alternative");
             } else if (o.has("name") && o.get("name").isJsonPrimitive()) {
                 t.name = o.get("name").getAsString();
@@ -139,15 +112,20 @@ public final class AniLibriaApi {
             else if (o.has("poster") && o.get("poster").isJsonObject())
                 p = o.getAsJsonObject("poster");
             if (p != null) {
-                for (String key : new String[]{"small", "medium", "original"}) {
-                    if (p.has(key) && p.get(key).isJsonObject()) {
-                        String u = str(p.getAsJsonObject(key), "url");
-                        if (!u.isEmpty()) {
-                            t.poster = u.startsWith("http") ? u
-                                    : host.replace("/api/v1", "") + (u.startsWith("/") ? u : "/" + u);
-                            break;
+                String u = str(p, "thumbnail");
+                if (u.isEmpty()) u = str(p, "preview");
+                if (u.isEmpty()) u = str(p, "src");
+                if (u.isEmpty()) {
+                    for (String key : new String[]{"small", "medium", "original"}) {
+                        if (p.has(key) && p.get(key).isJsonObject()) {
+                            u = str(p.getAsJsonObject(key), "url");
+                            if (!u.isEmpty()) break;
                         }
                     }
+                }
+                if (!u.isEmpty()) {
+                    t.poster = u.startsWith("http") ? u
+                            : host.replace("/api/v1", "") + (u.startsWith("/") ? u : "/" + u);
                 }
             }
             if (!t.name.isEmpty()) out.add(t);
