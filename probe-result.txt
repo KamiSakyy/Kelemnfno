@@ -1,14 +1,17 @@
-=== shikimori genre=hentai ===
-<html>
-<head><title>301 Moved Permanently</title></head>
-<body>
-<center><h1>301 Moved Permanently</h1></center>
-<hr><center>nginx/1.24.0 (Ubuntu)</center>
-</body>
-</html>
+=== headers shikimori.one ===
+HTTP/2 301 
+server: ddos-guard
+set-cookie: __ddg8_=5VRyN3S3X6mMPJTU; Domain=.shikimori.one; Path=/; Expires=Tue, 22-Sep-2026 12:41:33 GMT
+set-cookie: __ddg10_=1790079693; Domain=.shikimori.one; Path=/; Expires=Tue, 22-Sep-2026 12:41:33 GMT
+set-cookie: __ddg9_=48.214.53.183; Domain=.shikimori.one; Path=/; Expires=Tue, 22-Sep-2026 12:41:33 GMT
+strict-transport-security: max-age=2628000
+content-security-policy: upgrade-insecure-requests;
+set-cookie: __ddg1_=eauRnN9EpMtxTUne6q4f; Domain=.shikimori.one; HttpOnly; Path=/; Expires=Wed, 22-Sep-2027 12:21:33 GMT
+date: Tue, 22 Sep 2026 12:21:33 GMT
+content-type: text/html
+content-length: 178
+location: https://shikimori.io/api/animes?genre=hentai&limit=2&censored=false
 
-=== shikimori.me mirror ===
-curl: (6) Could not resolve host: api.shikimori.me
-
-=== anilibria.top mirror v1 R18 ===
-{"data":[{"id":10224,"type":{"value":"ONA","description":"\u041eNA"},"year":2026,"name":{"main":"\u0414\u044c\u044f\u0432\u043e\u043b \u043c\u043e\u0436\u0435\u0442 \u043f\u043b\u0430\u043a\u0430\u0442\u044c 2","english":"Devil May Cry Season 2","alternative":null},"alias":"devil-may-cry-season-2","season":{"value":"spring","description":"\u0412\u0435\u0441\u043d\u0430"},"shikimori":{"id":null,"url":null,"votes":null,"rating":null},"mal":{"id":null,"url":null,"votes":null,"rating":null},"rating":{"average":null,"votes":0,"distribution":{"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,"10":0}},"poster":{"src":"\/storage\/releases\/posters\/10224\/NRKNVlaSMevyJ49gVInUTpQBVHOotFno.jpg","preview":"\/storage\/releases\/posters\/10224\/NRKNVlaSMevyJ49gVInUTpQBVHOotFno.jpg","thumbnail":"\/storage\/releases\/posters\/10224\/d8sC8oSWdetO38Zmu50k7ch1bxsxnMRT.jpg","optimized":{"src":"\/storag
+=== follow shikimori.one ===
+[]
+=== shikimori.me direct ===
