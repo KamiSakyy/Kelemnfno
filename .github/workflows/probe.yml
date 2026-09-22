@@ -1,0 +1,33 @@
+name: probe
+on:
+  push:
+    branches: [arena/01a0afbd-kelemnfno]
+    paths: ['.github/workflows/probe.yml']
+permissions:
+  contents: write
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: probe
+        run: |
+          UA='Mozilla/5.0 (Linux; Android 15) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Mobile Safari/537.36'
+          {
+            echo '=== shikimori genre=hentai ==='
+            curl -sS -A "$UA" 'https://shikimori.one/api/animes?genre=hentai&limit=3&censored=false' | head -c 2500
+            echo
+            echo '=== shikimori.me mirror ==='
+            curl -sS -A "$UA" 'https://api.shikimori.me/api/animes?genre=hentai&limit=2&censored=false' | head -c 600
+            echo
+            echo '=== anilibria.top mirror v1 R18 ==='
+            curl -sS -A "$UA" 'https://anilibria.top/api/v1/anime/catalog/releases?f%5Bage_ratings%5D=R18_PLUS&page=1&limit=1' | head -c 900
+          } > probe-result.txt 2>&1
+      - name: commit result
+        run: |
+          git config user.name "probe"
+          git config user.email "probe@local"
+          git add probe-result.txt
+          git commit -m "probe result 2" || true
+          git pull --rebase
+          git push
