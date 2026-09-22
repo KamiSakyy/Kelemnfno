@@ -1,0 +1,5 @@
+=== search releases (raw head) ===
+[{"id":10233,"type":{"value":"TV","description":"\u0422\u0412"},"year":2026,"name":{"main":"\u0410\u043a\u043a\u0443\u0440\u0430\u0442\u043d\u0430\u044f \u0438 \u0441\u0438\u043c\u043f\u0430\u0442\u0438\u0447\u043d\u0430\u044f \u0434\u0435\u0432\u043e\u0447\u043a\u0430 \u0432 \u043c\u043e\u0435\u0439 \u043d\u043e\u0432\u043e\u0439 \u0448\u043a\u043e\u043b\u0435 \u2014 \u043f\u043e\u0434\u0440\u044curl: (23) Failure writing output to destination
+
+=== search releases ascii query ===
+[]
