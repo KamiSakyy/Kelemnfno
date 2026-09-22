@@ -204,6 +204,36 @@ public class DetailActivity extends AppCompatActivity {
         });
     }
 
+    private static volatile okhttp3.OkHttpClient shikiClient;
+
+    private static okhttp3.OkHttpClient shikiHttp() {
+        if (shikiClient == null) {
+            synchronized (DetailActivity.class) {
+                if (shikiClient == null) {
+                    shikiClient = new okhttp3.OkHttpClient.Builder()
+                            .connectTimeout(10, java.util.concurrent.TimeUnit.SECONDS)
+                            .readTimeout(20, java.util.concurrent.TimeUnit.SECONDS)
+                            .followRedirects(true)
+                            .followSslRedirects(true)
+                            .build();
+                }
+            }
+        }
+        return shikiClient;
+    }
+
+    private static String shikiGet(String url) throws java.io.IOException {
+        okhttp3.Request req = new okhttp3.Request.Builder()
+                .url(url)
+                .header("User-Agent", ru.kelemnfno.anime.data.resolver.Net.CHROME)
+                .build();
+        try (okhttp3.Response res = shikiHttp().newCall(req).execute()) {
+            if (!res.isSuccessful() || res.body() == null)
+                throw new java.io.IOException("HTTP " + res.code());
+            return res.body().string();
+        }
+    }
+
     /** Полная карточка из Shikimori + серии/видео из AniLibria API v1. */
     private ru.kelemnfno.anime.data.model.AnimeFull buildShikiFull() {
         int id = getIntent().getIntExtra(EXTRA_SHIKI, 0);
@@ -233,7 +263,7 @@ public class DetailActivity extends AppCompatActivity {
         a.minAge.title = "18+";
         a.genres = new java.util.ArrayList<>();
         try {
-            JsonObject o = Net.getJson("https://shikimori.io/api/animes/" + id, Net.baseHeaders(null, null));
+            JsonObject o = JsonParser.parseString(shikiGet("https://shikimori.io/api/animes/" + id)).getAsJsonObject();
             if (o.has("score") && o.get("score").isJsonPrimitive() && o.get("score").getAsDouble() > 0) {
                 a.rating = new ru.kelemnfno.anime.data.model.Rating();
                 a.rating.shikimoriRating = o.get("score").getAsDouble();
@@ -274,9 +304,9 @@ public class DetailActivity extends AppCompatActivity {
         for (String q : new String[]{en, ru}) {
             if (q == null || q.isEmpty()) continue;
             try {
-                JsonElement se = JsonParser.parseString(Net.get(
+                JsonElement se = JsonParser.parseString(shikiGet(
                         "https://anilibria.top/api/v1/app/search/releases?query="
-                        + Net.enc(q) + "&limit=6", Net.baseHeaders(null, null)));
+                        + Net.enc(q) + "&limit=6"));
                 JsonArray arr = null;
                 if (se.isJsonArray()) arr = se.getAsJsonArray();
                 else if (se.isJsonObject() && se.getAsJsonObject().has("data"))
@@ -308,8 +338,8 @@ public class DetailActivity extends AppCompatActivity {
                             : (arr.get(attempt).isJsonObject() ? arr.get(attempt).getAsJsonObject() : null);
                     if (cand == null || !cand.has("id") || cand.get("id").getAsInt() <= 0) continue;
                     int rid = cand.get("id").getAsInt();
-                    JsonObject full = Net.getJson("https://anilibria.top/api/v1/anime/releases/" + rid,
-                            Net.baseHeaders(null, null));
+                    JsonObject full = JsonParser.parseString(
+                            shikiGet("https://anilibria.top/api/v1/anime/releases/" + rid)).getAsJsonObject();
                     if (!full.has("episodes") || !full.get("episodes").isJsonArray()) continue;
                     for (JsonElement e : full.getAsJsonArray("episodes")) {
                         if (!e.isJsonObject()) continue;
