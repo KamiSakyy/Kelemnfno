@@ -297,7 +297,7 @@ public class HentaiActivity extends AppCompatActivity {
 
     /** Тап: полная карточка на данных Shikimori (описание, серии, просмотр, скачивание). */
     private void open(Row r) {
-        HentaiDetailActivity.start(this, r.shikiId, r.title, r.original, r.year, r.poster);
+        DetailActivity.openShiki(this, r.shikiId, r.title, r.original, r.year, r.poster);
     }
 
     private class Adapter extends RecyclerView.Adapter<Holder> {
