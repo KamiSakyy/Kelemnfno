@@ -56,7 +56,8 @@ public class CatalogFragment extends Fragment {
             {2020, 2021}, {2015, 2019}, {2010, 2014}, {2000, 2009}, {1900, 1999}};
     private static final String[] YEAR_LABELS = {"2026", "2025", "2024", "2023", "2022", "2020–2021",
             "2015–2019", "2010–2014", "2000-е", "До 2000"};
-    private static final List<String> ADULT = Arrays.asList("erotica", "sukkuby", "lolikon");
+    private static final List<String> ADULT = Arrays.asList("etti", "erotica", "garem", "garem-dlya-devochek",
+            "sukkuby", "lolikon", "trap", "sedze-aj", "snenen-aj");
 
 
     private FragmentCatalogBinding b;
