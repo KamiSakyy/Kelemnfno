@@ -1,0 +1,20 @@
+name: probe
+on: workflow_dispatch
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: probe anilibria v1
+        run: |
+          UA='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36'
+          echo '=== age-ratings refs ==='
+          curl -sS -A "$UA" 'https://aniliberty.top/api/v1/anime/catalog/references/age-ratings' | head -c 800
+          echo
+          echo '=== R18_PLUS catalog page 1 (limit 3) ==='
+          curl -sS -A "$UA" 'https://aniliberty.top/api/v1/anime/catalog/releases?f%5Bage_ratings%5D=R18_PLUS&page=1&limit=3' | head -c 4000
+          echo
+          echo '=== genres refs ==='
+          curl -sS -A "$UA" 'https://aniliberty.top/api/v1/anime/catalog/references/genres' | head -c 400
+          echo
+          echo '=== mirror api.anilibria.app ==='
+          curl -sS -A "$UA" 'https://api.anilibria.app/api/v1/anime/catalog/releases?f%5Bage_ratings%5D=R18_PLUS&page=1&limit=2' | head -c 1200
