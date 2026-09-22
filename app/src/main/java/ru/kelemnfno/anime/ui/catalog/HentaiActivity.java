@@ -295,9 +295,14 @@ public class HentaiActivity extends AppCompatActivity {
         });
     }
 
-    /** Тап: настоящие видео AniLibria, затем общие источники, затем каталог. */
+    /** Тап: карточка как у всех тайтлов; прямой плеер — только если тайтла нет в каталоге. */
     private void open(Row r) {
         AppExecutors.get().run(() -> {
+            Map<String, String> p = new LinkedHashMap<>();
+            p.put("search", r.title);
+            p.put("limit", "3");
+            List<AnimeItem> found = AnimeRepository.get(this).list(p);
+            if (!found.isEmpty()) return new Object[]{"item", null, found.get(0)};
             Object[] direct = anilibriaDirect(r);
             if (direct != null) return direct;
             Lookup l = new Lookup();
@@ -310,11 +315,7 @@ public class HentaiActivity extends AppCompatActivity {
             if (tracks != null && !tracks.isEmpty()) {
                 return new Object[]{"tracks", tracks, null};
             }
-            Map<String, String> p = new LinkedHashMap<>();
-            p.put("search", r.title);
-            p.put("limit", "1");
-            List<AnimeItem> found = AnimeRepository.get(this).list(p);
-            return new Object[]{"item", null, found.isEmpty() ? null : found.get(0)};
+            return null;
         }, (res, error) -> {
             if (isFinishing()) return;
             if (error != null || res == null) {
@@ -322,7 +323,9 @@ public class HentaiActivity extends AppCompatActivity {
                 return;
             }
             String mode = (String) res[0];
-            if ("direct".equals(mode)) {
+            if ("item".equals(mode)) {
+                DetailActivity.open(this, ((AnimeItem) res[2]).animeUrl);
+            } else if ("direct".equals(mode)) {
                 Track t = (Track) res[1];
                 List<Track> one = new ArrayList<>();
                 one.add(t);
@@ -335,9 +338,11 @@ public class HentaiActivity extends AppCompatActivity {
                 PlayerActivity.start(this, r.title, "hentai_" + r.shikiId, r.shikiId, r.poster,
                         t.id, t.firstEpisode(), t.voice, tracks);
             } else {
-                AnimeItem item = (AnimeItem) res[2];
-                if (item != null) DetailActivity.open(this, item.animeUrl);
-                else Ui.toast(this, "Тайтл не найден в каталоге");
+                @SuppressWarnings("unchecked")
+                List<Track> tracks = (List<Track>) res[1];
+                Track t = tracks.get(0);
+                PlayerActivity.start(this, r.title, "hentai_" + r.shikiId, r.shikiId, r.poster,
+                        t.id, t.firstEpisode(), t.voice, tracks);
             }
         });
     }
