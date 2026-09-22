@@ -39,7 +39,6 @@ public final class DirectHentai {
                 s.url = q.getValue();
                 s.kind = "hls";
                 s.voice = "AniLibria";
-                s.referer = "https://anilibria.top/";
                 s.label = q.getKey() + "p";
                 list.add(s);
                 maxQ = Math.max(maxQ, q.getKey());
