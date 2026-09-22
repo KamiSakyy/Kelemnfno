@@ -282,10 +282,32 @@ public class DetailActivity extends AppCompatActivity {
                 else if (se.isJsonObject() && se.getAsJsonObject().has("data"))
                     arr = se.getAsJsonObject().getAsJsonArray("data");
                 if (arr == null) continue;
+                JsonObject bestRel = null;
+                String ql = q == null ? "" : q.toLowerCase();
                 for (JsonElement rel : arr) {
                     if (!rel.isJsonObject()) continue;
-                    int rid = rel.getAsJsonObject().has("id") ? rel.getAsJsonObject().get("id").getAsInt() : 0;
-                    if (rid <= 0) continue;
+                    JsonObject ro = rel.getAsJsonObject();
+                    if (!ro.has("id") || ro.get("id").getAsInt() <= 0) continue;
+                    if (bestRel == null) bestRel = ro;
+                    if (!ql.isEmpty() && ro.has("name") && ro.get("name").isJsonObject()) {
+                        JsonObject nm = ro.getAsJsonObject("name");
+                        String main = nm.has("main") && nm.get("main").isJsonPrimitive()
+                                ? nm.get("main").getAsString().toLowerCase() : "";
+                        String eng = nm.has("english") && nm.get("english").isJsonPrimitive()
+                                ? nm.get("english").getAsString().toLowerCase() : "";
+                        if ((!main.isEmpty() && (main.contains(ql) || ql.contains(main)))
+                                || (!eng.isEmpty() && (eng.contains(ql) || ql.contains(eng)))) {
+                            bestRel = ro;
+                            break;
+                        }
+                    }
+                }
+                if (bestRel == null) continue;
+                for (int attempt = 0; attempt < arr.size(); attempt++) {
+                    JsonObject cand = attempt == 0 ? bestRel
+                            : (arr.get(attempt).isJsonObject() ? arr.get(attempt).getAsJsonObject() : null);
+                    if (cand == null || !cand.has("id") || cand.get("id").getAsInt() <= 0) continue;
+                    int rid = cand.get("id").getAsInt();
                     JsonObject full = Net.getJson("https://anilibria.top/api/v1/anime/releases/" + rid,
                             Net.baseHeaders(null, null));
                     if (!full.has("episodes") || !full.get("episodes").isJsonArray()) continue;
