@@ -674,11 +674,11 @@ public class DetailActivity extends AppCompatActivity {
         draft.title = anime.title;
         draft.poster = Fmt.posterUrl(anime, "big");
         draft.year = anime.year;
-        draft.type = anime.type == null ? "" : anime.type.shortname;
+        draft.type = (anime.type == null || anime.type.shortname == null) ? "" : anime.type.shortname;
         draft.addedAt = System.currentTimeMillis();
         draft.episodeCount = quickEpisodes().size();
         draft.dubbing = currentTrack == null ? "" : currentTrack.voice;
-        draft.status = anime.animeStatus == null ? "" : anime.animeStatus.alias;
+        draft.status = (anime.animeStatus == null || anime.animeStatus.alias == null) ? "" : anime.animeStatus.alias;
         draft.nextDate = nextEpisodeTs;
         AppExecutors.get().run(() -> AppDatabase.get(this).favoriteDao().bySlug(slug), (existing, error) -> {
             if (b == null || isFinishing()) return;

@@ -62,6 +62,12 @@ public class CatalogFragment extends Fragment {
 
     private FragmentCatalogBinding b;
     private AnimeCardAdapter adapter;
+    private boolean hentaiMode;
+    private int hentaiPage = 1;
+    private final java.util.Set<String> anilibNames = new java.util.HashSet<>();
+    private boolean anilibNamesLoaded;
+    private final java.util.Map<String, Integer> shikiYears = new java.util.HashMap<>();
+    private final java.util.Map<String, String> shikiOriginals = new java.util.HashMap<>();
     private final List<AnimeItem> items = new ArrayList<>();
     private List<Genre> genres = new ArrayList<>();
 
@@ -91,6 +97,14 @@ public class CatalogFragment extends Fragment {
         adapter.setListener(new AnimeCardAdapter.OnCardClick() {
             @Override
             public void onClick(CardModel model) {
+                if (model.slug != null && model.slug.startsWith("shiki:")) {
+                    int id = 0;
+                    try { id = Integer.parseInt(model.slug.substring(6)); } catch (Exception ignored) { }
+                    Integer y = shikiYears.get(model.slug);
+                    DetailActivity.openShiki(requireContext(), id, model.title,
+                            shikiOriginals.get(model.slug), y == null ? 0 : y, model.poster);
+                    return;
+                }
                 DetailActivity.openWith(requireContext(), model.slug, model.title, model.poster);
             }
 
@@ -321,6 +335,7 @@ public class CatalogFragment extends Fragment {
 
     private void loadMore() {
         if (loading || !hasMore) return;
+        if (hentaiMode) { loadHentaiMore(); return; }
         if (renderFromCache()) return;
         loading = true;
         final int from = offset;
@@ -469,7 +484,7 @@ public class CatalogFragment extends Fragment {
             s.genreGroup.removeAllViews();
             s.adultGroup.removeAllViews();
             // отдельный настоящий жанр «хентай» — каталог из AniLibria, вход через 18+
-            Chips.add(s.adultGroup, "Хентай", false, v -> openHentaiGate());
+            Chips.add(s.adultGroup, "Хентай", hentaiMode, v -> openHentaiGate());
             String q = s.genreQuery.getText() == null ? "" : s.genreQuery.getText().toString().trim().toLowerCase();
             boolean adultAllowed = Prefs.get(requireContext()).settings().showAdult;
             for (Genre g : genres) {
@@ -514,11 +529,146 @@ public class CatalogFragment extends Fragment {
         dialog.show();
     }
 
+    private void toggleHentaiMode(boolean on) {
+        hentaiMode = on;
+        hentaiPage = 1;
+        items.clear();
+        adapter.submit(new ArrayList<>());
+        hasMore = true;
+        offset = 0;
+        renderGenres();
+        loadMore();
+    }
+
+    private static String hGet(String url) throws java.io.IOException {
+        okhttp3.Request req = new okhttp3.Request.Builder()
+                .url(url)
+                .header("User-Agent", ru.kelemnfno.anime.data.resolver.Net.CHROME)
+                .build();
+        try (okhttp3.Response res = new okhttp3.OkHttpClient.Builder()
+                .connectTimeout(10, java.util.concurrent.TimeUnit.SECONDS)
+                .readTimeout(20, java.util.concurrent.TimeUnit.SECONDS)
+                .followRedirects(true).followSslRedirects(true).build().newCall(req).execute()) {
+            if (!res.isSuccessful() || res.body() == null) throw new java.io.IOException("HTTP " + res.code());
+            return res.body().string();
+        }
+    }
+
+    private boolean anilibAvailable(String ru, String en) {
+        if (anilibNames.isEmpty()) return false;
+        String a = ru == null ? "" : ru.toLowerCase();
+        String b2 = en == null ? "" : en.toLowerCase();
+        for (String n : anilibNames) {
+            if (n.isEmpty()) continue;
+            if ((!a.isEmpty() && (n.contains(a) || a.contains(n)))
+                    || (!b2.isEmpty() && (n.contains(b2) || b2.contains(n)))) return true;
+        }
+        return false;
+    }
+
+    /** Хентай-фильтр: тот же каталог, карточки Shikimori, «доступно на AniLibria» сверху. */
+    private void loadHentaiMore() {
+        loading = true;
+        final int page = hentaiPage;
+        AppExecutors.get().run(() -> {
+            if (!anilibNamesLoaded) {
+                anilibNamesLoaded = true;
+                try {
+                    for (int p = 1; p <= 3; p++) {
+                        com.google.gson.JsonElement se = com.google.gson.JsonParser.parseString(hGet(
+                                "https://anilibria.top/api/v1/anime/catalog/releases?f%5Bage_ratings%5D=R18_PLUS&page=" + p + "&limit=100"));
+                        com.google.gson.JsonArray arr = se.isJsonObject() && se.getAsJsonObject().has("data")
+                                ? se.getAsJsonObject().getAsJsonArray("data")
+                                : (se.isJsonArray() ? se.getAsJsonArray() : null);
+                        if (arr == null) break;
+                        for (com.google.gson.JsonElement e : arr) {
+                            if (!e.isJsonObject()) continue;
+                            com.google.gson.JsonObject o = e.getAsJsonObject();
+                            if (o.has("name") && o.get("name").isJsonObject()) {
+                                com.google.gson.JsonObject n = o.getAsJsonObject("name");
+                                if (n.has("main") && n.get("main").isJsonPrimitive())
+                                    anilibNames.add(n.get("main").getAsString().toLowerCase());
+                                if (n.has("english") && n.get("english").isJsonPrimitive())
+                                    anilibNames.add(n.get("english").getAsString().toLowerCase());
+                            }
+                        }
+                        if (arr.size() < 100) break;
+                    }
+                } catch (Exception ignored) {
+                }
+            }
+            java.io.IOException last = null;
+            List<com.google.gson.JsonObject> rows = new ArrayList<>();
+            for (String host : new String[]{"https://shikimori.io/api", "https://shikimori.one/api"}) {
+                try {
+                    com.google.gson.JsonElement r = com.google.gson.JsonParser.parseString(hGet(
+                            host + "/animes?genre=12&is_censored=false&order=popularity&limit=30&page=" + page));
+                    if (r.isJsonArray())
+                        for (com.google.gson.JsonElement e : r.getAsJsonArray())
+                            if (e.isJsonObject()) rows.add(e.getAsJsonObject());
+                    if (!rows.isEmpty()) break;
+                } catch (java.io.IOException e) {
+                    last = e;
+                }
+            }
+            if (rows.isEmpty() && last != null) throw last;
+            List<CardModel> out = new ArrayList<>();
+            for (com.google.gson.JsonObject o : rows) {
+                int id = o.has("id") ? o.get("id").getAsInt() : 0;
+                String ru = o.has("russian") && o.get("russian").isJsonPrimitive() ? o.get("russian").getAsString() : "";
+                String en = o.has("name") && o.get("name").isJsonPrimitive() ? o.get("name").getAsString() : "";
+                String title = ru.isEmpty() ? en : ru;
+                if (title.isEmpty()) continue;
+                String poster = "";
+                if (o.has("image") && o.get("image").isJsonObject()) {
+                    com.google.gson.JsonObject img = o.getAsJsonObject("image");
+                    poster = img.has("original") && img.get("original").isJsonPrimitive()
+                            ? img.get("original").getAsString() : "";
+                    if (!poster.isEmpty() && !poster.startsWith("http")) poster = "https://shikimori.io" + poster;
+                }
+                int year = 0;
+                String iso = o.has("aired_on") && o.get("aired_on").isJsonPrimitive()
+                        ? o.get("aired_on").getAsString() : "";
+                if (iso.length() >= 4) try { year = Integer.parseInt(iso.substring(0, 4)); } catch (Exception ignored) { }
+                double score = o.has("score") && o.get("score").isJsonPrimitive() ? o.get("score").getAsDouble() : 0;
+                String slug = "shiki:" + id;
+                shikiYears.put(slug, year);
+                shikiOriginals.put(slug, en);
+                CardModel m = new CardModel(slug, title, poster);
+                m.animeId = id;
+                m.rating = score;
+                m.subtitle = (year > 0 ? year + " · " : "") + "18+";
+                m.badge = anilibAvailable(ru, en) ? "AniLibria" : "";
+                out.add(m);
+            }
+            out.sort((x, y) -> Boolean.compare(y.badge != null && !y.badge.isEmpty(),
+                    x.badge != null && !x.badge.isEmpty()));
+            List<Object> res = new ArrayList<>();
+            res.add(out);
+            res.add(!rows.isEmpty());
+            return res;
+        }, (value, error) -> {
+            loading = false;
+            if (b == null) return;
+            if (error != null || value == null) {
+                hasMore = false;
+                return;
+            }
+            @SuppressWarnings("unchecked")
+            List<CardModel> models = (List<CardModel>) value.get(0);
+            boolean more = (Boolean) value.get(1);
+            if (models.isEmpty() || !more) hasMore = false;
+            hentaiPage++;
+            adapter.addAll(models);
+            b.empty.getRoot().setVisibility(adapter.current().isEmpty() && !hasMore ? View.VISIBLE : View.GONE);
+        });
+    }
+
     /** Диалог возраста: «Тебе есть 18 лет?» Да — открыть каталог, Нет — закрыть. */
     private void openHentaiGate() {
         ru.kelemnfno.anime.data.prefs.Prefs prefs = ru.kelemnfno.anime.data.prefs.Prefs.get(requireContext());
         if (prefs.settings().adultConfirmed) {
-            HentaiActivity.start(requireContext());
+            toggleHentaiMode(!hentaiMode);
             return;
         }
         new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
@@ -528,7 +678,7 @@ public class CatalogFragment extends Fragment {
                     ru.kelemnfno.anime.data.model.AppSettings st = prefs.settings();
                     st.adultConfirmed = true;
                     prefs.saveSettings(st);
-                    HentaiActivity.start(requireContext());
+                    toggleHentaiMode(true);
                 })
                 .setNegativeButton("Нет", null)
                 .show();
