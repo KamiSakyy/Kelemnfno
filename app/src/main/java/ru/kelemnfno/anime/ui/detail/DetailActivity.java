@@ -3,6 +3,7 @@ package ru.kelemnfno.anime.ui.detail;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import android.app.Dialog;
 import android.content.Context;
