@@ -178,13 +178,13 @@ public final class AniLibriaApi {
             }
             if (o.has("posters") && o.get("posters").isJsonObject()) {
                 JsonObject p = o.getAsJsonObject("posters");
-                String url = "";
+                String u = "";
                 if (p.has("small") && p.get("small").isJsonObject())
-                    url = str(p.getAsJsonObject("small"), "url");
-                if (url.isEmpty() && p.has("original") && p.get("original").isJsonObject())
-                    url = str(p.getAsJsonObject("original"), "url");
-                if (url.startsWith("/")) url = host.replace("/v3", "") + url;
-                t.poster = url;
+                    u = str(p.getAsJsonObject("small"), "url");
+                if (u.isEmpty() && p.has("original") && p.get("original").isJsonObject())
+                    u = str(p.getAsJsonObject("original"), "url");
+                if (u.startsWith("/")) u = host.replace("/v3", "") + u;
+                t.poster = u;
             }
             if (!t.name.isEmpty()) out.add(t);
         }
