@@ -1,8 +1,3 @@
-== search+is_adult: list 0
-== search+adult: list 0
-== search+age: list 0
-== catalog XXX: total=0 count=0
-== catalog ADULT: total=0 count=0
-== catalog hentai genre name: total=0 count=0
-== old tv v3: ERR HTTP Error 410: Gone
-== anilibria.tv root: ERR HTTP Error 404: Not Found
+== HANIME SEARCH Usamimi Bouken-tan ERR <urlopen error [Errno -2] Name or service not known>
+== HANIME SEARCH Isshо ni Ecchi ERR <urlopen error [Errno -2] Name or service not known>
+== HANIME SEARCH Incha Couple ERR <urlopen error [Errno -2] Name or service not known>
