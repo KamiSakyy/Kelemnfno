@@ -1,71 +1,16 @@
-GENRES sample keys: ['id', 'image', 'name', 'total_releases']
-G 15 | Боевые искусства | 
-G 24 | Вампиры | 
-G 32 | Гарем | 
-G 16 | Демоны | 
-G 25 | Детектив | 
-G 33 | Дзёсей | 
-G 8 | Драма | 
-G 17 | Игры | 
-G 34 | Исекай | 
-G 26 | Исторический | 
-G 30 | Киберпанк | 
-G 1 | Комедия | 
-G 18 | Магия | 
-G 2 | Меха | 
-G 9 | Мистика | 
-G 19 | Музыка | 
-G 36 | Пародия | 
-G 10 | Повседневность | 
-G 27 | Приключения | 
-G 3 | Психологическое | 
-G 11 | Романтика | 
-G 28 | Сверхъестественное | 
-G 20 | Сёдзе | 
-G 31 | Сёдзе-ай | 
-G 5 | Сейнен | 
-G 4 | Сёнен | 
-G 12 | Спорт | 
-G 21 | Супер сила | 
-G 6 | Триллер | 
-G 13 | Ужасы | 
-G 22 | Фантастика | 
-G 29 | Фэнтези | 
-G 7 | Школа | 
-G 14 | Экшен | 
-G 23 | Этти | 
-GENRE 15 Боевые искусства total=22
-GENRE 24 Вампиры total=46
-GENRE 32 Гарем total=12
-GENRE 16 Демоны total=50
-GENRE 25 Детектив total=147
-GENRE 33 Дзёсей total=6
-GENRE 8 Драма total=373
-GENRE 17 Игры total=42
-GENRE 34 Исекай total=54
-GENRE 26 Исторический total=95
-GENRE 30 Киберпанк total=1
-GENRE 1 Комедия total=693
-GENRE 18 Магия total=111
-GENRE 2 Меха total=58
-GENRE 9 Мистика total=50
-GENRE 19 Музыка total=61
-GENRE 36 Пародия total=4
-GENRE 10 Повседневность total=220
-GENRE 27 Приключения total=470
-GENRE 3 Психологическое total=81
-GENRE 11 Романтика total=486
-GENRE 28 Сверхъестественное total=305
-GENRE 20 Сёдзе total=73
-GENRE 31 Сёдзе-ай total=1
-GENRE 5 Сейнен total=203
-GENRE 4 Сёнен total=337
-GENRE 12 Спорт total=55
-GENRE 21 Супер сила total=51
-GENRE 6 Триллер total=61
-GENRE 13 Ужасы total=81
-GENRE 22 Фантастика total=275
-GENRE 29 Фэнтези total=651
-GENRE 7 Школа total=384
-GENRE 14 Экшен total=711
-GENRE 23 Этти total=116
+== YUMMY https://api.yani.tv зайка HTTP 200 size 8691
+YUMMY https://api.yani.tv зайка count=0
+== YUMMY https://yummyanime.club/api зайка HTTP 403 size 5699
+YUMMY https://yummyanime.club/api зайка PARSE-ERR Expecting value: line 1 column 1 (char 0)
+== YUMMY https://api.yummyanime.club зайка HTTP 000 size 5699
+YUMMY https://api.yummyanime.club зайка PARSE-ERR Expecting value: line 1 column 1 (char 0)
+== YUMMY секс вдвоём HTTP 200 size 8621
+YUMMY секс вдвоём count=0
+== YUMMY истории приключений HTTP 200 size 11781
+YUMMY истории приключений count=0
+== ANILIB appsearch Usamimi full HTTP 200 size 2
+ANILIB appsearch Usamimi full count=0
+== ANILIB appsearch Sexual HTTP 200 size 2
+ANILIB appsearch Sexual count=0
+== ANILIB appsearch Ecchi HTTP 200 size 2
+ANILIB appsearch Ecchi count=0
