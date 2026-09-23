@@ -1,16 +1,7 @@
-SHIKI https://shikimori.one/api ERR Unterminated string starting at: line 1 column 316 (char 315)
-SHIKI https://shikimori.io/api ERR Unterminated string starting at: line 1 column 316 (char 315)
-HANIME-VIDEO https://hanime.tv ERR HTTP Error 403: Forbidden
-HANIME-VIDEO https://hanime1.com ERR HTTP Error 403: Forbidden
-DoH search.htv-services.net -> []
-DoH search.htv-services.org -> []
-DoH search.htv-services.io -> []
-DoH htv-services.net -> []
-DoH search.hanime.tv -> []
-DoH htv-services.org -> []
-ANIMELIB https://api.cdnlibs.org/api/anime?page=1&q=usamimi -> 200 b'{"data":[],"links":{"first":"http:\\/\\/api.cdnlibs.org\\/api\\/anime?page=1","last":null,"prev":null,"n'
-ANIMELIB https://animelib.org/api/anime?page=1&q=usamimi ERR HTTP Error 404: Not Found
-ANIMELIB https://anilib.me/api/anime?page=1&q=usamimi ERR HTTP Error 403: Forbidden
-ANIMELIB https://api.anilib.me/api/anime?page=1&q=usamimi ERR <urlopen error [Errno -2] Name or service not known>
-HCHAN https://hentai-chan.best/ ERR <urlopen error [Errno -2] Name or service not known>
-HCHAN https://h-chan.me/ -> 200 len=39
+== AL q=История приключений с девушкой-зайкой count=0
+== AL q=Секс вдвоём count=0
+== AL q=История парочки count=0
+== AL q=зайкой count=0
+SHIKI id=49353 ru=История приключений с девушкой-зайкой: Спасение мира с помощью сексуальных домогательств name=Usamimi Bouken-tan: Sexual Harassment Shinagara Sekai wo Sukue
+SHIKI id=40828 ru=Я хочу быть девушкой name=Onnanoko ni Naritai
+SHIKI id=34899 ru=Квест с девушкой-монстром! name=Monmusu Quest!
