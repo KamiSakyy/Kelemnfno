@@ -15,54 +15,47 @@ jobs:
           UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36"
           OUT=probe-result.txt
           : > $OUT
-          i=0
-          for q in "Секс вдвоём" "Issho ni Ecchi" "История парочки" "Incha Couple" "девушкой-зайкой" "Usamimi Bouken-tan" "зайкой" "Bouken-tan"; do
-            i=$((i+1))
-            eq=$(python3 -c "import urllib.parse,sys;print(urllib.parse.quote(sys.argv[1]))" "$q")
-            curl -s --max-time 30 -H "User-Agent: $UA" "https://anilibria.top/api/v1/app/search/releases?query=$eq&limit=10" -o /tmp/a$i.json || true
-            echo "$i=$q" >> /tmp/map.txt
-          done
-          python3 - <<'PY' >> $OUT
-          import json
-          for line in open('/tmp/map.txt'):
-              i,q=line.strip().split('=',1)
-              try: d=json.load(open(f'/tmp/a{i}.json'))
-              except Exception as e: print(f'== APPSEARCH {q} ERR {e}'); continue
-              arr=d if isinstance(d,list) else d.get('data',[]) if isinstance(d,dict) else []
-              print(f'== APPSEARCH {q} count={len(arr)}')
-              for r in arr[:10]:
+          probe() {
+            local name="$1"; local url="$2"
+            local code=$(curl -s -o /tmp/pr.json -w "%{http_code}" --max-time 25 -H "User-Agent: $UA" "$url")
+            echo "== $name HTTP $code size $(stat -c%s /tmp/pr.json 2>/dev/null || echo 0)" >> $OUT
+            python3 - "$name" <<'PY' >> $OUT
+          import json,sys
+          name=sys.argv[1]
+          try: d=json.load(open('/tmp/pr.json'))
+          except Exception as e: print(f'{name} PARSE-ERR {e}'); raise SystemExit
+          if isinstance(d,dict) and 'data' in d:
+              arr=d['data']; meta=d.get('meta',{}).get('pagination',{})
+              print(f'{name} total={meta.get("total")} count={len(arr)}')
+              for r in arr[:30]:
+                  n=r.get('name',{}) if isinstance(r.get('name'),dict) else {}
+                  g=[x.get('name','') for x in (r.get('genres') or [])]
+                  print(f'  {r.get("id")} | {n.get("main")} | {n.get("english")} | {";".join(g)}')
+          elif isinstance(d,list):
+              print(f'{name} list count={len(d)}')
+              for r in d[:30]:
                   if isinstance(r,dict):
                       n=r.get('name',{}) if isinstance(r.get('name'),dict) else {}
-                      print(f'A {r.get("id")} | {n.get("main")} | {n.get("english")} | eps={len(r.get("episodes") or [])}')
-                  else:
-                      print(f'A raw={str(r)[:120]}')
+                      print(f'  {r.get("id")} | {n.get("main")} | {n.get("english")} | eps={len(r.get("episodes") or [])}')
+                  else: print(f'  raw {str(r)[:100]}')
+          else:
+              print(f'{name} other: {str(d)[:200]}')
           PY
-          M3U=$(curl -s --max-time 30 -H "User-Agent: $UA" "https://anilibria.top/api/v1/anime/releases/9738" | python3 -c "import json,sys;d=json.load(sys.stdin);r=d.get('data',d);eps=r.get('episodes') or [];print(eps[0].get('hls_480') if eps else '')")
-          echo "== M3U URL: $M3U" >> $OUT
-          for mode in plain ua ref uaref; do
-            case $mode in
-              plain) code=$(curl -s -o /tmp/m.plain -w "%{http_code}" --max-time 20 "$M3U");;
-              ua) code=$(curl -s -o /tmp/m.ua -w "%{http_code}" --max-time 20 -H "User-Agent: $UA" "$M3U");;
-              ref) code=$(curl -s -o /tmp/m.ref -w "%{http_code}" --max-time 20 -H "Referer: https://anilibria.top/" "$M3U");;
-              uaref) code=$(curl -s -o /tmp/m.uaref -w "%{http_code}" --max-time 20 -H "User-Agent: $UA" -H "Referer: https://anilibria.top/" "$M3U");;
-            esac
-            echo "== M3U $mode -> HTTP $code size $(stat -c%s /tmp/m.$mode 2>/dev/null || echo 0)" >> $OUT
-          done
-          echo "== M3U head:" >> $OUT
-          head -c 500 /tmp/m.uaref >> $OUT
-          echo "" >> $OUT
-          SEG=$(grep -v "^#" /tmp/m.uaref | head -1)
-          echo "== SEG1: $SEG" >> $OUT
-          case "$SEG" in /*) SEG="https://cache.libria.fun$SEG";; http*) ;; *) SEG="";; esac
-          if [ -n "$SEG" ]; then
-            code=$(curl -s -o /tmp/s1 -w "%{http_code}" --max-time 20 -H "User-Agent: $UA" -H "Referer: https://anilibria.top/" "$SEG")
-            echo "== SEG fetch -> HTTP $code size $(stat -c%s /tmp/s1 2>/dev/null || echo 0)" >> $OUT
-          fi
-          cat $OUT | head -80
+          }
+          probe "APP_HOST_R18" "https://api.anilibria.app/api/v1/anime/catalog/releases?f%5Bage_ratings%5D=R18_PLUS&limit=50"
+          probe "APP_SEARCH_SEX" "https://api.anilibria.app/api/v1/app/search/releases?query=%D0%A1%D0%B5%D0%BA%D1%81%20%D0%B2%D0%B4%D0%B2%D0%BE%D1%91%D0%BC&limit=10"
+          probe "APP_SEARCH_ZAIKA" "https://api.anilibria.app/api/v1/app/search/releases?query=%D0%B4%D0%B5%D0%B2%D1%83%D1%88%D0%BA%D0%BE%D0%B9-%D0%B7%D0%B0%D0%B9%D0%BA%D0%BE%D0%B9&limit=10"
+          probe "ANILIBERY_R18" "https://anilibery.top/api/v1/anime/catalog/releases?f%5Bage_ratings%5D=R18_PLUS&limit=50"
+          probe "ANILIBERY_SEARCH" "https://anilibery.top/api/v1/app/search/releases?query=%D0%A1%D0%B5%D0%BA%D1%81%20%D0%B2%D0%B4%D0%B2%D0%BE%D1%91%D0%BC&limit=10"
+          probe "TOP_ISADULT" "https://anilibria.top/api/v1/anime/catalog/releases?f%5Bis_adult%5D=1&limit=50"
+          probe "TOP_GENRES_EP" "https://anilibria.top/api/v1/anime/genres"
+          probe "V3_TITLE" "https://api.anilibria.tv/v3/title?code=issho-ni-ecchi"
+          probe "V3_GENRES" "https://api.anilibria.tv/v3/genres"
+          cat $OUT | head -120
       - name: push result
         run: |
           git config user.name "probe"
           git config user.email "probe@local"
           git add probe-result.txt
-          git commit -m "probe result 2 [skip ci]" || echo nothing
+          git commit -m "probe result 3 [skip ci]" || echo nothing
           git push origin HEAD:arena/01a0afbd-kelemnfno || echo pushfail
