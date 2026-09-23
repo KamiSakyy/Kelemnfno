@@ -1,14 +1,12 @@
-HC https://hentaichan.ru/ ERR <urlopen error [Errno 101] Network is unreachable>
-HC http://hentaichan.ru/ -> 200 final=http://hentaichan.ru/ len=10103
-   title: Срок регистрации домена&nbsp;hentaichan.ru истёк
-HC-PAGE https://hentaichan.ru/manga/usamimi-bouken-tan ERR <urlopen error [Errno 101] Network is unreachable>
-HC-PAGE https://hentaichan.ru/?do=search&subaction=search&searchstory=usamimi ERR <urlopen error [Errno 101] Network is unreachable>
-AL futari episodes=4
-AL futari ep10359 keys=['id', 'model', 'name', 'number', 'number_secondary', 'season', 'status', 'anime_id', 'created_at', 'players', 'type'] players=2
-   src=//kodikplayer.com/seria/551280/cacabcfb56418837076cfa0645b03402/720p team=None type=Озвучка
-   src=//kodikplayer.com/seria/626053/0f021d048c30d3e9115f4acc5a228c16/720p team=None type=Озвучка
-   PLAYER status=200 len=20502 kodik=True
-   videos-in-page: []
-AL-adult q=usamimi&isAdult=true count=0 :: []
-AL-adult q=usamimi&is_yaoi=true count=0 :: []
-AL-adult q=Usamimi%20Bouken count=0 :: []
+MIRROR https://manga.h-chan.me/ -> 200 final=https://x13.h-chan.me/ len=184550 title=Хентай-тян! - большой каталог хентай манга с удобной онлайн читалкой
+MIRROR https://x3.h-chan.me/ ERR HTTP Error 404: Not Found
+MIRROR https://xxl.hentaichan.live/ -> 200 final=https://xxl.hentaichan.live/ len=184550 title=Хентай-тян! - большой каталог хентай манга с удобной онлайн читалкой
+MIRROR https://anime-chan.me/ -> 200 final=https://anime-chan.me/ len=118010 title=Аниме приколы на Аниме-тян &raquo; Аниме приколы на Аниме-тян
+MIRROR https://x.henchan.pro/ ERR <urlopen error timed out>
+MIRROR https://henchan.pro/ ERR <urlopen error timed out>
+ALIVE=https://manga.h-chan.me
+  PAGE /?do=search&subaction=search&searchstory=usamimi -> 200 len=18262 title=Поиск по сайту &raquo; Хентай-тян! - большой каталог хентай манга с удобной онлайн читалко
+  manga-links: ['/manga/random']
+  PAGE https://manga.h-chan.me/manga/usamimi-bouken-tan ERR HTTP Error 404: Not Found
+SHIKITV /api/animes?search=usamimi&limit=2 ERR HTTP Error 403: Forbidden
+SHIKITV /api/animes?limit=1 ERR HTTP Error 403: Forbidden
