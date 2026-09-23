@@ -13,34 +13,35 @@ jobs:
       - name: probe
         run: |
           python3 - <<'PY2'
-          import json,urllib.request,socket
+          import json,urllib.request
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36"
+          BODY=json.dumps({"search_text":"Usamimi Bouken-tan","tags":[],"tags_mode":"AND","brands":[],"blacklist":[],"order_by":"created_at_unix","ordering":"desc","page":0})
           out=[]
-          for host in ["search.htv-services.com","hanime.tv","www.hanime.tv","htv-services.com"]:
-              try:
-                  ip=socket.gethostbyname(host); out.append(f'DNS {host} -> {ip}')
-              except Exception as e:
-                  out.append(f'DNS {host} ERR {e}')
           def doh(name):
               try:
-                  req=urllib.request.Request(f'https://cloudflare-dns.com/dns-query?name={name}&type=A',headers={'Accept':'application/dns-json','User-Agent':'Mozilla/5.0'})
+                  req=urllib.request.Request('https://cloudflare-dns.com/dns-query?name='+name+'&type=A',headers={'Accept':'application/dns-json','User-Agent':UA})
                   with urllib.request.urlopen(req,timeout=15) as r: d=json.loads(r.read())
-                  return [(a.get('address')) for a in d.get('Answer',[]) if a.get('type')==1]
+                  return [a.get('address') for a in d.get('Answer',[]) if a.get('type')==1]
               except Exception as e:
-                  return [f'ERR {e}']
-          for host in ["search.htv-services.com","hanime.tv"]:
-              out.append(f'DoH {host} -> {doh(host)}')
-          try:
-              req=urllib.request.Request('https://hanime.tv/',headers={'User-Agent':'Mozilla/5.0'})
-              with urllib.request.urlopen(req,timeout=15) as r:
-                  out.append(f'GET hanime.tv -> {r.status} len={len(r.read())}')
-          except Exception as e:
-              out.append(f'GET hanime.tv ERR {str(e)[:120]}')
-          try:
-              req=urllib.request.Request('https://search.htv-services.com/',data=b'{}',headers={'User-Agent':'Mozilla/5.0','Content-Type':'application/json'},method='POST')
-              with urllib.request.urlopen(req,timeout=15) as r:
-                  out.append(f'POST htv -> {r.status} len={len(r.read())}')
-          except Exception as e:
-              out.append(f'POST htv ERR {str(e)[:120]}')
+                  return ['ERR '+str(e)[:60]]
+          for h in ["htv-services.com","search.hanime.tv","search.hanime1.com","hanime1.com"]:
+              out.append('DoH %s -> %s' % (h, doh(h)))
+          tests=[
+            ("POST htv root","https://htv-services.com/","POST"),
+            ("POST htv root search path","https://htv-services.com/search","POST"),
+            ("POST hanime api v8 search","https://hanime.tv/api/v8/search","POST"),
+            ("GET hanime search page","https://hanime.tv/search?query=Usamimi","GET"),
+            ("GET hanime1","https://hanime1.com/","GET"),
+          ]
+          for name,url,method in tests:
+              try:
+                  req=urllib.request.Request(url,data=BODY.encode() if method=="POST" else None,
+                      headers={'User-Agent':UA,'Accept':'application/json','Origin':'https://hanime.tv','Referer':'https://hanime.tv/','Content-Type':'application/json'},method=method)
+                  with urllib.request.urlopen(req,timeout=15) as r:
+                      txt=r.read().decode('utf-8','ignore')
+                      out.append('%s -> %s len=%d head=%r' % (name,r.status,len(txt),txt[:150]))
+              except Exception as e:
+                  out.append('%s ERR %s' % (name,str(e)[:100]))
           open('probe-result.txt','w').write('\n'.join(out)+'\n')
           print('\n'.join(out))
           PY2
@@ -49,5 +50,5 @@ jobs:
           git config user.name "probe"
           git config user.email "probe@local"
           git add probe-result.txt
-          git commit -m "probe result 9 [skip ci]" || echo nothing
+          git commit -m "probe result 11 [skip ci]" || echo nothing
           git push origin HEAD:arena/01a0afbd-kelemnfno || echo pushfail
