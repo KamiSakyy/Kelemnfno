@@ -22,48 +22,58 @@ jobs:
               r=urllib.request.Request(url,headers=hh)
               with urllib.request.urlopen(r,timeout=25) as resp:
                   return resp.status,resp.geturl(),resp.read().decode('utf-8','ignore')
-          for u in ['https://manga.h-chan.me/','https://x3.h-chan.me/','https://xxl.hentaichan.live/','https://anime-chan.me/','https://x.henchan.pro/','https://henchan.pro/']:
+          B='https://manga.h-chan.me'
+          # поиск: русские и английские запросы, дамп href
+          found=[]
+          for q in ['usamimi','зайкой','Usamimi Bouken-tan']:
+              try:
+                  s,f,b=get(f'{B}/?do=search&subaction=search&searchstory='+urllib.parse.quote(q))
+                  hrefs=list(dict.fromkeys(re.findall(r'href="(/manga/[^"#]+)"',b)))
+                  out.append(f'SEARCH q={q} -> {s} len={len(b)} hrefs={hrefs[:6]}')
+                  if hrefs and not found: found=hrefs
+              except Exception as e:
+                  out.append(f'SEARCH q={q} ERR {str(e)[:100]}')
+          # AJAX поиск (DLE)
+          for u in [B+'/engine/ajax/search.php?query=usamimi']:
+              try:
+                  s,f,b=get(u)
+                  out.append(f'AJAX {u[len(B):]} -> {s} {b[:200]}')
+              except Exception as e:
+                  out.append(f'AJAX ERR {str(e)[:100]}')
+          # страница найденной манги: ищем видео-плеер
+          if found:
+              u=B+found[0]
               try:
                   s,f,b=get(u)
                   t=re.search(r'<title[^>]*>(.*?)</title>',b,re.S)
-                  out.append(f'MIRROR {u} -> {s} final={f} len={len(b)} title={(t.group(1).strip()[:80] if t else "-")}')
+                  out.append(f'MANGA {found[0]} -> {s} len={len(b)} title={(t.group(1).strip()[:90] if t else "-")}')
+                  for pat in [r'https?://[^"\'\s<>]*kodik[^"\'\s<>]*',r'https?://[^"\'\s<>]*\.m3u8[^"\'\s<>]*',r'https?://[^"\'\s<>]*\.mp4[^"\'\s<>]*',r'<iframe[^>]*src="([^"]+)"',r'video[^"\'\s<>]{0,80}']:
+                      m=list(dict.fromkeys(re.findall(pat,b)))
+                      if m: out.append(f'   {pat[:26]}: {[x[:120] for x in m[:4]]}')
+                  # ссылки на "смотреть видео"
+                  vlinks=list(dict.fromkeys(re.findall(r'href="(/(?:video|anime)[^"#]*)"',b)))
+                  out.append(f'   vlinks: {vlinks[:5]}')
+                  # их плеер может лежать в /engine или js-переменной
+                  for pat in [r'(?:playerUrl|video_url|file)\s*[:=]\s*["\']([^"\']+)',r'data-src="([^"]+)"']:
+                      m=list(dict.fromkeys(re.findall(pat,b)))
+                      if m: out.append(f'   {pat[:20]}: {[x[:120] for x in m[:3]]}')
               except Exception as e:
-                  out.append(f'MIRROR {u} ERR {str(e)[:110]}')
-          # живое зеркало: поиск + страница + видео
-          alive=None
-          for u in ['https://x.henchan.pro/','https://manga.h-chan.me/','https://xxl.hentaichan.live/']:
-              try:
-                  s,f,b=get(u)
-                  if s==200 and len(b)>3000: alive=u.rstrip('/'); break
-              except Exception: pass
-          if alive:
-              out.append(f'ALIVE={alive}')
-              for u in [alive+'/?do=search&subaction=search&searchstory=usamimi',alive+'/manga/usamimi-bouken-tan']:
+                  out.append(f'MANGA {found[0]} ERR {str(e)[:100]}')
+          else:
+              # прямой слаг-гесс с .html
+              for slug in ['usamimi-bouken-tan.html','usamimi-bouken-tan']:
                   try:
-                      s,f,b=get(u)
-                      t=re.search(r'<title[^>]*>(.*?)</title>',b,re.S)
-                      out.append(f'  PAGE {u[len(alive):][:50] or "/"} -> {s} len={len(b)} title={(t.group(1).strip()[:90] if t else "-")}')
-                      links=list(dict.fromkeys(re.findall(r'/manga/[a-z0-9\-]+',b)))[:6]
-                      out.append(f'  manga-links: {links}')
-                      for pat in [r'https?://[^"\'\s<>]*kodik[^"\'\s<>]*',r'https?://[^"\'\s<>]*\.m3u8[^"\'\s<>]*',r'https?://[^"\'\s<>]*\.mp4[^"\'\s<>]*']:
-                          m=list(dict.fromkeys(re.findall(pat,b)))
-                          if m: out.append(f'  {pat[:24]}: {m[:3]}')
+                      s,f,b=get(f'{B}/manga/{slug}')
+                      out.append(f'DIRECT /manga/{slug} -> {s} len={len(b)}')
                   except Exception as e:
-                      out.append(f'  PAGE {u[:60]} ERR {str(e)[:110]}')
-          # shikimori.tv
-          for u in ['https://shikimori.tv/api/animes?search=usamimi&limit=2','https://shikimori.tv/api/animes?limit=1']:
-              try:
-                  s,f,b=get(u,{'User-Agent':'KelemnfnoApp'})
-                  out.append(f'SHIKITV {u[20:60]} -> {s} {b[:120]}')
-              except Exception as e:
-                  out.append(f'SHIKITV {u[20:60]} ERR {str(e)[:110]}')
+                      out.append(f'DIRECT /manga/{slug} ERR {str(e)[:80]}')
           open('probe-result.txt','w').write('\n'.join(out)+'\n')
-          print('\n'.join(out)[:3200])
+          print('\n'.join(out)[:3400])
           PY2
       - name: push result
         run: |
           git config user.name "probe"
           git config user.email "probe@local"
           git add probe-result.txt
-          git commit -m "probe result 17 [skip ci]" || echo nothing
+          git commit -m "probe result 18 [skip ci]" || echo nothing
           git push origin HEAD:arena/01a0afbd-kelemnfno || echo pushfail
