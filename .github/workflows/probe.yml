@@ -22,58 +22,72 @@ jobs:
               r=urllib.request.Request(url,headers=hh)
               with urllib.request.urlopen(r,timeout=25) as resp:
                   return resp.status,resp.geturl(),resp.read().decode('utf-8','ignore')
-          # 1. h-chan главная
-          for u in ['https://h-chan.me/','https://h-chan.me/my/list']:
+          # 1. hentaichan.ru
+          for u in ['https://hentaichan.ru/','http://hentaichan.ru/']:
               try:
                   s,f,b=get(u)
-                  out.append(f'HCHAN {u} -> {s} final={f} len={len(b)}')
-                  out.append('   head: '+re.sub(r'\s+',' ',b[:300]))
+                  out.append(f'HC {u} -> {s} final={f} len={len(b)}')
+                  t=re.search(r'<title[^>]*>(.*?)</title>',b,re.S)
+                  out.append('   title: '+(t.group(1).strip()[:100] if t else '-'))
+                  break
               except Exception as e:
-                  out.append(f'HCHAN {u} ERR {str(e)[:120]}')
-          # 2. страница манги/видео по слагу
-          for u in ['https://h-chan.me/manga/usamimi-bouken-tan','https://h-chan.me/manga/futari-ecchi']:
+                  out.append(f'HC {u} ERR {str(e)[:120]}')
+          for u in ['https://hentaichan.ru/manga/usamimi-bouken-tan',
+                    'https://hentaichan.ru/?do=search&subaction=search&searchstory=usamimi']:
               try:
                   s,f,b=get(u)
-                  out.append(f'HCHAN-PAGE {u} -> {s} len={len(b)}')
+                  out.append(f'HC-PAGE {u[:70]} -> {s} len={len(b)}')
                   t=re.search(r'<title[^>]*>(.*?)</title>',b,re.S)
                   out.append('   title: '+(t.group(1).strip()[:120] if t else '-'))
-                  for pat in [r'https?://[^"\'\s]*kodik[^"\'\s]*',r'https?://[^"\'\s]*\.m3u8[^"\'\s]*',r'https?://[^"\'\s]*\.mp4[^"\'\s]*',r'https?://video[^"\'\s]*']:
-                      m=re.findall(pat,b)
-                      if m: out.append(f'   {pat[:20]}: {m[:2]}')
+                  for pat in [r'https?://[^"\'\s<>]*kodik[^"\'\s<>]*',r'https?://[^"\'\s<>]*\.m3u8[^"\'\s<>]*',r'https?://[^"\'\s<>]*\.mp4[^"\'\s<>]*','/manga/[a-z0-9-]+']:
+                      m=list(dict.fromkeys(re.findall(pat,b)))
+                      if m: out.append(f'   {pat[:22]}: {m[:4]}')
               except Exception as e:
-                  out.append(f'HCHAN-PAGE {u} ERR {str(e)[:120]}')
-          # 3. поиск h-chan (AJAX варианты)
-          for u in ['https://h-chan.me/search?query=usamimi','https://h-chan.me/manga/search?query=usamimi','https://h-chan.me/ajax/manga/search?query=usamimi']:
-              try:
-                  s,f,b=get(u)
-                  out.append(f'HCHAN-SEARCH {u} -> {s} len={len(b)} :: {re.sub(chr(10)," ",b[:150])}')
-              except Exception as e:
-                  out.append(f'HCHAN-SEARCH {u} ERR {str(e)[:100]}')
-          # 4. DoH зеркала
-          for name in ['h-chan.fun','hentai-chan.fun','h-chan.ru','hentaichan.ru']:
-              try:
-                  s,f,b=get(f'https://cloudflare-dns.com/dns-query?name={name}&type=A',{'accept':'application/dns-json'})
-                  j=json.loads(b)
-                  out.append(f'DoH {name} -> {[a.get("data") for a in j.get("Answer",[]) or []]}')
-              except Exception as e:
-                  out.append(f'DoH {name} ERR {str(e)[:80]}')
-          # 5. AnimeLib латиницей
+                  out.append(f'HC-PAGE {u[:70]} ERR {str(e)[:120]}')
+          # 2. AnimeLib futari ecchi — полная цепочка
           AL={'User-Agent':UA,'Accept':'application/json','Origin':'https://animelib.org','Referer':'https://animelib.org/'}
-          for q in ['Bouken','Futari Ecchi']:
+          def getj(url,h):
+              s,f,b=get(url,h); return json.loads(b)
+          try:
+              e=getj('https://api.cdnlibs.org/api/episodes?anime_id=359--futari-ecchi-anime',AL)
+              eps=e.get('data',[])
+              out.append(f'AL futari episodes={len(eps)}')
+              if eps:
+                  eid=eps[0].get('id')
+                  det=getj(f'https://api.cdnlibs.org/api/episodes/{eid}',AL)
+                  d=det.get('data') or {}
+                  players=(d.get('videoPlayerData') or {}).get('players') or d.get('players') or []
+                  out.append(f'AL futari ep{eid} keys={list(d.keys())[:12]} players={len(players)}')
+                  for p in players[:3]:
+                      out.append(f"   src={str(p.get('src'))[:120]} team={(p.get('team') or {}).get('title')} type={(p.get('translation_type') or {}).get('label')}")
+                  if players:
+                      src0=players[0].get('src') or ''
+                      if src0.startswith('//'): src0='https:'+src0
+                      src0=src0.replace('&amp;','&')
+                      try:
+                          s,f,b=get(src0,{'Referer':'https://animelib.org/'})
+                          out.append(f'   PLAYER status={s} len={len(b)} kodik={"kodik" in f}')
+                          vids=re.findall(r'https?://[^"\'\s]*\.(?:m3u8|mp4)[^"\'\s]*',b)
+                          out.append(f'   videos-in-page: {vids[:2]}')
+                      except Exception as ex:
+                          out.append(f'   PLAYER ERR {str(ex)[:120]}')
+          except Exception as ex:
+              out.append(f'AL futari ERR {str(ex)[:150]}')
+          # 3. AnimeLib adult-параметры
+          for q in ['usamimi&isAdult=true','usamimi&is_yaoi=true','Usamimi%20Bouken']:
               try:
-                  s,f,b=get('https://api.cdnlibs.org/api/anime?page=1&q='+urllib.parse.quote(q),AL)
-                  j=json.loads(b)
+                  j=getj(f'https://api.cdnlibs.org/api/anime?page=1&q={q}',AL)
                   rows=j.get('data',[])
-                  out.append(f'AL q={q} count={len(rows)} :: '+str([ (r.get("slug_url"),r.get("rus_name")) for r in rows[:4]]))
-              except Exception as e:
-                  out.append(f'AL q={q} ERR {str(e)[:100]}')
+                  out.append(f'AL-adult q={q} count={len(rows)} :: {[(r.get("slug_url")) for r in rows[:3]]}')
+              except Exception as ex:
+                  out.append(f'AL-adult q={q} ERR {str(ex)[:90]}')
           open('probe-result.txt','w').write('\n'.join(out)+'\n')
-          print('\n'.join(out)[:3000])
+          print('\n'.join(out)[:3200])
           PY2
       - name: push result
         run: |
           git config user.name "probe"
           git config user.email "probe@local"
           git add probe-result.txt
-          git commit -m "probe result 15 [skip ci]" || echo nothing
+          git commit -m "probe result 16 [skip ci]" || echo nothing
           git push origin HEAD:arena/01a0afbd-kelemnfno || echo pushfail
