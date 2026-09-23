@@ -631,7 +631,7 @@ public class CatalogFragment extends Fragment {
             // Карточки Shikimori (жанр «Хентай», без цензуры) — как в скриншотах.
             java.util.Set<String> taken = new java.util.HashSet<>();
             for (CardModel m : out) taken.add(String.valueOf(m.title).toLowerCase());
-            for (String host : new String[]{"https://shikimori.io/api", "https://shikimori.one/api"}) {
+            for (String host : new String[]{"https://shikimori.io/api", "https://shikimori.tv/api", "https://shikimori.one/api"}) {
                 try {
                     com.google.gson.JsonElement r = com.google.gson.JsonParser.parseString(hGet(
                             host + "/animes?genre=12&is_censored=false&order=popularity&limit=30&page=" + page));

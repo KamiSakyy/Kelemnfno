@@ -51,7 +51,7 @@ import ru.kelemnfno.anime.util.Ui;
  */
 public class HentaiActivity extends AppCompatActivity {
 
-    private static final String[] SHIKI = {"https://shikimori.io/api", "https://shikimori.one/api"};
+    private static final String[] SHIKI = {"https://shikimori.io/api", "https://shikimori.tv/api", "https://shikimori.one/api"};
     private static final String ANILIB = "https://anilibria.top/api/v1";
 
     /** Тайтлы, которые обязаны быть в разделе (со скриншота пользователя). */

@@ -262,6 +262,19 @@ public class DetailActivity extends AppCompatActivity {
         }
     }
 
+    /** Shikimori с запасными доменами: основной может быть заблокирован у провайдера. */
+    private static String shikiAny(String path) throws java.io.IOException {
+        java.io.IOException last = null;
+        for (String h : new String[]{"https://shikimori.io/api", "https://shikimori.tv/api", "https://shikimori.one/api"}) {
+            try {
+                return shikiGet(h + path);
+            } catch (java.io.IOException e) {
+                last = e;
+            }
+        }
+        throw last != null ? last : new java.io.IOException("shikimori");
+    }
+
     /** Полная карточка из Shikimori + серии/видео из AniLibria API v1. */
     /** Полная карточка AniLibria: описание, обложка, серии и HLS — только anilibria.top. */
     private ru.kelemnfno.anime.data.model.AnimeFull buildAnilibFull() {
@@ -410,7 +423,7 @@ public class DetailActivity extends AppCompatActivity {
         a.minAge.title = "18+";
         a.genres = new java.util.ArrayList<>();
         try {
-            JsonObject o = JsonParser.parseString(shikiGet("https://shikimori.io/api/animes/" + id)).getAsJsonObject();
+            JsonObject o = JsonParser.parseString(shikiAny("/animes/" + id)).getAsJsonObject();
             if (o.has("score") && o.get("score").isJsonPrimitive() && o.get("score").getAsDouble() > 0) {
                 a.rating = new ru.kelemnfno.anime.data.model.Rating();
                 a.rating.shikimoriRating = o.get("score").getAsDouble();

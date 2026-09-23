@@ -198,10 +198,18 @@ public class SearchActivity extends AppCompatActivity {
             }
             // Shikimori hentai search (жанр 12) — «зайка» и т.п.
             try {
-                com.google.gson.JsonElement sr = com.google.gson.JsonParser.parseString(sGet(
-                        "https://shikimori.io/api/animes?genre=12&is_censored=false&search="
-                                + java.net.URLEncoder.encode(q, "UTF-8") + "&limit=8"));
-                if (sr.isJsonArray()) {
+                com.google.gson.JsonElement sr = null;
+                for (String sh : new String[]{"https://shikimori.io/api", "https://shikimori.tv/api", "https://shikimori.one/api"}) {
+                    try {
+                        sr = com.google.gson.JsonParser.parseString(sGet(
+                                sh + "/animes?genre=12&is_censored=false&search="
+                                        + java.net.URLEncoder.encode(q, "UTF-8") + "&limit=8"));
+                        if (sr.isJsonArray()) break;
+                    } catch (Exception ignored) {
+                        sr = null;
+                    }
+                }
+                if (sr != null && sr.isJsonArray()) {
                     for (com.google.gson.JsonElement e : sr.getAsJsonArray()) {
                         if (!e.isJsonObject()) continue;
                         com.google.gson.JsonObject a = e.getAsJsonObject();
