@@ -6,41 +6,57 @@ on:
 jobs:
   probe:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
-      - name: probe R18 catalog
+      - uses: actions/checkout@v4
+      - name: probe
         run: |
           UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36"
-          for p in 1 2 3 4 5 6; do
+          OUT=probe-result.txt
+          : > $OUT
+          for p in 1 2; do
             curl -s --max-time 30 -H "User-Agent: $UA" "https://anilibria.top/api/v1/anime/catalog/releases?f%5Bage_ratings%5D=R18_PLUS&page=$p&limit=50" -o /tmp/p$p.json || true
-            echo "::notice::PAGE $p size $(stat -c%s /tmp/p$p.json 2>/dev/null || echo 0)"
-            python3 - "$p" <<'PY'
-          import json,sys
-          p=sys.argv[1]
-          try:
-              d=json.load(open(f'/tmp/p{p}.json'))
-          except Exception as e:
-              print(f'::notice::PAGE {p} parse error {e}'); raise SystemExit
-          arr=d.get('data',[]) if isinstance(d,dict) else d
-          meta=d.get('meta',{}).get('pagination',{}) if isinstance(d,dict) else {}
-          print(f"::notice::PAGE {p} total={meta.get('total')} pages={meta.get('total_pages')} count={len(arr)}")
-          for r in arr:
-              g=[x.get('name','') for x in (r.get('genres') or [])]
-              n=r.get('name',{})
-              print(f"::notice::R18 {r.get('id')} | {n.get('main')} | {n.get('english')} | {';'.join(g)}")
-          PY
+          done
+          for q in "Секс вдвоём" "История приключений" "зайкой" "Usamimi" "приключений с девушкой"; do
+            eq=$(python3 -c "import urllib.parse,sys;print(urllib.parse.quote(sys.argv[1]))" "$q")
+            curl -s --max-time 30 -H "User-Agent: $UA" "https://anilibria.top/api/v1/anime/catalog/releases?f%5Bsearch%5D=$eq&limit=50" -o "/tmp/s_$eq.json" || true
           done
           curl -s --max-time 30 -H "User-Agent: $UA" "https://anilibria.top/api/v1/anime/releases/9738" -o /tmp/rel.json || true
-          python3 - <<'PY'
-          import json
-          try:
-              d=json.load(open('/tmp/rel.json'))
-          except Exception as e:
-              print(f'::notice::REL parse error {e}'); raise SystemExit
-          r=d.get('data',d) if isinstance(d,dict) else {}
-          eps=r.get('episodes') or []
-          print(f"::notice::REL9738 keys={sorted(r.keys())[:20]}")
+          python3 - <<'PY' > $OUT
+          import json,glob,urllib.parse
+          def load(f):
+              try: return json.load(open(f))
+              except Exception as e: return {'err':str(e)}
+          for p in ['1','2']:
+              d=load(f'/tmp/p{p}.json'); arr=d.get('data',[]) if isinstance(d,dict) else []
+              meta=d.get('meta',{}).get('pagination',{}) if isinstance(d,dict) else {}
+              print(f'== PAGE {p} total={meta.get("total")} pages={meta.get("total_pages")} count={len(arr)}')
+              for r in arr:
+                  g=[x.get('name','') for x in (r.get('genres') or [])]
+                  n=r.get('name',{})
+                  print(f'R18 {r.get("id")} | {n.get("main")} | {n.get("english")} | {";".join(g)}')
+          for f in sorted(glob.glob('/tmp/s_*.json')):
+              q=urllib.parse.unquote(f.split('s_')[1][:-5])
+              d=load(f); arr=d.get('data',[]) if isinstance(d,dict) else (d if isinstance(d,list) else [])
+              print(f'== SEARCH {q} count={len(arr)}')
+              for r in arr:
+                  g=[x.get('name','') for x in (r.get('genres') or [])]
+                  n=r.get('name',{})
+                  print(f'S {r.get("id")} | {n.get("main")} | {n.get("english")} | {n.get("alternative")} | {";".join(g)} | {r.get("age_rating",{}).get("value")}')
+          d=load('/tmp/rel.json'); r=d.get('data',d) if isinstance(d,dict) else {}
+          print(f'== REL9738 keys={sorted(r.keys()) if isinstance(r,dict) else type(r)}')
+          eps=r.get('episodes') or [] if isinstance(r,dict) else []
           if eps:
               e0=eps[0]
-              print(f"::notice::REL9738 ep keys={sorted(e0.keys())}")
-              print(f"::notice::REL9738 ep0 ordinal={e0.get('ordinal')} hls_480={str(e0.get('hls_480'))[:80]} hls_1080={str(e0.get('hls_1080'))[:80]}")
+              print(f'REL9738 epkeys={sorted(e0.keys())}')
+              print(f'REL9738 ep0={ {k:str(e0.get(k))[:100] for k in ["ordinal","hls_480","hls_720","hls_1080","hls_1440","hls_2160","name"]} }')
           PY
+          cat $OUT | head -100
+      - name: push result
+        run: |
+          git config user.name "probe"
+          git config user.email "probe@local"
+          git add probe-result.txt
+          git commit -m "probe result [skip ci]" || echo nothing
+          git push origin HEAD:arena/01a0afbd-kelemnfno || echo pushfail
