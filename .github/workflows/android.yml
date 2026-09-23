@@ -223,4 +223,12 @@ jobs:
             gh release delete nightly --yes --cleanup-tag 2>/dev/null
             sleep 5
           done
+          # Файл мог не прикрепиться (сбои uploads.github.com) — догружаем с проверкой.
+          for i in 1 2 3 4 5; do
+            n=$(gh release view nightly --json assets --jq '.assets | length' 2>/dev/null || echo 0)
+            [ "$n" != "0" ] && break
+            echo "::notice::В релизе нет файла, догружаю (попытка $i)"
+            gh release upload nightly out/Kelemnfno-release.apk#Kelemnfno-release.apk --clobber || true
+            sleep 15
+          done
           gh release view nightly --json assets --jq '.assets[] | "release asset: \(.name) \(.size) байт"'
