@@ -22,65 +22,41 @@ jobs:
               r=urllib.request.Request(url,headers=hh)
               with urllib.request.urlopen(r,timeout=25) as resp:
                   return resp.status,resp.geturl(),resp.read().decode('utf-8','ignore')
-          # 1. hentaichan.ru
-          for u in ['https://hentaichan.ru/','http://hentaichan.ru/']:
+          for u in ['https://manga.h-chan.me/','https://x3.h-chan.me/','https://xxl.hentaichan.live/','https://anime-chan.me/','https://x.henchan.pro/','https://henchan.pro/']:
               try:
                   s,f,b=get(u)
-                  out.append(f'HC {u} -> {s} final={f} len={len(b)}')
                   t=re.search(r'<title[^>]*>(.*?)</title>',b,re.S)
-                  out.append('   title: '+(t.group(1).strip()[:100] if t else '-'))
-                  break
+                  out.append(f'MIRROR {u} -> {s} final={f} len={len(b)} title={(t.group(1).strip()[:80] if t else "-")}')
               except Exception as e:
-                  out.append(f'HC {u} ERR {str(e)[:120]}')
-          for u in ['https://hentaichan.ru/manga/usamimi-bouken-tan',
-                    'https://hentaichan.ru/?do=search&subaction=search&searchstory=usamimi']:
+                  out.append(f'MIRROR {u} ERR {str(e)[:110]}')
+          # живое зеркало: поиск + страница + видео
+          alive=None
+          for u in ['https://x.henchan.pro/','https://manga.h-chan.me/','https://xxl.hentaichan.live/']:
               try:
                   s,f,b=get(u)
-                  out.append(f'HC-PAGE {u[:70]} -> {s} len={len(b)}')
-                  t=re.search(r'<title[^>]*>(.*?)</title>',b,re.S)
-                  out.append('   title: '+(t.group(1).strip()[:120] if t else '-'))
-                  for pat in [r'https?://[^"\'\s<>]*kodik[^"\'\s<>]*',r'https?://[^"\'\s<>]*\.m3u8[^"\'\s<>]*',r'https?://[^"\'\s<>]*\.mp4[^"\'\s<>]*','/manga/[a-z0-9-]+']:
-                      m=list(dict.fromkeys(re.findall(pat,b)))
-                      if m: out.append(f'   {pat[:22]}: {m[:4]}')
-              except Exception as e:
-                  out.append(f'HC-PAGE {u[:70]} ERR {str(e)[:120]}')
-          # 2. AnimeLib futari ecchi — полная цепочка
-          AL={'User-Agent':UA,'Accept':'application/json','Origin':'https://animelib.org','Referer':'https://animelib.org/'}
-          def getj(url,h):
-              s,f,b=get(url,h); return json.loads(b)
-          try:
-              e=getj('https://api.cdnlibs.org/api/episodes?anime_id=359--futari-ecchi-anime',AL)
-              eps=e.get('data',[])
-              out.append(f'AL futari episodes={len(eps)}')
-              if eps:
-                  eid=eps[0].get('id')
-                  det=getj(f'https://api.cdnlibs.org/api/episodes/{eid}',AL)
-                  d=det.get('data') or {}
-                  players=(d.get('videoPlayerData') or {}).get('players') or d.get('players') or []
-                  out.append(f'AL futari ep{eid} keys={list(d.keys())[:12]} players={len(players)}')
-                  for p in players[:3]:
-                      out.append(f"   src={str(p.get('src'))[:120]} team={(p.get('team') or {}).get('title')} type={(p.get('translation_type') or {}).get('label')}")
-                  if players:
-                      src0=players[0].get('src') or ''
-                      if src0.startswith('//'): src0='https:'+src0
-                      src0=src0.replace('&amp;','&')
-                      try:
-                          s,f,b=get(src0,{'Referer':'https://animelib.org/'})
-                          out.append(f'   PLAYER status={s} len={len(b)} kodik={"kodik" in f}')
-                          vids=re.findall(r'https?://[^"\'\s]*\.(?:m3u8|mp4)[^"\'\s]*',b)
-                          out.append(f'   videos-in-page: {vids[:2]}')
-                      except Exception as ex:
-                          out.append(f'   PLAYER ERR {str(ex)[:120]}')
-          except Exception as ex:
-              out.append(f'AL futari ERR {str(ex)[:150]}')
-          # 3. AnimeLib adult-параметры
-          for q in ['usamimi&isAdult=true','usamimi&is_yaoi=true','Usamimi%20Bouken']:
+                  if s==200 and len(b)>3000: alive=u.rstrip('/'); break
+              except Exception: pass
+          if alive:
+              out.append(f'ALIVE={alive}')
+              for u in [alive+'/?do=search&subaction=search&searchstory=usamimi',alive+'/manga/usamimi-bouken-tan']:
+                  try:
+                      s,f,b=get(u)
+                      t=re.search(r'<title[^>]*>(.*?)</title>',b,re.S)
+                      out.append(f'  PAGE {u[len(alive):][:50] or "/"} -> {s} len={len(b)} title={(t.group(1).strip()[:90] if t else "-")}')
+                      links=list(dict.fromkeys(re.findall(r'/manga/[a-z0-9\-]+',b)))[:6]
+                      out.append(f'  manga-links: {links}')
+                      for pat in [r'https?://[^"\'\s<>]*kodik[^"\'\s<>]*',r'https?://[^"\'\s<>]*\.m3u8[^"\'\s<>]*',r'https?://[^"\'\s<>]*\.mp4[^"\'\s<>]*']:
+                          m=list(dict.fromkeys(re.findall(pat,b)))
+                          if m: out.append(f'  {pat[:24]}: {m[:3]}')
+                  except Exception as e:
+                      out.append(f'  PAGE {u[:60]} ERR {str(e)[:110]}')
+          # shikimori.tv
+          for u in ['https://shikimori.tv/api/animes?search=usamimi&limit=2','https://shikimori.tv/api/animes?limit=1']:
               try:
-                  j=getj(f'https://api.cdnlibs.org/api/anime?page=1&q={q}',AL)
-                  rows=j.get('data',[])
-                  out.append(f'AL-adult q={q} count={len(rows)} :: {[(r.get("slug_url")) for r in rows[:3]]}')
-              except Exception as ex:
-                  out.append(f'AL-adult q={q} ERR {str(ex)[:90]}')
+                  s,f,b=get(u,{'User-Agent':'KelemnfnoApp'})
+                  out.append(f'SHIKITV {u[20:60]} -> {s} {b[:120]}')
+              except Exception as e:
+                  out.append(f'SHIKITV {u[20:60]} ERR {str(e)[:110]}')
           open('probe-result.txt','w').write('\n'.join(out)+'\n')
           print('\n'.join(out)[:3200])
           PY2
@@ -89,5 +65,5 @@ jobs:
           git config user.name "probe"
           git config user.email "probe@local"
           git add probe-result.txt
-          git commit -m "probe result 16 [skip ci]" || echo nothing
+          git commit -m "probe result 17 [skip ci]" || echo nothing
           git push origin HEAD:arena/01a0afbd-kelemnfno || echo pushfail
