@@ -1,8 +1,9 @@
-DNS search.htv-services.com ERR [Errno -2] Name or service not known
-DNS hanime.tv -> 104.21.18.100
-DNS www.hanime.tv -> 172.67.181.145
-DNS htv-services.com -> 104.21.30.93
-DoH search.htv-services.com -> []
-DoH hanime.tv -> [None, None]
-GET hanime.tv ERR HTTP Error 403: Forbidden
-POST htv ERR <urlopen error [Errno -2] Name or service not known>
+DoH htv-services.com -> [None, None]
+DoH search.hanime.tv -> []
+DoH search.hanime1.com -> []
+DoH hanime1.com -> [None, None]
+POST htv root ERR HTTP Error 530: <none>
+POST htv root search path ERR HTTP Error 530: <none>
+POST hanime api v8 search ERR HTTP Error 403: Forbidden
+GET hanime search page ERR HTTP Error 403: Forbidden
+GET hanime1 ERR HTTP Error 403: Forbidden
