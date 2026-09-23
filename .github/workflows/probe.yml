@@ -12,39 +12,38 @@ jobs:
       - uses: actions/checkout@v4
       - name: probe
         run: |
-          python3 - <<'PY'
-          import json,urllib.request
-          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36"
-          H={'User-Agent':UA,'Accept':'application/json','Origin':'https://hanime.tv','Referer':'https://hanime.tv/','Content-Type':'application/json'}
+          python3 - <<'PY2'
+          import json,urllib.request,socket
           out=[]
-          def post(url,body):
-              req=urllib.request.Request(url,data=json.dumps(body).encode(),headers=H,method='POST')
-              with urllib.request.urlopen(req,timeout=20) as r: return r.read().decode('utf-8','ignore')
-          def get(url):
-              req=urllib.request.Request(url,headers=H)
-              with urllib.request.urlopen(req,timeout=20) as r: return r.read().decode('utf-8','ignore')
-          for title in ["Usamimi Bouken-tan","Isshо ni Ecchi","Incha Couple"]:
+          for host in ["search.htv-services.com","hanime.tv","www.hanime.tv","htv-services.com"]:
               try:
-                  root=post("https://search.htv-services.com/",{"search_text":title,"tags":[],"tags_mode":"AND","brands":[],"blacklist":[],"order_by":"created_at_unix","ordering":"desc","page":0})
-                  parsed=json.loads(root)
-                  hits=json.loads(parsed.get('hits','[]')) if isinstance(parsed.get('hits'),str) else (parsed.get('hits') or [])
-                  out.append(f'== HANIME SEARCH {title} hits={len(hits)}')
-                  for h in hits[:4]:
-                      out.append(f"   slug={h.get('slug')} | name={h.get('name')} | titles={str(h.get('titles'))[:80]}")
-                  if hits:
-                      slug=hits[0].get('slug')
-                      d=json.loads(get(f"https://hanime.tv/api/v8/video?id={urllib.request.quote(str(slug))}"))
-                      man=d.get('videos_manifest') or {}
-                      servers=man.get('servers') or []
-                      out.append(f'   VIDEO {slug} servers={len(servers)}')
-                      for s in servers[:3]:
-                          for st in (s.get('streams') or [])[:4]:
-                              out.append(f"     h={st.get('height')} url={str(st.get('url'))[:110]}")
+                  ip=socket.gethostbyname(host); out.append(f'DNS {host} -> {ip}')
               except Exception as e:
-                  out.append(f'== HANIME SEARCH {title} ERR {str(e)[:120]}')
+                  out.append(f'DNS {host} ERR {e}')
+          def doh(name):
+              try:
+                  req=urllib.request.Request(f'https://cloudflare-dns.com/dns-query?name={name}&type=A',headers={'Accept':'application/dns-json','User-Agent':'Mozilla/5.0'})
+                  with urllib.request.urlopen(req,timeout=15) as r: d=json.loads(r.read())
+                  return [(a.get('address')) for a in d.get('Answer',[]) if a.get('type')==1]
+              except Exception as e:
+                  return [f'ERR {e}']
+          for host in ["search.htv-services.com","hanime.tv"]:
+              out.append(f'DoH {host} -> {doh(host)}')
+          try:
+              req=urllib.request.Request('https://hanime.tv/',headers={'User-Agent':'Mozilla/5.0'})
+              with urllib.request.urlopen(req,timeout=15) as r:
+                  out.append(f'GET hanime.tv -> {r.status} len={len(r.read())}')
+          except Exception as e:
+              out.append(f'GET hanime.tv ERR {str(e)[:120]}')
+          try:
+              req=urllib.request.Request('https://search.htv-services.com/',data=b'{}',headers={'User-Agent':'Mozilla/5.0','Content-Type':'application/json'},method='POST')
+              with urllib.request.urlopen(req,timeout=15) as r:
+                  out.append(f'POST htv -> {r.status} len={len(r.read())}')
+          except Exception as e:
+              out.append(f'POST htv ERR {str(e)[:120]}')
           open('probe-result.txt','w').write('\n'.join(out)+'\n')
-          print('\n'.join(out)[:2800])
-          PY
+          print('\n'.join(out))
+          PY2
       - name: push result
         run: |
           git config user.name "probe"
