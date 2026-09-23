@@ -33,7 +33,8 @@ public class Lookup {
         if (genres == null) return false;
         for (String g : genres) {
             String v = g == null ? "" : g.toLowerCase();
-            if (v.contains("этти") || v.contains("эроти") || v.contains("18") || v.contains("hentai")) return true;
+            if (v.contains("этти") || v.contains("эроти") || v.contains("18")
+                    || v.contains("hentai") || v.contains("хентай")) return true;
         }
         return false;
     }
