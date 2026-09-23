@@ -1,8 +1,9 @@
-SEARCH q=usamimi -> 200 len=955 hrefs=[]
-SEARCH q=зайкой -> 200 len=18262 hrefs=['/manga/random']
-SEARCH q=Usamimi Bouken-tan -> 200 len=18260 hrefs=['/manga/random']
-AJAX /engine/ajax/search.php?query=usamimi -> 200 
-MANGA /manga/random -> 200 len=96325 title=Случайная хентай манга
-   video[^"\'\s<>]{0,80}: ['video/', 'videos_link', 'videos_drop', 'video/new']
-   vlinks: ['/video/', '/video/new', '/video/hentai', '/video/cosplay', '/video/crazyshow']
-   (?:playerUrl|video_u: ['Просмотр профиля']
+HOME len=184550 apis=[]
+  scripts=['/engine/classes/js/jquery.js', '/engine/classes/js/dialog.js', '/engine/classes/js/effects.js', '/engine/classes/js/menu.js', '/engine/classes/js/dle_ajax.js']
+VIDEO /video/hentai -> 200 len=19 title=- hrefs=[]
+VIDEO /video/new -> 200 len=90225 title=Новинки видео hrefs=['/video/new', '/video/hentai', '/video/cosplay', '/video/crazyshow', '/video/random', '/video/53872-bible-black-3-remastered.html', '/video/46381-the-female-brat-has-come-daddy-active-girls-cousin-and-summer-of-sex-indulgence.html', '/video/46318-eksgibicionizm-ofisnoy-ledi-nakovshey-stress-vo-vremya-sverhurochnoy-raboty.html']
+VIDEO /video/usamimi-bouken-tan ERR HTTP Error 404: Not Found
+API /api/manga/search?query=usamimi ERR HTTP Error 404: Not Found
+API /api/video/search?query=usamimi ERR HTTP Error 404: Not Found
+API /ajax/search?query=usamimi ERR HTTP Error 404: Not Found
+API /manga/usamimi-bouken-tan.json ERR HTTP Error 404: Not Found
