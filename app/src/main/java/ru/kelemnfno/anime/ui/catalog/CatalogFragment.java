@@ -68,6 +68,8 @@ public class CatalogFragment extends Fragment {
     private boolean anilibNamesLoaded;
     private final java.util.Map<String, Integer> shikiYears = new java.util.HashMap<>();
     private final java.util.Map<String, String> shikiOriginals = new java.util.HashMap<>();
+    private final java.util.Map<String, Integer> anilibYears = new java.util.HashMap<>();
+    private final java.util.Map<String, String> anilibOriginals = new java.util.HashMap<>();
     private final List<AnimeItem> items = new ArrayList<>();
     private List<Genre> genres = new ArrayList<>();
 
@@ -97,6 +99,14 @@ public class CatalogFragment extends Fragment {
         adapter.setListener(new AnimeCardAdapter.OnCardClick() {
             @Override
             public void onClick(CardModel model) {
+                if (model.slug != null && model.slug.startsWith("anilib:")) {
+                    int aid = 0;
+                    try { aid = Integer.parseInt(model.slug.substring(7)); } catch (Exception ignored) { }
+                    Integer ay = anilibYears.get(model.slug);
+                    DetailActivity.openAnilib(requireContext(), aid, model.title,
+                            anilibOriginals.get(model.slug), ay == null ? 0 : ay, model.poster);
+                    return;
+                }
                 if (model.slug != null && model.slug.startsWith("shiki:")) {
                     int id = 0;
                     try { id = Integer.parseInt(model.slug.substring(6)); } catch (Exception ignored) { }
@@ -571,81 +581,56 @@ public class CatalogFragment extends Fragment {
         loading = true;
         final int page = hentaiPage;
         AppExecutors.get().run(() -> {
-            if (!anilibNamesLoaded) {
-                anilibNamesLoaded = true;
-                try {
-                    for (int p = 1; p <= 3; p++) {
-                        com.google.gson.JsonElement se = com.google.gson.JsonParser.parseString(hGet(
-                                "https://anilibria.top/api/v1/anime/catalog/releases?f%5Bage_ratings%5D=R18_PLUS&page=" + p + "&limit=100"));
-                        com.google.gson.JsonArray arr = se.isJsonObject() && se.getAsJsonObject().has("data")
-                                ? se.getAsJsonObject().getAsJsonArray("data")
-                                : (se.isJsonArray() ? se.getAsJsonArray() : null);
-                        if (arr == null) break;
-                        for (com.google.gson.JsonElement e : arr) {
-                            if (!e.isJsonObject()) continue;
-                            com.google.gson.JsonObject o = e.getAsJsonObject();
-                            if (o.has("name") && o.get("name").isJsonObject()) {
-                                com.google.gson.JsonObject n = o.getAsJsonObject("name");
-                                if (n.has("main") && n.get("main").isJsonPrimitive())
-                                    anilibNames.add(n.get("main").getAsString().toLowerCase());
-                                if (n.has("english") && n.get("english").isJsonPrimitive())
-                                    anilibNames.add(n.get("english").getAsString().toLowerCase());
-                            }
-                        }
-                        if (arr.size() < 100) break;
-                    }
-                } catch (Exception ignored) {
-                }
-            }
-            java.io.IOException last = null;
-            List<com.google.gson.JsonObject> rows = new ArrayList<>();
-            for (String host : new String[]{"https://shikimori.io/api", "https://shikimori.one/api"}) {
-                try {
-                    com.google.gson.JsonElement r = com.google.gson.JsonParser.parseString(hGet(
-                            host + "/animes?genre=12&is_censored=false&order=popularity&limit=30&page=" + page));
-                    if (r.isJsonArray())
-                        for (com.google.gson.JsonElement e : r.getAsJsonArray())
-                            if (e.isJsonObject()) rows.add(e.getAsJsonObject());
-                    if (!rows.isEmpty()) break;
-                } catch (java.io.IOException e) {
-                    last = e;
-                }
-            }
-            if (rows.isEmpty() && last != null) throw last;
+            com.google.gson.JsonElement se = com.google.gson.JsonParser.parseString(hGet(
+                    "https://anilibria.top/api/v1/anime/catalog/releases?f%5Bage_ratings%5D=R18_PLUS&page="
+                            + page + "&limit=50"));
+            com.google.gson.JsonArray arr = se.isJsonObject() && se.getAsJsonObject().has("data")
+                    ? se.getAsJsonObject().getAsJsonArray("data")
+                    : (se.isJsonArray() ? se.getAsJsonArray() : null);
+            if (arr == null) throw new java.io.IOException("AniLibria: нет данных");
             List<CardModel> out = new ArrayList<>();
-            for (com.google.gson.JsonObject o : rows) {
-                int id = o.has("id") ? o.get("id").getAsInt() : 0;
-                String ru = o.has("russian") && o.get("russian").isJsonPrimitive() ? o.get("russian").getAsString() : "";
-                String en = o.has("name") && o.get("name").isJsonPrimitive() ? o.get("name").getAsString() : "";
-                String title = ru.isEmpty() ? en : ru;
+            for (com.google.gson.JsonElement e : arr) {
+                if (!e.isJsonObject()) continue;
+                com.google.gson.JsonObject o = e.getAsJsonObject();
+                int id = o.has("id") && o.get("id").isJsonPrimitive() ? o.get("id").getAsInt() : 0;
+                if (id <= 0) continue;
+                String title = "";
+                String en = "";
+                if (o.has("name") && o.get("name").isJsonObject()) {
+                    com.google.gson.JsonObject n = o.getAsJsonObject("name");
+                    title = n.has("main") && n.get("main").isJsonPrimitive() ? n.get("main").getAsString() : "";
+                    en = n.has("english") && n.get("english").isJsonPrimitive() ? n.get("english").getAsString() : "";
+                }
+                if (title.isEmpty()) title = en;
                 if (title.isEmpty()) continue;
                 String poster = "";
-                if (o.has("image") && o.get("image").isJsonObject()) {
-                    com.google.gson.JsonObject img = o.getAsJsonObject("image");
-                    poster = img.has("original") && img.get("original").isJsonPrimitive()
-                            ? img.get("original").getAsString() : "";
-                    if (!poster.isEmpty() && !poster.startsWith("http")) poster = "https://shikimori.io" + poster;
+                if (o.has("poster") && o.get("poster").isJsonObject()) {
+                    com.google.gson.JsonObject ps = o.getAsJsonObject("poster");
+                    poster = ps.has("src") && ps.get("src").isJsonPrimitive() ? ps.get("src").getAsString() : "";
+                    if (!poster.isEmpty() && !poster.startsWith("http")) poster = "https://anilibria.top" + poster;
                 }
-                int year = 0;
-                String iso = o.has("aired_on") && o.get("aired_on").isJsonPrimitive()
-                        ? o.get("aired_on").getAsString() : "";
-                if (iso.length() >= 4) try { year = Integer.parseInt(iso.substring(0, 4)); } catch (Exception ignored) { }
-                double score = o.has("score") && o.get("score").isJsonPrimitive() ? o.get("score").getAsDouble() : 0;
-                String slug = "shiki:" + id;
-                shikiYears.put(slug, year);
-                shikiOriginals.put(slug, en);
+                int year = o.has("year") && o.get("year").isJsonPrimitive() ? o.get("year").getAsInt() : 0;
+                int eps = o.has("episodes_total") && o.get("episodes_total").isJsonPrimitive()
+                        ? o.get("episodes_total").getAsInt() : 0;
+                double score = 0;
+                if (o.has("shikimori") && o.get("shikimori").isJsonObject()) {
+                    com.google.gson.JsonObject sh = o.getAsJsonObject("shikimori");
+                    score = sh.has("rating") && sh.get("rating").isJsonPrimitive() && !sh.get("rating").isJsonNull()
+                            ? sh.get("rating").getAsDouble() : 0;
+                }
+                String slug = "anilib:" + id;
+                anilibYears.put(slug, year);
+                anilibOriginals.put(slug, en);
                 CardModel m = new CardModel(slug, title, poster);
                 m.animeId = id;
                 m.rating = score;
-                m.subtitle = (year > 0 ? year + " · " : "") + "18+";
-                m.badge = anilibAvailable(ru, en) ? "AniLibria" : "";
+                m.subtitle = (year > 0 ? year + " · " : "") + "18+" + (eps > 0 ? " · " + eps + " сер." : "");
+                m.badge = "AniLibria";
                 out.add(m);
             }
-            out.sort((x, y) -> Boolean.compare(y.badge != null && !y.badge.isEmpty(),
-                    x.badge != null && !x.badge.isEmpty()));
             List<Object> res = new ArrayList<>();
             res.add(out);
-            res.add(!rows.isEmpty());
+            res.add(out.size() >= 50);
             return res;
         }, (value, error) -> {
             loading = false;

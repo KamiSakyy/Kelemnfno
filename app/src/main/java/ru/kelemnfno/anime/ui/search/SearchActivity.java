@@ -150,57 +150,51 @@ public class SearchActivity extends AppCompatActivity {
         java.util.List<ru.kelemnfno.anime.data.model.AnimeItem> out = new java.util.ArrayList<>();
         try {
             com.google.gson.JsonElement se = com.google.gson.JsonParser.parseString(sGet(
-                    "https://anilibria.top/api/v1/app/search/releases?query="
-                            + java.net.URLEncoder.encode(q, "UTF-8") + "&limit=8"));
-            com.google.gson.JsonArray arr = se.isJsonArray() ? se.getAsJsonArray()
-                    : (se.isJsonObject() && se.getAsJsonObject().has("data")
-                    ? se.getAsJsonObject().getAsJsonArray("data") : null);
+                    "https://anilibria.top/api/v1/anime/catalog/releases?f%5Bsearch%5D="
+                            + java.net.URLEncoder.encode(q, "UTF-8") + "&limit=20"));
+            com.google.gson.JsonArray arr = se.isJsonObject() && se.getAsJsonObject().has("data")
+                    ? se.getAsJsonObject().getAsJsonArray("data")
+                    : (se.isJsonArray() ? se.getAsJsonArray() : null);
             if (arr == null) return out;
             for (com.google.gson.JsonElement e : arr) {
                 if (!e.isJsonObject()) continue;
                 com.google.gson.JsonObject o = e.getAsJsonObject();
+                int id = o.has("id") && o.get("id").isJsonPrimitive() ? o.get("id").getAsInt() : 0;
+                if (id <= 0) continue;
+                String title = "";
                 String en = "";
                 if (o.has("name") && o.get("name").isJsonObject()) {
                     com.google.gson.JsonObject n = o.getAsJsonObject("name");
-                    en = n.has("english") && n.get("english").isJsonPrimitive() ? n.get("english").getAsString()
-                            : (n.has("main") ? n.get("main").getAsString() : "");
+                    title = n.has("main") && n.get("main").isJsonPrimitive() ? n.get("main").getAsString() : "";
+                    en = n.has("english") && n.get("english").isJsonPrimitive() ? n.get("english").getAsString() : "";
                 }
-                if (en.isEmpty()) continue;
-                try {
-                    com.google.gson.JsonElement sr = com.google.gson.JsonParser.parseString(sGet(
-                            "https://shikimori.io/api/animes?search=" + java.net.URLEncoder.encode(en, "UTF-8") + "&limit=1"));
-                    if (!sr.isJsonArray() || sr.getAsJsonArray().size() == 0) continue;
-                    com.google.gson.JsonObject a = sr.getAsJsonArray().get(0).getAsJsonObject();
-                    ru.kelemnfno.anime.data.model.AnimeItem it = new ru.kelemnfno.anime.data.model.AnimeItem();
-                    int id = a.has("id") ? a.get("id").getAsInt() : 0;
-                    if (id <= 0) continue;
-                    it.animeUrl = "shiki:" + id;
-                    it.animeId = id;
-                    String ru = a.has("russian") && a.get("russian").isJsonPrimitive() ? a.get("russian").getAsString() : "";
-                    it.title = ru.isEmpty() ? en : ru;
-                    it.original = en;
-                    it.year = 0;
-                    String iso = a.has("aired_on") && a.get("aired_on").isJsonPrimitive()
-                            ? a.get("aired_on").getAsString() : "";
-                    if (iso.length() >= 4) try { it.year = Integer.parseInt(iso.substring(0, 4)); } catch (Exception ignored) { }
-                    it.poster = new ru.kelemnfno.anime.data.model.Poster();
-                    String img = "";
-                    if (a.has("image") && a.get("image").isJsonObject()) {
-                        com.google.gson.JsonObject im = a.getAsJsonObject("image");
-                        img = im.has("original") && im.get("original").isJsonPrimitive()
-                                ? im.get("original").getAsString() : "";
-                        if (!img.isEmpty() && !img.startsWith("http")) img = "https://shikimori.io" + img;
-                    }
-                    it.poster.big = img;
-                    it.poster.huge = img;
-                    it.poster.fullsize = img;
-                    if (a.has("score") && a.get("score").isJsonPrimitive() && a.get("score").getAsDouble() > 0) {
+                if (title.isEmpty()) title = en;
+                if (title.isEmpty()) continue;
+                ru.kelemnfno.anime.data.model.AnimeItem it = new ru.kelemnfno.anime.data.model.AnimeItem();
+                it.animeUrl = "anilib:" + id;
+                it.animeId = id;
+                it.title = title;
+                it.original = en;
+                it.year = o.has("year") && o.get("year").isJsonPrimitive() ? o.get("year").getAsInt() : 0;
+                String poster = "";
+                if (o.has("poster") && o.get("poster").isJsonObject()) {
+                    com.google.gson.JsonObject ps = o.getAsJsonObject("poster");
+                    poster = ps.has("src") && ps.get("src").isJsonPrimitive() ? ps.get("src").getAsString() : "";
+                    if (!poster.isEmpty() && !poster.startsWith("http")) poster = "https://anilibria.top" + poster;
+                }
+                it.poster = new ru.kelemnfno.anime.data.model.Poster();
+                it.poster.big = poster;
+                it.poster.huge = poster;
+                it.poster.fullsize = poster;
+                if (o.has("shikimori") && o.get("shikimori").isJsonObject()) {
+                    com.google.gson.JsonObject sh = o.getAsJsonObject("shikimori");
+                    if (sh.has("rating") && sh.get("rating").isJsonPrimitive() && !sh.get("rating").isJsonNull()
+                            && sh.get("rating").getAsDouble() > 0) {
                         it.rating = new ru.kelemnfno.anime.data.model.Rating();
-                        it.rating.average = a.get("score").getAsDouble();
+                        it.rating.average = sh.get("rating").getAsDouble();
                     }
-                    out.add(it);
-                } catch (Exception ignored) {
                 }
+                out.add(it);
             }
         } catch (Exception ignored) {
         }
@@ -333,6 +327,14 @@ public class SearchActivity extends AppCompatActivity {
                         ? View.VISIBLE : View.GONE);
                 b.getRoot().setOnClickListener(v -> {
                     Prefs.get(SearchActivity.this).addRecentSearch(text());
+                    if (a.animeUrl != null && a.animeUrl.startsWith("anilib:")) {
+                        int aid = 0;
+                        try { aid = Integer.parseInt(a.animeUrl.substring(7)); } catch (Exception ignored) { }
+                        DetailActivity.openAnilib(SearchActivity.this, aid, a.title,
+                                a.original == null ? "" : a.original, a.year,
+                                ru.kelemnfno.anime.util.Fmt.posterUrl(a, "big"));
+                        return;
+                    }
                     if (a.animeUrl != null && a.animeUrl.startsWith("shiki:")) {
                         int sid = 0;
                         try { sid = Integer.parseInt(a.animeUrl.substring(6)); } catch (Exception ignored) { }

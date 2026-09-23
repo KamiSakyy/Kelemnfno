@@ -47,6 +47,12 @@ public class FavoritesFragment extends Fragment {
         adapter.setListener(new AnimeCardAdapter.OnCardClick() {
             @Override
             public void onClick(CardModel model) {
+                if (model.slug != null && model.slug.startsWith("anilib:")) {
+                    int aid = 0;
+                    try { aid = Integer.parseInt(model.slug.substring(7)); } catch (Exception ignored) { }
+                    DetailActivity.openAnilib(requireContext(), aid, model.title, "", 0, model.poster);
+                    return;
+                }
                 if (model.slug != null && model.slug.startsWith("shiki:")) {
                     int id = 0;
                     try { id = Integer.parseInt(model.slug.substring(6)); } catch (Exception ignored) { }
