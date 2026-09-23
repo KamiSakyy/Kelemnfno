@@ -1,14 +1,14 @@
-HCHAN https://h-chan.me/ -> 200 final=https://h-chan.me/ len=39
-   head: This content is not available in Russia
-HCHAN https://h-chan.me/my/list ERR HTTP Error 404: Not Found
-HCHAN-PAGE https://h-chan.me/manga/usamimi-bouken-tan ERR HTTP Error 404: Not Found
-HCHAN-PAGE https://h-chan.me/manga/futari-ecchi ERR HTTP Error 404: Not Found
-HCHAN-SEARCH https://h-chan.me/search?query=usamimi ERR HTTP Error 404: Not Found
-HCHAN-SEARCH https://h-chan.me/manga/search?query=usamimi ERR HTTP Error 404: Not Found
-HCHAN-SEARCH https://h-chan.me/ajax/manga/search?query=usamimi ERR HTTP Error 404: Not Found
-DoH h-chan.fun -> []
-DoH hentai-chan.fun -> []
-DoH h-chan.ru -> []
-DoH hentaichan.ru -> ['194.67.71.145']
-AL q=Bouken count=60 :: [('7108--jojo-no-kimyou-na-bouken-tv-anime', 'Невероятное приключение ДжоДжо'), ('9264--jojo-no-kimyou-na-bouken-part-3-stardust-crusaders-egypt-hen-anime', 'Невероятное приключение ДжоДжо: Рыцари звёздной пыли 2'), ('8287--jojo-no-kimyou-na-bouken-part-3-stardust-crusaders-anime', 'Невероятное приключение ДжоДжо: Рыцари звёздной пыли'), ('10998--jojo-no-kimyou-na-bouken-part-4-diamond-wa-kudakenai-anime', 'Невероятное приключение ДжоДжо: Несокрушимый алмаз')]
-AL q=Futari Ecchi count=2 :: [('359--futari-ecchi-anime', 'Хроники молодожёнов'), ('20033--futari-ecchi-2014-anime', 'Хроники молодожёнов (2014)')]
+HC https://hentaichan.ru/ ERR <urlopen error [Errno 101] Network is unreachable>
+HC http://hentaichan.ru/ -> 200 final=http://hentaichan.ru/ len=10103
+   title: Срок регистрации домена&nbsp;hentaichan.ru истёк
+HC-PAGE https://hentaichan.ru/manga/usamimi-bouken-tan ERR <urlopen error [Errno 101] Network is unreachable>
+HC-PAGE https://hentaichan.ru/?do=search&subaction=search&searchstory=usamimi ERR <urlopen error [Errno 101] Network is unreachable>
+AL futari episodes=4
+AL futari ep10359 keys=['id', 'model', 'name', 'number', 'number_secondary', 'season', 'status', 'anime_id', 'created_at', 'players', 'type'] players=2
+   src=//kodikplayer.com/seria/551280/cacabcfb56418837076cfa0645b03402/720p team=None type=Озвучка
+   src=//kodikplayer.com/seria/626053/0f021d048c30d3e9115f4acc5a228c16/720p team=None type=Озвучка
+   PLAYER status=200 len=20502 kodik=True
+   videos-in-page: []
+AL-adult q=usamimi&isAdult=true count=0 :: []
+AL-adult q=usamimi&is_yaoi=true count=0 :: []
+AL-adult q=Usamimi%20Bouken count=0 :: []
