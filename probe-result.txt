@@ -1,3 +1,8 @@
-== HANIME SEARCH Usamimi Bouken-tan ERR <urlopen error [Errno -2] Name or service not known>
-== HANIME SEARCH Isshо ni Ecchi ERR <urlopen error [Errno -2] Name or service not known>
-== HANIME SEARCH Incha Couple ERR <urlopen error [Errno -2] Name or service not known>
+DNS search.htv-services.com ERR [Errno -2] Name or service not known
+DNS hanime.tv -> 104.21.18.100
+DNS www.hanime.tv -> 172.67.181.145
+DNS htv-services.com -> 104.21.30.93
+DoH search.htv-services.com -> []
+DoH hanime.tv -> [None, None]
+GET hanime.tv ERR HTTP Error 403: Forbidden
+POST htv ERR <urlopen error [Errno -2] Name or service not known>
