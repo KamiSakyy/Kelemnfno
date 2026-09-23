@@ -1,143 +1,71 @@
-== APP_HOST_R18 HTTP 200 size 209235
-APP_HOST_R18 total=29 count=29
-  10224 | Дьявол может плакать 2 | Devil May Cry Season 2 | Демоны;Сверхъестественное
-  10216 | Невинный панк: Механическая девушка | Virgin Punk: Clockwork Girl | Экшен;Фантастика
-  10144 | Клинок, Рассекающий Демонов: Бесконечный Замок — Возвращение Аказы | Kimetsu no Yaiba Movie 1: Mugenjou-hen - Akaza Sairai | Сёнен;Исторический;Приключения;Фэнтези
-  9988 | Труська, Чулко и пресвятой Подвяз 2 | New Panty & Stocking with Garterbelt | Комедия;Экшен;Фэнтези;Пародия
-  10026 | Первородный грех Такопи | Takopii no Genzai | Сёнен;Драма;Фантастика
-  9960 | Дьявол может плакать | Devil May Cry | Демоны;Сверхъестественное
-  9961 | Ведьмак: Сирены глубин | The Witcher: Sirens of the Deep | Драма;Фэнтези
-  9851 | Я монстр S-класса Бегемот, но меня перепутали с котом, и я живу у эльфийки как домашний питомец | S-Rank Monster no "Behemoth" dakedo, Neko to Machigawarete Elf Musume no Pet toshite Kurashitemasu | Комедия;Сейнен;Экшен;Этти;Приключения;Фэнтези
-  9789 | Дандадан | Dandadan | Комедия;Сёнен;Экшен;Сверхъестественное
-  9730 | Отряд самоубийц из другого мира | Isekai Suicide Squad | Экшен;Приключения;Исекай
-  9705 | Борьба в прямом эфире | Kenka Dokugaku | Школа;Экшен;Боевые искусства
-  9718 | Братья Гримм: Вариации | the grimm variations | Триллер;Ужасы;Фэнтези
-  9606 | Раб спецотряда демонического города | Mato Seihei no Slave | Экшен;Этти;Фэнтези;Гарем
-  9656 | Обитель зла: Остров смерти | Resident Evil: Death Island | Ужасы;Экшен;Фантастика
-  9551 | Королевство руин | Hametsu no Oukoku | Экшен;Фантастика;Приключения;Фэнтези
-  9349 | Я стал её любимой собачкой | Inu ni Nattara Suki na Hito ni Hirowareta | Комедия;Этти
-  9253 | Ублюдок!! Сокрушитель тьмы | Bastard!! Ankoku no Hakaishin | Комедия;Сейнен;Экшен;Этти;Приключения;Фэнтези
-  9311 | Берсерк. Мемориальное издание | Berserk. Memory edition | Драма;Экшен;Фэнтези
-  9243 | Удар крови: Финал | Strike the Blood Final | Экшен;Этти;Вампиры;Сверхъестественное;Фэнтези
-  9307 | Киберпанк: Бегущие по краю | Cyberpunk: Edgerunners | Фантастика;Киберпанк
-  8700 | Технолайз | Texhnolyze | Психологическое;Драма;Экшен;Фантастика
-  9207 | Одарённый. Фильм | Given Movie | Драма;Повседневность;Романтика;Музыка
-  7440 | Убийца Гоблинов | Goblin Slayer | Экшен;Приключения;Фэнтези
-  6062 | Демоны старшей школы 4: Герой | High School DxD Hero | Комедия;Романтика;Демоны;Этти
-  398 | Демоны старшей школы 3 | High School DxD BorN | Комедия;Сёнен;Школа;Романтика;Демоны;Этти;Приключения
-  569 | Демоны старшей школы | High School DxD | Комедия;Сёнен;Романтика;Этти;Приключения
-  405 | Клеймор | Claymore | Драма;Приключения;Фэнтези
-  570 | Демоны старшей школы ТВ-2 | High School DxD New | Комедия;Сёнен;Романтика;Этти;Приключения
-  432 | Токийский Гуль | Tokyo Ghoul | Сейнен;Драма;Мистика;Ужасы;Экшен
-== APP_SEARCH_SEX HTTP 200 size 2
-APP_SEARCH_SEX list count=0
-== APP_SEARCH_ZAIKA HTTP 200 size 56335
-APP_SEARCH_ZAIKA list count=12
-  809 | Повседневная Жизнь с Девушкой-Монстром | Monster Musume no Iru Nichijou | eps=0
-  3529 | Повседневная жизнь с девушкой-монстром OVA | Monster Musume no Iru Nichijou OVA | eps=0
-  9989 | Межкультурный обмен с девушкой у игровых автоматов | Game Center Shoujo to Ibunka Kouryuu | eps=0
-  9990 | За небрежной молодой девушкой ухаживает бывший жених её сестры | Zutaboro Reijou wa Ane no Moto Konyakusha ni Dekiai sareru | eps=0
-  10158 | Я подружился со второй самой симпатичной девушкой в классе | Class de 2-banme ni Kawaii Onnanoko to Tomodachi ni Natta | eps=0
-  9130 | Девушки на линии фронта | Dolls&#039; Frontline | eps=0
-  9955 | Девушки-пони: Серая Золушка | Uma Musume: Cinderella Gray | eps=0
-  10061 | Девушки-пони: Серая Золушка. Часть 2 | Uma Musume: Cinderella Gray Part 2 | eps=0
-  6921 | Идолмастер: Девушки-золушки | The iDOLMASTER Cinderella Girls | eps=0
-  7096 | Бедствие Девушки-Зомби | Aru Zombie Shoujo no Sainan (ONA) | eps=0
-  9175 | Жизнь девушки-карателя | Shokei Shoujo no Virgin Road | eps=0
-  10175 | Где те девушки, что были бы добры к отаку? | Otaku ni Yasashii Gal wa Inai!? | eps=0
-== ANILIBERY_R18 HTTP 000 size 56335
-ANILIBERY_R18 list count=12
-  809 | Повседневная Жизнь с Девушкой-Монстром | Monster Musume no Iru Nichijou | eps=0
-  3529 | Повседневная жизнь с девушкой-монстром OVA | Monster Musume no Iru Nichijou OVA | eps=0
-  9989 | Межкультурный обмен с девушкой у игровых автоматов | Game Center Shoujo to Ibunka Kouryuu | eps=0
-  9990 | За небрежной молодой девушкой ухаживает бывший жених её сестры | Zutaboro Reijou wa Ane no Moto Konyakusha ni Dekiai sareru | eps=0
-  10158 | Я подружился со второй самой симпатичной девушкой в классе | Class de 2-banme ni Kawaii Onnanoko to Tomodachi ni Natta | eps=0
-  9130 | Девушки на линии фронта | Dolls&#039; Frontline | eps=0
-  9955 | Девушки-пони: Серая Золушка | Uma Musume: Cinderella Gray | eps=0
-  10061 | Девушки-пони: Серая Золушка. Часть 2 | Uma Musume: Cinderella Gray Part 2 | eps=0
-  6921 | Идолмастер: Девушки-золушки | The iDOLMASTER Cinderella Girls | eps=0
-  7096 | Бедствие Девушки-Зомби | Aru Zombie Shoujo no Sainan (ONA) | eps=0
-  9175 | Жизнь девушки-карателя | Shokei Shoujo no Virgin Road | eps=0
-  10175 | Где те девушки, что были бы добры к отаку? | Otaku ni Yasashii Gal wa Inai!? | eps=0
-== ANILIBERY_SEARCH HTTP 000 size 56335
-ANILIBERY_SEARCH list count=12
-  809 | Повседневная Жизнь с Девушкой-Монстром | Monster Musume no Iru Nichijou | eps=0
-  3529 | Повседневная жизнь с девушкой-монстром OVA | Monster Musume no Iru Nichijou OVA | eps=0
-  9989 | Межкультурный обмен с девушкой у игровых автоматов | Game Center Shoujo to Ibunka Kouryuu | eps=0
-  9990 | За небрежной молодой девушкой ухаживает бывший жених её сестры | Zutaboro Reijou wa Ane no Moto Konyakusha ni Dekiai sareru | eps=0
-  10158 | Я подружился со второй самой симпатичной девушкой в классе | Class de 2-banme ni Kawaii Onnanoko to Tomodachi ni Natta | eps=0
-  9130 | Девушки на линии фронта | Dolls&#039; Frontline | eps=0
-  9955 | Девушки-пони: Серая Золушка | Uma Musume: Cinderella Gray | eps=0
-  10061 | Девушки-пони: Серая Золушка. Часть 2 | Uma Musume: Cinderella Gray Part 2 | eps=0
-  6921 | Идолмастер: Девушки-золушки | The iDOLMASTER Cinderella Girls | eps=0
-  7096 | Бедствие Девушки-Зомби | Aru Zombie Shoujo no Sainan (ONA) | eps=0
-  9175 | Жизнь девушки-карателя | Shokei Shoujo no Virgin Road | eps=0
-  10175 | Где те девушки, что были бы добры к отаку? | Otaku ni Yasashii Gal wa Inai!? | eps=0
-== TOP_ISADULT HTTP 200 size 342534
-TOP_ISADULT total=1939 count=50
-  10228 | Рыцарь-скелет вступает в параллельный мир 2 | Gaikotsu Kishi-sama, Tadaima Isekai e Odekakechuu II | Экшен;Фэнтези
-  10226 | Мир отомэ-игр — это тяжёлый мир для мобов 2 | Otome Game Sekai wa Mob ni Kibishii Sekai desu 2 | Меха;Школа;Романтика;Фэнтези;Гарем;Исекай
-  10289 | Кошечка из Сакурасо — новая озвучка | Sakurasou no Pet na Kanojo | Комедия;Школа;Драма;Повседневность;Романтика
-  10165 | Революция книжного червя: Приёмная дочь лорда | Honzuki no Gekokujou: Shisho ni Naru Tame ni wa Shudan wo Erandeiraremasen - Ryoushu no Youjo | Фэнтези;Исекай
-  10161 | Явись, Ирума! 4 | Mairimashita! Iruma-kun 4th Season | Комедия;Сёнен;Школа;Фэнтези
-  8986 | Хеталия и страны Оси | Hetalia Axis Powers | Комедия;Сёнен;Исторический
-  10232 | Клеватесс 2: Король демонических зверей и легенда о ложном герое | Clevatess II: Majuu no Ou to Itsuwari no Yuusha Denshou | Экшен;Фэнтези
-  10250 | Я влюбился в тебя, когда ты бежала в лунной ночи | Toumei na Yoru ni Kakeru Kimi to, Me ni Mienai Koi wo Shita | Драма;Романтика
-  10239 | Адский режим: Хардкорный геймер отправляется в другой мир на высоком уровне сложности 2 | Hell Mode: Yarikomizuki no Gamer wa Hai Settei no Isekai de Musou suru 2nd Season | Экшен;Приключения;Фэнтези;Исекай
-  10242 | История электричества в двадцатом веке | Nijusseiki Denki Mokuroku: Eureka Evrika | Комедия;Драма
-  10278 | Забота об одарённой девушке: В престижной школе, полной высококлассных учеников, я буду тайно заботиться о самой красивой девушке (не имеющей никаких жизненных навыков) | Saijo no Osewa: Takane no Hanadarake na Meimonkou de, Gakuin Ichi no Ojousama (Seikatsu Nouryoku Kaimu) wo Kagenagara Osewa suru Koto ni Narimashita | Комедия;Школа;Романтика
-  10273 | Дара из Рэйвы | Reiwa no Dara-san | Комедия;Сверхъестественное
-  10268 | Небеса у берегов Красной реки | Sora wa Akai Kawa no Hotori | Драма;Романтика;Экшен;Сёдзе;Исторический;Приключения;Сверхъестественное
-  10255 | Монстрик Карамелька | Otome Kaijuu Carameliser | Сейнен;Школа;Романтика;Сверхъестественное
-  10248 | Чёрный факел | Black Torch | Сёнен;Экшен;Сверхъестественное
-  10290 | Ван-Пис | One Piece | Сёнен;Экшен;Приключения;Фэнтези
-  10292 | История о перекуре за супермаркетом | Super no Ura de Yani Suu Futari | Сейнен;Романтика
-  10272 | Пожалуйста, простите моих младших братьев | Uchi no Otouto-domo ga Sumimasen | Комедия;Романтика;Сёдзе
-  10294 | Хантер х Хантер | Hunter x Hunter | Сёнен;Экшен;Приключения;Фэнтези
-  10244 | Расхититель гробниц | Dogulwang | Экшен;Приключения;Фэнтези
-  10281 | Пыль Мёбиуса | Mebius Dust | Фантастика
-  10234 | Тайная битва за престол сильнейшего принца-дуралея | Saikyou Degarashi Ouji no Anyaku Teii Arasoi | Экшен;Приключения;Фэнтези
-  10230 | Старик из деревни становится Святым мечом 2 | Katainaka no Ossan, Kensei ni Naru II | Экшен;Фэнтези
-  10227 | Военная хроника маленькой девочки 2 | Youjo Senki II | Экшен;Фэнтези;Исекай
-  10171 | Цугаи загробного мира | Yomi no Tsugai | Сёнен;Экшен;Приключения;Фэнтези
-  10251 | Хоть я и бездарная злодейка: Сказка о том, как бабочка и крыса поменялись местами в девичьем дворе | Futsutsuka na Akujo dewa Gozaimasu ga: Suuguu Chouso Torikae Den | Романтика;Фэнтези
-  10295 | Звёздные Войны: Видения представляют — Девятый Джедай | Star Wars: Visions Presents - The Ninth Jedi | Экшен;Приключения;Фэнтези
-  10277 | Вперёд, отряд мистики! | Let's Go Kaiki-gumi | Комедия;Школа;Сверхъестественное
-  10276 | Рекомендация старшеклассника Ивамото | Iwamoto-senpai no Suisen | Сейнен;Исторический;Сверхъестественное
-  10188 | Мао | Mao | Сёнен;Детектив;Сверхъестественное
-== TOP_GENRES_EP HTTP 200 size 16196
-TOP_GENRES_EP list count=35
-  15 | None | None | eps=0
-  24 | None | None | eps=0
-  32 | None | None | eps=0
-  16 | None | None | eps=0
-  25 | None | None | eps=0
-  33 | None | None | eps=0
-  8 | None | None | eps=0
-  17 | None | None | eps=0
-  34 | None | None | eps=0
-  26 | None | None | eps=0
-  30 | None | None | eps=0
-  1 | None | None | eps=0
-  18 | None | None | eps=0
-  2 | None | None | eps=0
-  9 | None | None | eps=0
-  19 | None | None | eps=0
-  36 | None | None | eps=0
-  10 | None | None | eps=0
-  27 | None | None | eps=0
-  3 | None | None | eps=0
-  11 | None | None | eps=0
-  28 | None | None | eps=0
-  20 | None | None | eps=0
-  31 | None | None | eps=0
-  5 | None | None | eps=0
-  4 | None | None | eps=0
-  12 | None | None | eps=0
-  21 | None | None | eps=0
-  6 | None | None | eps=0
-  13 | None | None | eps=0
-== V3_TITLE HTTP 410 size 91
-V3_TITLE other: {'error': {'code': 410, 'message': 'API version is deprecated. Use anilibria.top/api/docs/v1'}}
-== V3_GENRES HTTP 410 size 91
-V3_GENRES other: {'error': {'code': 410, 'message': 'API version is deprecated. Use anilibria.top/api/docs/v1'}}
+GENRES sample keys: ['id', 'image', 'name', 'total_releases']
+G 15 | Боевые искусства | 
+G 24 | Вампиры | 
+G 32 | Гарем | 
+G 16 | Демоны | 
+G 25 | Детектив | 
+G 33 | Дзёсей | 
+G 8 | Драма | 
+G 17 | Игры | 
+G 34 | Исекай | 
+G 26 | Исторический | 
+G 30 | Киберпанк | 
+G 1 | Комедия | 
+G 18 | Магия | 
+G 2 | Меха | 
+G 9 | Мистика | 
+G 19 | Музыка | 
+G 36 | Пародия | 
+G 10 | Повседневность | 
+G 27 | Приключения | 
+G 3 | Психологическое | 
+G 11 | Романтика | 
+G 28 | Сверхъестественное | 
+G 20 | Сёдзе | 
+G 31 | Сёдзе-ай | 
+G 5 | Сейнен | 
+G 4 | Сёнен | 
+G 12 | Спорт | 
+G 21 | Супер сила | 
+G 6 | Триллер | 
+G 13 | Ужасы | 
+G 22 | Фантастика | 
+G 29 | Фэнтези | 
+G 7 | Школа | 
+G 14 | Экшен | 
+G 23 | Этти | 
+GENRE 15 Боевые искусства total=22
+GENRE 24 Вампиры total=46
+GENRE 32 Гарем total=12
+GENRE 16 Демоны total=50
+GENRE 25 Детектив total=147
+GENRE 33 Дзёсей total=6
+GENRE 8 Драма total=373
+GENRE 17 Игры total=42
+GENRE 34 Исекай total=54
+GENRE 26 Исторический total=95
+GENRE 30 Киберпанк total=1
+GENRE 1 Комедия total=693
+GENRE 18 Магия total=111
+GENRE 2 Меха total=58
+GENRE 9 Мистика total=50
+GENRE 19 Музыка total=61
+GENRE 36 Пародия total=4
+GENRE 10 Повседневность total=220
+GENRE 27 Приключения total=470
+GENRE 3 Психологическое total=81
+GENRE 11 Романтика total=486
+GENRE 28 Сверхъестественное total=305
+GENRE 20 Сёдзе total=73
+GENRE 31 Сёдзе-ай total=1
+GENRE 5 Сейнен total=203
+GENRE 4 Сёнен total=337
+GENRE 12 Спорт total=55
+GENRE 21 Супер сила total=51
+GENRE 6 Триллер total=61
+GENRE 13 Ужасы total=81
+GENRE 22 Фантастика total=275
+GENRE 29 Фэнтези total=651
+GENRE 7 Школа total=384
+GENRE 14 Экшен total=711
+GENRE 23 Этти total=116
