@@ -1,4 +1,4 @@
-name: probe18
+name: probe
 on: workflow_dispatch
 jobs:
   probe:
