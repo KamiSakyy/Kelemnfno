@@ -1,0 +1,43 @@
+name: probe18
+on: workflow_dispatch
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: probe R18 catalog
+        run: |
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36"
+          for p in 1 2 3 4 5 6; do
+            curl -s --max-time 30 -H "User-Agent: $UA" "https://anilibria.top/api/v1/anime/catalog/releases?f%5Bage_ratings%5D=R18_PLUS&page=$p&limit=50" -o /tmp/p$p.json || true
+            echo "::notice::PAGE $p size $(stat -c%s /tmp/p$p.json 2>/dev/null || echo 0)"
+            python3 - "$p" <<'PY'
+          import json,sys
+          p=sys.argv[1]
+          try:
+              d=json.load(open(f'/tmp/p{p}.json'))
+          except Exception as e:
+              print(f'::notice::PAGE {p} parse error {e}'); raise SystemExit
+          arr=d.get('data',[]) if isinstance(d,dict) else d
+          meta=d.get('meta',{}).get('pagination',{}) if isinstance(d,dict) else {}
+          print(f"::notice::PAGE {p} total={meta.get('total')} pages={meta.get('total_pages')} count={len(arr)}")
+          for r in arr:
+              g=[x.get('name','') for x in (r.get('genres') or [])]
+              n=r.get('name',{})
+              print(f"::notice::R18 {r.get('id')} | {n.get('main')} | {n.get('english')} | {';'.join(g)}")
+          PY
+          done
+          curl -s --max-time 30 -H "User-Agent: $UA" "https://anilibria.top/api/v1/anime/releases/9738" -o /tmp/rel.json || true
+          python3 - <<'PY'
+          import json
+          try:
+              d=json.load(open('/tmp/rel.json'))
+          except Exception as e:
+              print(f'::notice::REL parse error {e}'); raise SystemExit
+          r=d.get('data',d) if isinstance(d,dict) else {}
+          eps=r.get('episodes') or []
+          print(f"::notice::REL9738 keys={sorted(r.keys())[:20]}")
+          if eps:
+              e0=eps[0]
+              print(f"::notice::REL9738 ep keys={sorted(e0.keys())}")
+              print(f"::notice::REL9738 ep0 ordinal={e0.get('ordinal')} hls_480={str(e0.get('hls_480'))[:80]} hls_1080={str(e0.get('hls_1080'))[:80]}")
+          PY
