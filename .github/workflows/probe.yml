@@ -17,56 +17,45 @@ jobs:
           UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36"
           out=[]
           def get(url,h=None):
-              hh={'User-Agent':UA,'Accept-Language':'ru-RU,ru;q=0.9'}
+              hh={'User-Agent':UA,'Accept-Language':'ru-RU,ru;q=0.9','Accept':'*/*'}
               if h: hh.update(h)
               r=urllib.request.Request(url,headers=hh)
               with urllib.request.urlopen(r,timeout=25) as resp:
                   return resp.status,resp.geturl(),resp.read().decode('utf-8','ignore')
           B='https://manga.h-chan.me'
-          # поиск: русские и английские запросы, дамп href
-          found=[]
-          for q in ['usamimi','зайкой','Usamimi Bouken-tan']:
-              try:
-                  s,f,b=get(f'{B}/?do=search&subaction=search&searchstory='+urllib.parse.quote(q))
-                  hrefs=list(dict.fromkeys(re.findall(r'href="(/manga/[^"#]+)"',b)))
-                  out.append(f'SEARCH q={q} -> {s} len={len(b)} hrefs={hrefs[:6]}')
-                  if hrefs and not found: found=hrefs
-              except Exception as e:
-                  out.append(f'SEARCH q={q} ERR {str(e)[:100]}')
-          # AJAX поиск (DLE)
-          for u in [B+'/engine/ajax/search.php?query=usamimi']:
-              try:
-                  s,f,b=get(u)
-                  out.append(f'AJAX {u[len(B):]} -> {s} {b[:200]}')
-              except Exception as e:
-                  out.append(f'AJAX ERR {str(e)[:100]}')
-          # страница найденной манги: ищем видео-плеер
-          if found:
-              u=B+found[0]
-              try:
-                  s,f,b=get(u)
-                  t=re.search(r'<title[^>]*>(.*?)</title>',b,re.S)
-                  out.append(f'MANGA {found[0]} -> {s} len={len(b)} title={(t.group(1).strip()[:90] if t else "-")}')
-                  for pat in [r'https?://[^"\'\s<>]*kodik[^"\'\s<>]*',r'https?://[^"\'\s<>]*\.m3u8[^"\'\s<>]*',r'https?://[^"\'\s<>]*\.mp4[^"\'\s<>]*',r'<iframe[^>]*src="([^"]+)"',r'video[^"\'\s<>]{0,80}']:
-                      m=list(dict.fromkeys(re.findall(pat,b)))
-                      if m: out.append(f'   {pat[:26]}: {[x[:120] for x in m[:4]]}')
-                  # ссылки на "смотреть видео"
-                  vlinks=list(dict.fromkeys(re.findall(r'href="(/(?:video|anime)[^"#]*)"',b)))
-                  out.append(f'   vlinks: {vlinks[:5]}')
-                  # их плеер может лежать в /engine или js-переменной
-                  for pat in [r'(?:playerUrl|video_url|file)\s*[:=]\s*["\']([^"\']+)',r'data-src="([^"]+)"']:
-                      m=list(dict.fromkeys(re.findall(pat,b)))
-                      if m: out.append(f'   {pat[:20]}: {[x[:120] for x in m[:3]]}')
-              except Exception as e:
-                  out.append(f'MANGA {found[0]} ERR {str(e)[:100]}')
-          else:
-              # прямой слаг-гесс с .html
-              for slug in ['usamimi-bouken-tan.html','usamimi-bouken-tan']:
+          # 1. главная: SPA-подсказки (api-эндпоинты в JS)
+          try:
+              s,f,b=get(B+'/')
+              apis=list(dict.fromkeys(re.findall(r'["\'](/(?:api|ajax)[a-zA-Z0-9_/\-]*)["\']',b)))
+              scripts=list(dict.fromkeys(re.findall(r'src="([^"]+\.js[^"]*)"',b)))
+              out.append(f'HOME len={len(b)} apis={apis[:10]}')
+              out.append(f'  scripts={scripts[:5]}')
+              for js in scripts[:3]:
                   try:
-                      s,f,b=get(f'{B}/manga/{slug}')
-                      out.append(f'DIRECT /manga/{slug} -> {s} len={len(b)}')
+                      u=js if js.startswith('http') else B+js
+                      _,_,jb=get(u)
+                      hits=list(dict.fromkeys(re.findall(r'["\'](?:https?://[^"\']*)?/(?:api|manga|video)/[a-zA-Z0-9_/\-\.{}$]*["\']',jb)))
+                      if hits: out.append(f'  JS {js[-40:]}: {hits[:12]}')
                   except Exception as e:
-                      out.append(f'DIRECT /manga/{slug} ERR {str(e)[:80]}')
+                      out.append(f'  JS {js[-40:]} ERR {str(e)[:60]}')
+          except Exception as e:
+              out.append(f'HOME ERR {str(e)[:100]}')
+          # 2. видео-разделы
+          for u in [B+'/video/hentai',B+'/video/new',B+'/video/usamimi-bouken-tan']:
+              try:
+                  s,f,b=get(u)
+                  hrefs=list(dict.fromkeys(re.findall(r'href="(/video/[^"#]+)"',b)))
+                  t=re.search(r'<title[^>]*>(.*?)</title>',b,re.S)
+                  out.append(f'VIDEO {u[len(B):]} -> {s} len={len(b)} title={(t.group(1).strip()[:60] if t else "-")} hrefs={hrefs[:8]}')
+              except Exception as e:
+                  out.append(f'VIDEO {u[len(B):]} ERR {str(e)[:90]}')
+          # 3. типовые API-пути
+          for u in [B+'/api/manga/search?query=usamimi',B+'/api/video/search?query=usamimi',B+'/ajax/search?query=usamimi',B+'/manga/usamimi-bouken-tan.json']:
+              try:
+                  s,f,b=get(u)
+                  out.append(f'API {u[len(B):]} -> {s} {b[:150]}')
+              except Exception as e:
+                  out.append(f'API {u[len(B):]} ERR {str(e)[:80]}')
           open('probe-result.txt','w').write('\n'.join(out)+'\n')
           print('\n'.join(out)[:3400])
           PY2
@@ -75,5 +64,5 @@ jobs:
           git config user.name "probe"
           git config user.email "probe@local"
           git add probe-result.txt
-          git commit -m "probe result 18 [skip ci]" || echo nothing
+          git commit -m "probe result 19 [skip ci]" || echo nothing
           git push origin HEAD:arena/01a0afbd-kelemnfno || echo pushfail
