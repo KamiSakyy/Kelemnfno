@@ -196,6 +196,48 @@ public class SearchActivity extends AppCompatActivity {
                 }
                 out.add(it);
             }
+            // Shikimori hentai search (жанр 12) — «зайка» и т.п.
+            try {
+                com.google.gson.JsonElement sr = com.google.gson.JsonParser.parseString(sGet(
+                        "https://shikimori.io/api/animes?genre=12&is_censored=false&search="
+                                + java.net.URLEncoder.encode(q, "UTF-8") + "&limit=8"));
+                if (sr.isJsonArray()) {
+                    for (com.google.gson.JsonElement e : sr.getAsJsonArray()) {
+                        if (!e.isJsonObject()) continue;
+                        com.google.gson.JsonObject a = e.getAsJsonObject();
+                        int id = a.has("id") ? a.get("id").getAsInt() : 0;
+                        if (id <= 0) continue;
+                        String en = a.has("name") && a.get("name").isJsonPrimitive() ? a.get("name").getAsString() : "";
+                        String ru = a.has("russian") && a.get("russian").isJsonPrimitive() ? a.get("russian").getAsString() : "";
+                        ru.kelemnfno.anime.data.model.AnimeItem it = new ru.kelemnfno.anime.data.model.AnimeItem();
+                        it.animeUrl = "shiki:" + id;
+                        it.animeId = id;
+                        it.title = ru.isEmpty() ? en : ru;
+                        it.original = en;
+                        it.year = 0;
+                        String iso = a.has("aired_on") && a.get("aired_on").isJsonPrimitive()
+                                ? a.get("aired_on").getAsString() : "";
+                        if (iso.length() >= 4) try { it.year = Integer.parseInt(iso.substring(0, 4)); } catch (Exception ignored) { }
+                        String img = "";
+                        if (a.has("image") && a.get("image").isJsonObject()) {
+                            com.google.gson.JsonObject im = a.getAsJsonObject("image");
+                            img = im.has("original") && im.get("original").isJsonPrimitive()
+                                    ? im.get("original").getAsString() : "";
+                            if (!img.isEmpty() && !img.startsWith("http")) img = "https://shikimori.io" + img;
+                        }
+                        it.poster = new ru.kelemnfno.anime.data.model.Poster();
+                        it.poster.big = img;
+                        it.poster.huge = img;
+                        it.poster.fullsize = img;
+                        if (a.has("score") && a.get("score").isJsonPrimitive() && a.get("score").getAsDouble() > 0) {
+                            it.rating = new ru.kelemnfno.anime.data.model.Rating();
+                            it.rating.average = a.get("score").getAsDouble();
+                        }
+                        out.add(it);
+                    }
+                }
+            } catch (Exception ignored) {
+            }
         } catch (Exception ignored) {
         }
         return out;

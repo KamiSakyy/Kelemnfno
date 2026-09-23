@@ -628,6 +628,51 @@ public class CatalogFragment extends Fragment {
                 m.badge = "AniLibria";
                 out.add(m);
             }
+            // Карточки Shikimori (жанр «Хентай», без цензуры) — как в скриншотах.
+            java.util.Set<String> taken = new java.util.HashSet<>();
+            for (CardModel m : out) taken.add(String.valueOf(m.title).toLowerCase());
+            for (String host : new String[]{"https://shikimori.io/api", "https://shikimori.one/api"}) {
+                try {
+                    com.google.gson.JsonElement r = com.google.gson.JsonParser.parseString(hGet(
+                            host + "/animes?genre=12&is_censored=false&order=popularity&limit=30&page=" + page));
+                    if (!r.isJsonArray()) continue;
+                    for (com.google.gson.JsonElement e : r.getAsJsonArray()) {
+                        if (!e.isJsonObject()) continue;
+                        com.google.gson.JsonObject o = e.getAsJsonObject();
+                        int sid = o.has("id") ? o.get("id").getAsInt() : 0;
+                        String ru = o.has("russian") && o.get("russian").isJsonPrimitive() ? o.get("russian").getAsString() : "";
+                        String en = o.has("name") && o.get("name").isJsonPrimitive() ? o.get("name").getAsString() : "";
+                        String title = ru.isEmpty() ? en : ru;
+                        if (title.isEmpty() || !taken.add(title.toLowerCase())) continue;
+                        String poster = "";
+                        if (o.has("image") && o.get("image").isJsonObject()) {
+                            com.google.gson.JsonObject img = o.getAsJsonObject("image");
+                            poster = img.has("original") && img.get("original").isJsonPrimitive()
+                                    ? img.get("original").getAsString() : "";
+                            if (!poster.isEmpty() && !poster.startsWith("http")) poster = "https://shikimori.io" + poster;
+                        }
+                        int year = 0;
+                        String iso = o.has("aired_on") && o.get("aired_on").isJsonPrimitive()
+                                ? o.get("aired_on").getAsString() : "";
+                        if (iso.length() >= 4) try { year = Integer.parseInt(iso.substring(0, 4)); } catch (Exception ignored) { }
+                        double score = o.has("score") && o.get("score").isJsonPrimitive() ? o.get("score").getAsDouble() : 0;
+                        String slug = "shiki:" + sid;
+                        shikiYears.put(slug, year);
+                        shikiOriginals.put(slug, en);
+                        CardModel m = new CardModel(slug, title, poster);
+                        m.animeId = sid;
+                        m.rating = score;
+                        m.subtitle = (year > 0 ? year + " · " : "") + "18+";
+                        m.badge = "";
+                        out.add(m);
+                    }
+                    if (r.getAsJsonArray().size() > 0) break;
+                } catch (Exception ignored) {
+                }
+            }
+            // «Доступно на AniLibria» — сверху.
+            out.sort((x, y) -> Boolean.compare(y.badge != null && !y.badge.isEmpty(),
+                    x.badge != null && !x.badge.isEmpty()));
             List<Object> res = new ArrayList<>();
             res.add(out);
             res.add(out.size() >= 50);
