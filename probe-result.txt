@@ -1,12 +1,8 @@
-MIRROR https://manga.h-chan.me/ -> 200 final=https://x13.h-chan.me/ len=184550 title=Хентай-тян! - большой каталог хентай манга с удобной онлайн читалкой
-MIRROR https://x3.h-chan.me/ ERR HTTP Error 404: Not Found
-MIRROR https://xxl.hentaichan.live/ -> 200 final=https://xxl.hentaichan.live/ len=184550 title=Хентай-тян! - большой каталог хентай манга с удобной онлайн читалкой
-MIRROR https://anime-chan.me/ -> 200 final=https://anime-chan.me/ len=118010 title=Аниме приколы на Аниме-тян &raquo; Аниме приколы на Аниме-тян
-MIRROR https://x.henchan.pro/ ERR <urlopen error timed out>
-MIRROR https://henchan.pro/ ERR <urlopen error timed out>
-ALIVE=https://manga.h-chan.me
-  PAGE /?do=search&subaction=search&searchstory=usamimi -> 200 len=18262 title=Поиск по сайту &raquo; Хентай-тян! - большой каталог хентай манга с удобной онлайн читалко
-  manga-links: ['/manga/random']
-  PAGE https://manga.h-chan.me/manga/usamimi-bouken-tan ERR HTTP Error 404: Not Found
-SHIKITV /api/animes?search=usamimi&limit=2 ERR HTTP Error 403: Forbidden
-SHIKITV /api/animes?limit=1 ERR HTTP Error 403: Forbidden
+SEARCH q=usamimi -> 200 len=955 hrefs=[]
+SEARCH q=зайкой -> 200 len=18262 hrefs=['/manga/random']
+SEARCH q=Usamimi Bouken-tan -> 200 len=18260 hrefs=['/manga/random']
+AJAX /engine/ajax/search.php?query=usamimi -> 200 
+MANGA /manga/random -> 200 len=96325 title=Случайная хентай манга
+   video[^"\'\s<>]{0,80}: ['video/', 'videos_link', 'videos_drop', 'video/new']
+   vlinks: ['/video/', '/video/new', '/video/hentai', '/video/cosplay', '/video/crazyshow']
+   (?:playerUrl|video_u: ['Просмотр профиля']
