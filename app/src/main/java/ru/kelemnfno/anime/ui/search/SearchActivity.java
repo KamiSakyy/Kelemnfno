@@ -117,7 +117,94 @@ public class SearchActivity extends AppCompatActivity {
             results.clear();
             if (value != null) results.addAll(value);
             applySort();
+            final long token2 = token;
+            AppExecutors.get().run(() -> anilibriaSearch(q), (extra, err) -> {
+                if (token2 != searchToken || extra == null || extra.isEmpty()) return;
+                for (ru.kelemnfno.anime.data.model.AnimeItem ex : extra) {
+                    boolean dup = false;
+                    for (ru.kelemnfno.anime.data.model.AnimeItem r : results)
+                        if (String.valueOf(r.title).equalsIgnoreCase(String.valueOf(ex.title))) { dup = true; break; }
+                    if (!dup) results.add(ex);
+                }
+                adapter.notifyDataSetChanged();
+            });
         });
+    }
+
+    private static String sGet(String url) throws java.io.IOException {
+        okhttp3.Request req = new okhttp3.Request.Builder()
+                .url(url)
+                .header("User-Agent", ru.kelemnfno.anime.data.resolver.Net.CHROME)
+                .build();
+        try (okhttp3.Response res = new okhttp3.OkHttpClient.Builder()
+                .connectTimeout(10, java.util.concurrent.TimeUnit.SECONDS)
+                .readTimeout(20, java.util.concurrent.TimeUnit.SECONDS)
+                .followRedirects(true).followSslRedirects(true).build().newCall(req).execute()) {
+            if (!res.isSuccessful() || res.body() == null) throw new java.io.IOException("HTTP " + res.code());
+            return res.body().string();
+        }
+    }
+
+    /** Результаты AniLibria API v1, привязанные к карточкам Shikimori. */
+    private java.util.List<ru.kelemnfno.anime.data.model.AnimeItem> anilibriaSearch(String q) {
+        java.util.List<ru.kelemnfno.anime.data.model.AnimeItem> out = new java.util.ArrayList<>();
+        try {
+            com.google.gson.JsonElement se = com.google.gson.JsonParser.parseString(sGet(
+                    "https://anilibria.top/api/v1/app/search/releases?query="
+                            + java.net.URLEncoder.encode(q, "UTF-8") + "&limit=8"));
+            com.google.gson.JsonArray arr = se.isJsonArray() ? se.getAsJsonArray()
+                    : (se.isJsonObject() && se.getAsJsonObject().has("data")
+                    ? se.getAsJsonObject().getAsJsonArray("data") : null);
+            if (arr == null) return out;
+            for (com.google.gson.JsonElement e : arr) {
+                if (!e.isJsonObject()) continue;
+                com.google.gson.JsonObject o = e.getAsJsonObject();
+                String en = "";
+                if (o.has("name") && o.get("name").isJsonObject()) {
+                    com.google.gson.JsonObject n = o.getAsJsonObject("name");
+                    en = n.has("english") && n.get("english").isJsonPrimitive() ? n.get("english").getAsString()
+                            : (n.has("main") ? n.get("main").getAsString() : "");
+                }
+                if (en.isEmpty()) continue;
+                try {
+                    com.google.gson.JsonElement sr = com.google.gson.JsonParser.parseString(sGet(
+                            "https://shikimori.io/api/animes?search=" + java.net.URLEncoder.encode(en, "UTF-8") + "&limit=1"));
+                    if (!sr.isJsonArray() || sr.getAsJsonArray().size() == 0) continue;
+                    com.google.gson.JsonObject a = sr.getAsJsonArray().get(0).getAsJsonObject();
+                    ru.kelemnfno.anime.data.model.AnimeItem it = new ru.kelemnfno.anime.data.model.AnimeItem();
+                    int id = a.has("id") ? a.get("id").getAsInt() : 0;
+                    if (id <= 0) continue;
+                    it.animeUrl = "shiki:" + id;
+                    it.animeId = id;
+                    String ru = a.has("russian") && a.get("russian").isJsonPrimitive() ? a.get("russian").getAsString() : "";
+                    it.title = ru.isEmpty() ? en : ru;
+                    it.original = en;
+                    it.year = 0;
+                    String iso = a.has("aired_on") && a.get("aired_on").isJsonPrimitive()
+                            ? a.get("aired_on").getAsString() : "";
+                    if (iso.length() >= 4) try { it.year = Integer.parseInt(iso.substring(0, 4)); } catch (Exception ignored) { }
+                    it.poster = new ru.kelemnfno.anime.data.model.Poster();
+                    String img = "";
+                    if (a.has("image") && a.get("image").isJsonObject()) {
+                        com.google.gson.JsonObject im = a.getAsJsonObject("image");
+                        img = im.has("original") && im.get("original").isJsonPrimitive()
+                                ? im.get("original").getAsString() : "";
+                        if (!img.isEmpty() && !img.startsWith("http")) img = "https://shikimori.io" + img;
+                    }
+                    it.poster.big = img;
+                    it.poster.huge = img;
+                    it.poster.fullsize = img;
+                    if (a.has("score") && a.get("score").isJsonPrimitive() && a.get("score").getAsDouble() > 0) {
+                        it.rating = new ru.kelemnfno.anime.data.model.Rating();
+                        it.rating.average = a.get("score").getAsDouble();
+                    }
+                    out.add(it);
+                } catch (Exception ignored) {
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return out;
     }
 
     private void applySort() {
@@ -246,6 +333,14 @@ public class SearchActivity extends AppCompatActivity {
                         ? View.VISIBLE : View.GONE);
                 b.getRoot().setOnClickListener(v -> {
                     Prefs.get(SearchActivity.this).addRecentSearch(text());
+                    if (a.animeUrl != null && a.animeUrl.startsWith("shiki:")) {
+                        int sid = 0;
+                        try { sid = Integer.parseInt(a.animeUrl.substring(6)); } catch (Exception ignored) { }
+                        DetailActivity.openShiki(SearchActivity.this, sid, a.title,
+                                a.original == null ? "" : a.original, a.year,
+                                ru.kelemnfno.anime.util.Fmt.posterUrl(a, "big"));
+                        return;
+                    }
                     DetailActivity.open(SearchActivity.this, a.animeUrl);
                     finish();
                 });

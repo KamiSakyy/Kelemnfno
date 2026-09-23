@@ -669,16 +669,16 @@ public class DetailActivity extends AppCompatActivity {
     private void toggleFavorite() {
         if (anime == null) return;
         final FavoriteEntity draft = new FavoriteEntity();
-        draft.slug = slug;
+        draft.slug = slug != null ? slug : (anime.animeUrl == null ? "" : anime.animeUrl);
         draft.animeId = anime.animeId;
         draft.title = anime.title;
         draft.poster = Fmt.posterUrl(anime, "big");
         draft.year = anime.year;
-        draft.type = anime.type == null ? "" : anime.type.shortname;
+        draft.type = (anime.type == null || anime.type.shortname == null) ? "" : anime.type.shortname;
         draft.addedAt = System.currentTimeMillis();
         draft.episodeCount = quickEpisodes().size();
         draft.dubbing = currentTrack == null ? "" : currentTrack.voice;
-        draft.status = anime.animeStatus == null ? "" : anime.animeStatus.alias;
+        draft.status = (anime.animeStatus == null || anime.animeStatus.alias == null) ? "" : anime.animeStatus.alias;
         draft.nextDate = nextEpisodeTs;
         AppExecutors.get().run(() -> AppDatabase.get(this).favoriteDao().bySlug(slug), (existing, error) -> {
             if (b == null || isFinishing()) return;
@@ -821,8 +821,10 @@ public class DetailActivity extends AppCompatActivity {
         AppDatabase.get(this).downloadDao().observeAll().observe(this, rows -> {
             downloadedEpisodes.clear();
             if (rows != null) {
+                String eff = slug != null ? slug : (anime != null ? anime.animeUrl : null);
                 for (DownloadEntity d : rows) {
-                    if (d.status == DownloadEntity.DONE && slug.equals(d.slug)) downloadedEpisodes.add(d.episode);
+                    if (d.status == DownloadEntity.DONE && eff != null && eff.equals(d.slug))
+                        downloadedEpisodes.add(d.episode);
                 }
             }
             if (episodeAdapter != null) episodeAdapter.notifyDataSetChanged();
