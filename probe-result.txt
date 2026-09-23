@@ -1,9 +1,6 @@
-HOME len=184550 apis=[]
-  scripts=['/engine/classes/js/jquery.js', '/engine/classes/js/dialog.js', '/engine/classes/js/effects.js', '/engine/classes/js/menu.js', '/engine/classes/js/dle_ajax.js']
-VIDEO /video/hentai -> 200 len=19 title=- hrefs=[]
-VIDEO /video/new -> 200 len=90225 title=Новинки видео hrefs=['/video/new', '/video/hentai', '/video/cosplay', '/video/crazyshow', '/video/random', '/video/53872-bible-black-3-remastered.html', '/video/46381-the-female-brat-has-come-daddy-active-girls-cousin-and-summer-of-sex-indulgence.html', '/video/46318-eksgibicionizm-ofisnoy-ledi-nakovshey-stress-vo-vremya-sverhurochnoy-raboty.html']
-VIDEO /video/usamimi-bouken-tan ERR HTTP Error 404: Not Found
-API /api/manga/search?query=usamimi ERR HTTP Error 404: Not Found
-API /api/video/search?query=usamimi ERR HTTP Error 404: Not Found
-API /ajax/search?query=usamimi ERR HTTP Error 404: Not Found
-API /manga/usamimi-bouken-tan.json ERR HTTP Error 404: Not Found
+SEARCH q=usamimi videos=[] manga=[]
+SEARCH q=Bouken-tan videos=[] manga=[]
+SEARCH q=зайкой videos=[] manga=[]
+SEARCH q=девушкой-зайкой videos=[] manga=[]
+VPAGE /video/53872-bible-black-3-remastered.html -> 200 len=126250 title=Bible Black 3 Remastered &raquo; Хентай-тян! - большой каталог хентай манга с удобной онла
+   (?:playerUrl|video_url|f: ['Просмотр профиля']
