@@ -15,47 +15,45 @@ jobs:
           UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36"
           OUT=probe-result.txt
           : > $OUT
-          probe() {
-            local name="$1"; local url="$2"
-            local code=$(curl -s -o /tmp/pr.json -w "%{http_code}" --max-time 25 -H "User-Agent: $UA" "$url")
-            echo "== $name HTTP $code size $(stat -c%s /tmp/pr.json 2>/dev/null || echo 0)" >> $OUT
-            python3 - "$name" <<'PY' >> $OUT
-          import json,sys
-          name=sys.argv[1]
-          try: d=json.load(open('/tmp/pr.json'))
-          except Exception as e: print(f'{name} PARSE-ERR {e}'); raise SystemExit
-          if isinstance(d,dict) and 'data' in d:
-              arr=d['data']; meta=d.get('meta',{}).get('pagination',{})
-              print(f'{name} total={meta.get("total")} count={len(arr)}')
-              for r in arr[:30]:
-                  n=r.get('name',{}) if isinstance(r.get('name'),dict) else {}
-                  g=[x.get('name','') for x in (r.get('genres') or [])]
-                  print(f'  {r.get("id")} | {n.get("main")} | {n.get("english")} | {";".join(g)}')
-          elif isinstance(d,list):
-              print(f'{name} list count={len(d)}')
-              for r in d[:30]:
-                  if isinstance(r,dict):
-                      n=r.get('name',{}) if isinstance(r.get('name'),dict) else {}
-                      print(f'  {r.get("id")} | {n.get("main")} | {n.get("english")} | eps={len(r.get("episodes") or [])}')
-                  else: print(f'  raw {str(r)[:100]}')
-          else:
-              print(f'{name} other: {str(d)[:200]}')
+          curl -s --max-time 25 -H "User-Agent: $UA" "https://anilibria.top/api/v1/anime/genres" -o /tmp/genres.json
+          python3 - <<'PY' >> $OUT
+          import json
+          d=json.load(open('/tmp/genres.json'))
+          arr=d if isinstance(d,list) else d.get('data',[])
+          print('GENRES sample keys:', sorted(arr[0].keys()) if arr else 'none')
+          for g in arr:
+              print(f'G {g.get("id")} | {g.get("name") or g.get("title")} | {g.get("slug","")}')
           PY
-          }
-          probe "APP_HOST_R18" "https://api.anilibria.app/api/v1/anime/catalog/releases?f%5Bage_ratings%5D=R18_PLUS&limit=50"
-          probe "APP_SEARCH_SEX" "https://api.anilibria.app/api/v1/app/search/releases?query=%D0%A1%D0%B5%D0%BA%D1%81%20%D0%B2%D0%B4%D0%B2%D0%BE%D1%91%D0%BC&limit=10"
-          probe "APP_SEARCH_ZAIKA" "https://api.anilibria.app/api/v1/app/search/releases?query=%D0%B4%D0%B5%D0%B2%D1%83%D1%88%D0%BA%D0%BE%D0%B9-%D0%B7%D0%B0%D0%B9%D0%BA%D0%BE%D0%B9&limit=10"
-          probe "ANILIBERY_R18" "https://anilibery.top/api/v1/anime/catalog/releases?f%5Bage_ratings%5D=R18_PLUS&limit=50"
-          probe "ANILIBERY_SEARCH" "https://anilibery.top/api/v1/app/search/releases?query=%D0%A1%D0%B5%D0%BA%D1%81%20%D0%B2%D0%B4%D0%B2%D0%BE%D1%91%D0%BC&limit=10"
-          probe "TOP_ISADULT" "https://anilibria.top/api/v1/anime/catalog/releases?f%5Bis_adult%5D=1&limit=50"
-          probe "TOP_GENRES_EP" "https://anilibria.top/api/v1/anime/genres"
-          probe "V3_TITLE" "https://api.anilibria.tv/v3/title?code=issho-ni-ecchi"
-          probe "V3_GENRES" "https://api.anilibria.tv/v3/genres"
-          cat $OUT | head -120
+          for id in $(python3 -c "
+          import json
+          d=json.load(open('/tmp/genres.json'))
+          arr=d if isinstance(d,list) else d.get('data',[])
+          print(' '.join(str(g.get('id')) for g in arr))"); do
+            curl -s --max-time 20 -H "User-Agent: $UA" "https://anilibria.top/api/v1/anime/catalog/releases?f%5Bgenres%5D=$id&limit=50" -o /tmp/g$id.json
+          done
+          python3 - <<'PY' >> $OUT
+          import json
+          d=json.load(open('/tmp/genres.json'))
+          arr=d if isinstance(d,list) else d.get('data',[])
+          for g in arr:
+              gid=g.get('id'); nm=g.get('name') or g.get('title')
+              try:
+                  c=json.load(open(f'/tmp/g{gid}.json'))
+                  items=c.get('data',[]) if isinstance(c,dict) else []
+                  meta=c.get('meta',{}).get('pagination',{}) if isinstance(c,dict) else {}
+                  print(f'GENRE {gid} {nm} total={meta.get("total")}')
+                  if nm and 'ентай' in str(nm):
+                      for r in items:
+                          n=r.get('name',{})
+                          print(f'  H {r.get("id")} | {n.get("main")} | {n.get("english")} | eps={r.get("episodes_total")}')
+              except Exception as e:
+                  print(f'GENRE {gid} {nm} ERR {e}')
+          PY
+          cat $OUT | head -140
       - name: push result
         run: |
           git config user.name "probe"
           git config user.email "probe@local"
           git add probe-result.txt
-          git commit -m "probe result 3 [skip ci]" || echo nothing
+          git commit -m "probe result 4 [skip ci]" || echo nothing
           git push origin HEAD:arena/01a0afbd-kelemnfno || echo pushfail
