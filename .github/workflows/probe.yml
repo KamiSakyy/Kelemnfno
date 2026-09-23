@@ -13,51 +13,60 @@ jobs:
       - name: probe
         run: |
           python3 - <<'PY2'
-          import json,urllib.request,urllib.parse
+          import json,urllib.request,urllib.parse,re
           UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36"
-          AL={'User-Agent':UA,'Accept':'application/json','Accept-Language':'ru-RU,ru;q=0.9','Origin':'https://animelib.org','Referer':'https://animelib.org/'}
           out=[]
-          def getj(url,h):
-              r=urllib.request.Request(url,headers=h)
-              with urllib.request.urlopen(r,timeout=20) as resp: return json.loads(resp.read().decode('utf-8','ignore'))
-          for q in ['История приключений с девушкой-зайкой','Секс вдвоём','История парочки','зайкой']:
+          def get(url,h=None):
+              hh={'User-Agent':UA,'Accept-Language':'ru-RU,ru;q=0.9'}
+              if h: hh.update(h)
+              r=urllib.request.Request(url,headers=hh)
+              with urllib.request.urlopen(r,timeout=25) as resp:
+                  return resp.status,resp.geturl(),resp.read().decode('utf-8','ignore')
+          # 1. h-chan главная
+          for u in ['https://h-chan.me/','https://h-chan.me/my/list']:
               try:
-                  d=getj('https://api.cdnlibs.org/api/anime?page=1&q='+urllib.parse.quote(q),AL)
-                  rows=d.get('data',[])
-                  out.append(f'== AL q={q} count={len(rows)}')
-                  for r in rows[:5]:
-                      out.append(f"   slug={r.get('slug_url')} rus={r.get('rus_name')} eng={r.get('eng_name')} shiki={r.get('shikimori_href')}")
-                  if rows:
-                      slug=rows[0].get('slug_url')
-                      e=getj('https://api.cdnlibs.org/api/episodes?anime_id='+urllib.parse.quote(str(slug)),AL)
-                      eps=e.get('data',[])
-                      out.append(f'   EPISODES {slug}: {len(eps)}')
-                      if eps:
-                          eid=eps[0].get('id')
-                          det=getj(f'https://api.cdnlibs.org/api/episodes/{eid}',AL)
-                          players=(det.get('data') or {}).get('videoPlayerData',{}).get('players') or (det.get('data') or {}).get('players') or []
-                          out.append(f'   ep {eid} players={len(players)}')
-                          for p in players[:3]:
-                              team=(p.get('team') or {}).get('title')
-                              out.append(f"     player src={str(p.get('src'))[:110]} team={team} type={(p.get('translation_type') or {}).get('label')}")
-                          if players:
-                              src0=players[0].get('src') or ''
-                              if src0.startswith('//'): src0='https:'+src0
-                              try:
-                                  r=urllib.request.Request(src0,headers={'User-Agent':UA})
-                                  with urllib.request.urlopen(r,timeout=20) as resp:
-                                      out.append(f'     PLAYER PAGE status={resp.status} len={len(resp.read())}')
-                              except Exception as ex:
-                                  out.append(f'     PLAYER PAGE ERR {ex}')
-              except Exception as ex:
-                  out.append(f'== AL q={q} ERR {str(ex)[:150]}')
-          # shikimori: полные ответы
-          try:
-              d=getj('https://shikimori.one/api/animes?search='+urllib.parse.quote('девушкой-зайкой')+'&limit=3',{'User-Agent':'KelemnfnoApp'})
-              for a in d:
-                  out.append(f"SHIKI id={a['id']} ru={a.get('russian')} name={a.get('name')}")
-          except Exception as ex:
-              out.append(f'SHIKI ERR {ex}')
+                  s,f,b=get(u)
+                  out.append(f'HCHAN {u} -> {s} final={f} len={len(b)}')
+                  out.append('   head: '+re.sub(r'\s+',' ',b[:300]))
+              except Exception as e:
+                  out.append(f'HCHAN {u} ERR {str(e)[:120]}')
+          # 2. страница манги/видео по слагу
+          for u in ['https://h-chan.me/manga/usamimi-bouken-tan','https://h-chan.me/manga/futari-ecchi']:
+              try:
+                  s,f,b=get(u)
+                  out.append(f'HCHAN-PAGE {u} -> {s} len={len(b)}')
+                  t=re.search(r'<title[^>]*>(.*?)</title>',b,re.S)
+                  out.append('   title: '+(t.group(1).strip()[:120] if t else '-'))
+                  for pat in [r'https?://[^"\'\s]*kodik[^"\'\s]*',r'https?://[^"\'\s]*\.m3u8[^"\'\s]*',r'https?://[^"\'\s]*\.mp4[^"\'\s]*',r'https?://video[^"\'\s]*']:
+                      m=re.findall(pat,b)
+                      if m: out.append(f'   {pat[:20]}: {m[:2]}')
+              except Exception as e:
+                  out.append(f'HCHAN-PAGE {u} ERR {str(e)[:120]}')
+          # 3. поиск h-chan (AJAX варианты)
+          for u in ['https://h-chan.me/search?query=usamimi','https://h-chan.me/manga/search?query=usamimi','https://h-chan.me/ajax/manga/search?query=usamimi']:
+              try:
+                  s,f,b=get(u)
+                  out.append(f'HCHAN-SEARCH {u} -> {s} len={len(b)} :: {re.sub(chr(10)," ",b[:150])}')
+              except Exception as e:
+                  out.append(f'HCHAN-SEARCH {u} ERR {str(e)[:100]}')
+          # 4. DoH зеркала
+          for name in ['h-chan.fun','hentai-chan.fun','h-chan.ru','hentaichan.ru']:
+              try:
+                  s,f,b=get(f'https://cloudflare-dns.com/dns-query?name={name}&type=A',{'accept':'application/dns-json'})
+                  j=json.loads(b)
+                  out.append(f'DoH {name} -> {[a.get("data") for a in j.get("Answer",[]) or []]}')
+              except Exception as e:
+                  out.append(f'DoH {name} ERR {str(e)[:80]}')
+          # 5. AnimeLib латиницей
+          AL={'User-Agent':UA,'Accept':'application/json','Origin':'https://animelib.org','Referer':'https://animelib.org/'}
+          for q in ['Bouken','Futari Ecchi']:
+              try:
+                  s,f,b=get('https://api.cdnlibs.org/api/anime?page=1&q='+urllib.parse.quote(q),AL)
+                  j=json.loads(b)
+                  rows=j.get('data',[])
+                  out.append(f'AL q={q} count={len(rows)} :: '+str([ (r.get("slug_url"),r.get("rus_name")) for r in rows[:4]]))
+              except Exception as e:
+                  out.append(f'AL q={q} ERR {str(e)[:100]}')
           open('probe-result.txt','w').write('\n'.join(out)+'\n')
           print('\n'.join(out)[:3000])
           PY2
@@ -66,5 +75,5 @@ jobs:
           git config user.name "probe"
           git config user.email "probe@local"
           git add probe-result.txt
-          git commit -m "probe result 14 [skip ci]" || echo nothing
+          git commit -m "probe result 15 [skip ci]" || echo nothing
           git push origin HEAD:arena/01a0afbd-kelemnfno || echo pushfail
