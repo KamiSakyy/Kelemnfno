@@ -1,5 +1,61 @@
-=== search releases (raw head) ===
-[{"id":10233,"type":{"value":"TV","description":"\u0422\u0412"},"year":2026,"name":{"main":"\u0410\u043a\u043a\u0443\u0440\u0430\u0442\u043d\u0430\u044f \u0438 \u0441\u0438\u043c\u043f\u0430\u0442\u0438\u0447\u043d\u0430\u044f \u0434\u0435\u0432\u043e\u0447\u043a\u0430 \u0432 \u043c\u043e\u0435\u0439 \u043d\u043e\u0432\u043e\u0439 \u0448\u043a\u043e\u043b\u0435 \u2014 \u043f\u043e\u0434\u0440\u044curl: (23) Failure writing output to destination
-
-=== search releases ascii query ===
-[]
+== PAGE 1 total=29 pages=1 count=29
+R18 10224 | Дьявол может плакать 2 | Devil May Cry Season 2 | Демоны;Сверхъестественное
+R18 10216 | Невинный панк: Механическая девушка | Virgin Punk: Clockwork Girl | Экшен;Фантастика
+R18 10144 | Клинок, Рассекающий Демонов: Бесконечный Замок — Возвращение Аказы | Kimetsu no Yaiba Movie 1: Mugenjou-hen - Akaza Sairai | Сёнен;Исторический;Приключения;Фэнтези
+R18 9988 | Труська, Чулко и пресвятой Подвяз 2 | New Panty & Stocking with Garterbelt | Комедия;Экшен;Фэнтези;Пародия
+R18 10026 | Первородный грех Такопи | Takopii no Genzai | Сёнен;Драма;Фантастика
+R18 9960 | Дьявол может плакать | Devil May Cry | Демоны;Сверхъестественное
+R18 9961 | Ведьмак: Сирены глубин | The Witcher: Sirens of the Deep | Драма;Фэнтези
+R18 9851 | Я монстр S-класса Бегемот, но меня перепутали с котом, и я живу у эльфийки как домашний питомец | S-Rank Monster no "Behemoth" dakedo, Neko to Machigawarete Elf Musume no Pet toshite Kurashitemasu | Комедия;Сейнен;Экшен;Этти;Приключения;Фэнтези
+R18 9789 | Дандадан | Dandadan | Комедия;Сёнен;Экшен;Сверхъестественное
+R18 9730 | Отряд самоубийц из другого мира | Isekai Suicide Squad | Экшен;Приключения;Исекай
+R18 9705 | Борьба в прямом эфире | Kenka Dokugaku | Школа;Экшен;Боевые искусства
+R18 9718 | Братья Гримм: Вариации | the grimm variations | Триллер;Ужасы;Фэнтези
+R18 9606 | Раб спецотряда демонического города | Mato Seihei no Slave | Экшен;Этти;Фэнтези;Гарем
+R18 9656 | Обитель зла: Остров смерти | Resident Evil: Death Island | Ужасы;Экшен;Фантастика
+R18 9551 | Королевство руин | Hametsu no Oukoku | Экшен;Фантастика;Приключения;Фэнтези
+R18 9349 | Я стал её любимой собачкой | Inu ni Nattara Suki na Hito ni Hirowareta | Комедия;Этти
+R18 9253 | Ублюдок!! Сокрушитель тьмы | Bastard!! Ankoku no Hakaishin | Комедия;Сейнен;Экшен;Этти;Приключения;Фэнтези
+R18 9311 | Берсерк. Мемориальное издание | Berserk. Memory edition | Драма;Экшен;Фэнтези
+R18 9243 | Удар крови: Финал | Strike the Blood Final | Экшен;Этти;Вампиры;Сверхъестественное;Фэнтези
+R18 9307 | Киберпанк: Бегущие по краю | Cyberpunk: Edgerunners | Фантастика;Киберпанк
+R18 8700 | Технолайз | Texhnolyze | Психологическое;Драма;Экшен;Фантастика
+R18 9207 | Одарённый. Фильм | Given Movie | Драма;Повседневность;Романтика;Музыка
+R18 7440 | Убийца Гоблинов | Goblin Slayer | Экшен;Приключения;Фэнтези
+R18 6062 | Демоны старшей школы 4: Герой | High School DxD Hero | Комедия;Романтика;Демоны;Этти
+R18 398 | Демоны старшей школы 3 | High School DxD BorN | Комедия;Сёнен;Школа;Романтика;Демоны;Этти;Приключения
+R18 569 | Демоны старшей школы | High School DxD | Комедия;Сёнен;Романтика;Этти;Приключения
+R18 405 | Клеймор | Claymore | Драма;Приключения;Фэнтези
+R18 570 | Демоны старшей школы ТВ-2 | High School DxD New | Комедия;Сёнен;Романтика;Этти;Приключения
+R18 432 | Токийский Гуль | Tokyo Ghoul | Сейнен;Драма;Мистика;Ужасы;Экшен
+== PAGE 2 total=29 pages=1 count=0
+== SEARCH История приключений count=14
+S 6180 | История финала  2 | Owarimonogatari 2 | None | Сверхъестественное;Детектив;Комедия | R16_PLUS
+S 7468 | История Мерк | Merc Storia: Mukiryoku no Shounen to Bin no Naka no Shoujo | None | Магия;Приключения;Фэнтези;Экшен | R16_PLUS
+S 8459 | История Кошки: Чёрная Глава | Nekomonogatari: Kuro | None | Романтика;Сверхъестественное;Этти;Комедия | R16_PLUS
+S 8886 | История о пареньке из деревни, расположенной перед сложнейшим подземельем | Tatoeba Last Dungeon Mae no Mura no Shounen ga Joban no Machi de Kurasu Youna Monogatari | None | Фэнтези;Комедия;Приключения | R16_PLUS
+S 9321 | История Цветов | Hanamonogatari | None | Комедия;Детектив;Сверхъестественное;Демоны | R16_PLUS
+S 9370 | История о мононокэ | Mononogatari | История нечести | Экшен;Сверхъестественное | R16_PLUS
+S 9372 | История Одержимости | Tsukimonogatari | История Одержимости: Кукла Ёцуги | Вампиры;Комедия;Детектив;Сверхъестественное;Этти | R16_PLUS
+S 9398 | История Финала | Owarimonogatari | Финальная История | Комедия;Детектив;Вампиры;Сверхъестественное | R16_PLUS
+S 9508 | История о мононокэ 2 | Mononogatari 2nd Season | None | Экшен;Сверхъестественное | R16_PLUS
+S 9543 | История знакомства опытной тебя и неопытного меня | Keikenzumi na Kimi to, Keiken Zero na Ore ga, Otsukiai suru Hanashi | None | Романтика;Комедия;Школа | R16_PLUS
+S 9560 | История империи Тиамун | Tearmoon Teikoku Monogatari: Dantoudai kara Hajimaru, Hime no Tensei Gyakuten Story | None | Комедия;Драма;Фэнтези | R16_PLUS
+S 9677 | История о дедушке и бабушке, которые снова стали молодыми | Jiisan Baasan Wakagaeru | None | Комедия;Романтика;Сверхъестественное | R16_PLUS
+S 9858 | История о служащем, который стал одним из четырёх Небесных Царей, когда отправился в другой мир | Salaryman ga Isekai ni Ittara Shitennou ni Natta Hanashi | None | Приключения;Комедия;Фэнтези | R16_PLUS
+S 10141 | История Финала: Продолжение | Zoku Owarimonogatari | Финальные истории: Продолжение | Мистика;Вампиры;Сверхъестественное;Комедия | R16_PLUS
+== SEARCH Секс вдвоём count=0
+== SEARCH зайкой count=0
+== SEARCH приключений с девушкой count=8
+S 9738 | Приключения в другом мире: Воспитывать детей будучи авантюристом | Iseyuru | Isekai Yururi Kikou: Kosodateshinagara Boukensha Shimasu, Isekai Yururi Kikou: Raising Children While Being an Adventurer | Фэнтези;Повседневность;Исекай | R16_PLUS
+S 7438 | Невероятные приключения ДжоДжо: Золотой ветер | JoJo no Kimyou na Bouken: Ougon no Kaze | None | Экшен;Приключения;Сёнен | R16_PLUS
+S 8586 | Невероятные приключения ДжоДжо  | JoJo no Kimyou na Bouken [TV-1] | JoJo&#039;s Bizarre Adventure | Сверхъестественное;Вампиры;Экшен;Приключения;Сёнен | R16_PLUS
+S 8682 | Невероятные приключения ДжоДжо: Рыцари звёздной пыли [ТВ-2] | JoJo no Kimyou na Bouken Part 3: Stardust Crusaders [TV-2] | None | Приключения;Сёнен;Драма;Сверхъестественное;Экшен | R16_PLUS
+S 8704 | Маги: Приключение Синдбада | Magi: Sinbad no Bouken | None | Экшен;Фэнтези;Приключения;Сёнен;Магия | R16_PLUS
+S 9417 | Невообразимые приключения перерождённого дворянина | Tensei Kizoku no Isekai Boukenroku: Jichou wo Shiranai Kamigami no Shito | None | Экшен;Фэнтези;Романтика | R16_PLUS
+S 9097 | Невероятные приключения ДжоДжо: Каменный океан | JoJo no Kimyou na Bouken Part 6: Stone Ocean | None | Экшен;Приключения;Сёнен | R16_PLUS
+S 10172 | Невероятные приключения ДжоДжо: Гонка «Стальной шар» | Steel Ball Run: JoJo no Kimyou na Bouken | None | Сейнен;Сёнен;Экшен;Приключения;Детектив;Сверхъестественное | R16_PLUS
+== SEARCH Usamimi count=0
+== REL9738 keys=['added_in_abandoned_collection', 'added_in_planned_collection', 'added_in_postponed_collection', 'added_in_users_favorites', 'added_in_watched_collection', 'added_in_watching_collection', 'age_rating', 'alias', 'average_duration_of_episode', 'background_covers', 'created_at', 'description', 'episodes', 'episodes_total', 'external_player', 'fresh_at', 'genres', 'id', 'is_blocked_by_copyrights', 'is_blocked_by_geo', 'is_in_production', 'is_ongoing', 'mal', 'members', 'name', 'notification', 'poster', 'publish_day', 'rating', 'season', 'shikimori', 'sponsors', 'torrents', 'type', 'updated_at', 'year']
+REL9738 epkeys=['duration', 'ending', 'hls_1080', 'hls_480', 'hls_720', 'id', 'name', 'name_english', 'opening', 'ordinal', 'preview', 'release_id', 'rutube_id', 'sort_order', 'updated_at', 'youtube_id']
+REL9738 ep0={'ordinal': '1', 'hls_480': 'https://cache.libria.fun/videos/media/ts/9738/1/480/787e5bc172bcc55f49aaae840e85774e.m3u8?countryIso', 'hls_720': 'https://cache.libria.fun/videos/media/ts/9738/1/720/11451b3d9c6ec3fbd77574a4d9797823.m3u8?countryIso', 'hls_1080': 'https://cache.libria.fun/videos/media/ts/9738/1/1080/b4460258ae898d171044ff70f2deb8e5.m3u8?countryIs', 'hls_1440': 'None', 'hls_2160': 'None', 'name': 'Другой мир и близнецы'}
