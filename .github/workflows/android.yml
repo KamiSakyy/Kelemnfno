@@ -3,6 +3,11 @@ name: Android CI
 on:
   push:
     branches: [ "**" ]
+    paths-ignore:
+      - '.github/workflows/probe.yml'
+      - 'probe-result.txt'
+      - 'HANDOFF.md'
+      - '*.md' 
   pull_request:
   workflow_dispatch:
 
