@@ -1,0 +1,456 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/black"
+    android:keepScreenOn="true">
+
+    <androidx.media3.ui.PlayerView
+        android:id="@+id/player_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:artwork_display_mode="off"
+        app:resize_mode="fit"
+        app:show_buffering="never"
+        app:use_controller="false" />
+
+    <!-- Индикатор громкости слева -->
+    <LinearLayout
+        android:id="@+id/volume_panel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="start|center_vertical"
+        android:layout_marginStart="22dp"
+        android:background="@drawable/bg_surface_block"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="14dp"
+        android:visibility="invisible">
+
+        <ImageView
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_volume" />
+
+        <TextView
+            android:id="@+id/volume_value"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:textColor="@color/text"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            tools:text="60%" />
+    </LinearLayout>
+
+    <!-- Индикатор яркости справа -->
+    <LinearLayout
+        android:id="@+id/brightness_panel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end|center_vertical"
+        android:layout_marginEnd="22dp"
+        android:background="@drawable/bg_surface_block"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="14dp"
+        android:visibility="invisible">
+
+        <ImageView
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_brightness" />
+
+        <TextView
+            android:id="@+id/brightness_value"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:textColor="@color/text"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            tools:text="80%" />
+    </LinearLayout>
+
+    <!-- Центральная вспышка: «+10 сек» -->
+    <TextView
+        android:id="@+id/flash"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:background="@drawable/bg_surface_block"
+        android:paddingStart="20dp"
+        android:paddingTop="12dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="12dp"
+        android:textColor="@color/text"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:visibility="invisible"
+        tools:text="+10 сек" />
+
+    <ProgressBar
+        android:id="@+id/buffering"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:layout_gravity="center"
+        android:indeterminateTint="#FFFFFFFF" />
+
+    <!-- Панель ошибок -->
+    <LinearLayout
+        android:id="@+id/error_panel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="24dp"
+        android:visibility="gone">
+
+        <ImageView
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_alert"
+            android:tint="@color/rose" />
+
+        <TextView
+            android:id="@+id/error_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:gravity="center"
+            android:textColor="@color/text_dim"
+            android:textSize="13sp"
+            tools:text="Поток недоступен" />
+
+        <TextView
+            android:id="@+id/error_retry"
+            android:layout_width="wrap_content"
+            android:layout_height="44dp"
+            android:layout_marginTop="14dp"
+            android:background="@drawable/bg_badge"
+            android:gravity="center"
+            android:paddingStart="26dp"
+            android:paddingEnd="26dp"
+            android:text="@string/retry"
+            android:textColor="@color/on_media"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/error_other_source"
+            android:layout_width="wrap_content"
+            android:layout_height="44dp"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_chip"
+            android:gravity="center"
+            android:paddingStart="22dp"
+            android:paddingEnd="22dp"
+            android:text="Другой источник"
+            android:textColor="@color/text"
+            android:textSize="13sp" />
+    </LinearLayout>
+
+    <!-- Карточка автоперехода -->
+    <LinearLayout
+        android:id="@+id/next_card"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="24dp"
+        android:background="@drawable/bg_surface_block"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="12dp"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/next_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/text"
+            android:textSize="13sp"
+            tools:text="Следующая серия через 5" />
+
+        <TextView
+            android:id="@+id/next_now"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="14dp"
+            android:background="@drawable/bg_badge"
+            android:paddingStart="16dp"
+            android:paddingTop="8dp"
+            android:paddingEnd="16dp"
+            android:paddingBottom="8dp"
+            android:text="Сейчас"
+            android:textColor="@color/on_media"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- Управление -->
+    <FrameLayout
+        android:id="@+id/controls"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="110dp"
+            android:layout_gravity="top"
+            android:background="@drawable/bg_scrim_top" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="140dp"
+            android:layout_gravity="bottom"
+            android:background="@drawable/bg_scrim_bottom" />
+
+        <LinearLayout
+            android:id="@+id/top_bar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="6dp"
+            android:paddingTop="8dp"
+            android:paddingEnd="6dp">
+
+            <ImageView
+            android:tint="@color/on_media"
+                android:id="@+id/ctrl_back"
+                style="@style/Widget.Kelemnfno.IconButton"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:contentDescription="@string/cancel"
+                android:src="@drawable/ic_chevron_left" />
+
+            <LinearLayout
+                android:id="@+id/ctrl_titles"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/ctrl_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:textColor="@color/text"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    tools:text="Магическая битва" />
+
+                <TextView
+                    android:id="@+id/ctrl_subtitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:textColor="@color/text_dim"
+                    android:textSize="12sp"
+                    tools:text="Серия 12 · AniLibria.TV · 1080p" />
+            </LinearLayout>
+
+            <ImageView
+            android:tint="@color/on_media"
+                android:id="@+id/ctrl_lock"
+                style="@style/Widget.Kelemnfno.IconButton"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:contentDescription="@null"
+                android:src="@drawable/ic_lock" />
+
+            <ImageView
+            android:tint="@color/on_media"
+                android:id="@+id/ctrl_pip"
+                style="@style/Widget.Kelemnfno.IconButton"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:contentDescription="@null"
+                android:src="@drawable/ic_pip" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/center_bar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ImageView
+            android:tint="@color/on_media"
+                android:id="@+id/ctrl_prev"
+                style="@style/Widget.Kelemnfno.IconButton"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:contentDescription="@null"
+                android:padding="14dp"
+                android:src="@drawable/ic_skip_prev" />
+
+            <ImageView
+            android:tint="@color/on_media"
+                android:id="@+id/ctrl_back10"
+                style="@style/Widget.Kelemnfno.IconButton"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:layout_marginStart="10dp"
+                android:contentDescription="@null"
+                android:padding="12dp"
+                android:src="@drawable/ic_back10" />
+
+            <ImageView
+                android:id="@+id/ctrl_play"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:layout_marginStart="14dp"
+                android:layout_marginEnd="14dp"
+                android:background="@drawable/bg_circle_dark"
+                android:contentDescription="@string/watch"
+                android:padding="20dp"
+                android:src="@drawable/ic_pause"
+                android:tint="@color/on_accent" />
+
+            <ImageView
+            android:tint="@color/on_media"
+                android:id="@+id/ctrl_forward10"
+                style="@style/Widget.Kelemnfno.IconButton"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:layout_marginEnd="10dp"
+                android:contentDescription="@null"
+                android:padding="12dp"
+                android:src="@drawable/ic_forward10" />
+
+            <ImageView
+            android:tint="@color/on_media"
+                android:id="@+id/ctrl_next"
+                style="@style/Widget.Kelemnfno.IconButton"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:contentDescription="@null"
+                android:padding="14dp"
+                android:src="@drawable/ic_skip_next" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/bottom_bar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:orientation="vertical"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:paddingBottom="10dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/ctrl_position"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/text"
+                    android:textSize="12sp"
+                    tools:text="12:04" />
+
+                <SeekBar
+                    android:id="@+id/ctrl_seek"
+                    style="@style/Widget.Kelemnfno.SeekBar"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:max="1000"
+                    android:paddingTop="10dp"
+                    android:paddingBottom="10dp" />
+
+                <TextView
+                    android:id="@+id/ctrl_duration"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/text_dim"
+                    android:textSize="12sp"
+                    tools:text="23:40" />
+            </LinearLayout>
+
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:scrollbars="none">
+
+                <LinearLayout
+                    android:id="@+id/ctrl_menu"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/ctrl_voice"
+                        style="@style/Widget.Kelemnfno.Chip"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="8dp"
+                        android:drawablePadding="6dp"
+                        android:drawableTint="@color/text"
+                        android:text="@string/voice"
+                        app:drawableStartCompat="@drawable/ic_subtitle" />
+
+                    <TextView
+                        android:id="@+id/ctrl_quality"
+                        style="@style/Widget.Kelemnfno.Chip"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="8dp"
+                        android:drawablePadding="6dp"
+                        android:drawableTint="@color/text"
+                        android:text="@string/auto"
+                        app:drawableStartCompat="@drawable/ic_quality" />
+
+                    <TextView
+                        android:id="@+id/ctrl_speed"
+                        style="@style/Widget.Kelemnfno.Chip"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="8dp"
+                        android:drawablePadding="6dp"
+                        android:drawableTint="@color/text"
+                        android:text="1x"
+                        app:drawableStartCompat="@drawable/ic_speed" />
+
+                    <TextView
+                        android:id="@+id/ctrl_skip"
+                        style="@style/Widget.Kelemnfno.Chip"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="8dp"
+                        android:drawablePadding="6dp"
+                        android:drawableTint="@color/text"
+                        android:text="Пропустить опенинг"
+                        app:drawableStartCompat="@drawable/ic_skip_next" />
+
+                    <TextView
+                        android:id="@+id/ctrl_episodes"
+                        style="@style/Widget.Kelemnfno.Chip"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:drawablePadding="6dp"
+                        android:drawableTint="@color/text"
+                        android:text="@string/episodes"
+                        app:drawableStartCompat="@drawable/ic_grid" />
+                </LinearLayout>
+            </HorizontalScrollView>
+        </LinearLayout>
+    </FrameLayout>
+</FrameLayout>
