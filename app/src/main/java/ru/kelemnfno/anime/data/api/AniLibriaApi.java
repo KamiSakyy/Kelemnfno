@@ -63,27 +63,7 @@ public final class AniLibriaApi {
         }
     }
 
-    /** Страница каталога хентая (page с единицы). */
-    public static List<Title> hentai(int page) throws IOException {
-        IOException last = null;
-        for (String host : HOSTS) {
-            try {
-                if (host.endsWith("/v3")) {
-                    List<Title> v3 = hentaiV3(host, page);
-                    if (!v3.isEmpty()) return v3;
-                    continue;
-                }
-                String url = host + "/anime/catalog/releases?f%5Bage_ratings%5D=R18_PLUS"
-                        + "&page=" + page + "&limit=30";
-                List<Title> rows = parseCatalog(get(url), host);
-                if (!rows.isEmpty()) return rows;
-            } catch (IOException e) {
-                last = e;
-            }
-        }
-        throw last != null ? last : new IOException("AniLibria недоступна");
-    }
-
+    
     /** Ответ каталога v1: { data: [ { name:{ru,en}, poster/posters:{small:{url}} } ] }. */
     private static List<Title> parseCatalog(String body, String host) {
         List<Title> out = new ArrayList<>();
@@ -133,42 +113,7 @@ public final class AniLibriaApi {
         return out;
     }
 
-    /** Запасной путь через старый v3. */
-    private static List<Title> hentaiV3(String host, int page) throws IOException {
-        List<Title> out = new ArrayList<>();
-        String url = host + "/title/search?genres=%D1%85%D0%B5%D0%BD%D1%82%D0%B0%D0%B9"
-                + "&items_per_page=30&page=" + page
-                + "&filter=id,names,posters";
-        JsonElement root = JsonParser.parseString(get(url));
-        JsonArray list = null;
-        if (root.isJsonArray()) list = root.getAsJsonArray();
-        else if (root.isJsonObject() && root.getAsJsonObject().has("list"))
-            list = root.getAsJsonObject().getAsJsonArray("list");
-        if (list == null) return out;
-        for (JsonElement e : list) {
-            if (!e.isJsonObject()) continue;
-            JsonObject o = e.getAsJsonObject();
-            Title t = new Title();
-            if (o.has("names") && o.get("names").isJsonObject()) {
-                JsonObject n = o.getAsJsonObject("names");
-                t.name = str(n, "ru");
-                if (t.name.isEmpty()) t.name = str(n, "en");
-            }
-            if (o.has("posters") && o.get("posters").isJsonObject()) {
-                JsonObject p = o.getAsJsonObject("posters");
-                String u = "";
-                if (p.has("small") && p.get("small").isJsonObject())
-                    u = str(p.getAsJsonObject("small"), "url");
-                if (u.isEmpty() && p.has("original") && p.get("original").isJsonObject())
-                    u = str(p.getAsJsonObject("original"), "url");
-                if (u.startsWith("/")) u = host.replace("/v3", "") + u;
-                t.poster = u;
-            }
-            if (!t.name.isEmpty()) out.add(t);
-        }
-        return out;
-    }
-
+    
     private static String str(JsonObject o, String key) {
         return o.has(key) && o.get(key).isJsonPrimitive() ? o.get(key).getAsString() : "";
     }
