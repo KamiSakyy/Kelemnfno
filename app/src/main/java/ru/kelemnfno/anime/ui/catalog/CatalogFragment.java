@@ -62,12 +62,6 @@ public class CatalogFragment extends Fragment {
 
     private FragmentCatalogBinding b;
     private AnimeCardAdapter adapter;
-    private final java.util.Set<String> anilibNames = new java.util.HashSet<>();
-    private boolean anilibNamesLoaded;
-    private final java.util.Map<String, Integer> shikiYears = new java.util.HashMap<>();
-    private final java.util.Map<String, String> shikiOriginals = new java.util.HashMap<>();
-    private final java.util.Map<String, Integer> anilibYears = new java.util.HashMap<>();
-    private final java.util.Map<String, String> anilibOriginals = new java.util.HashMap<>();
     private final List<AnimeItem> items = new ArrayList<>();
     private List<Genre> genres = new ArrayList<>();
 
@@ -97,22 +91,6 @@ public class CatalogFragment extends Fragment {
         adapter.setListener(new AnimeCardAdapter.OnCardClick() {
             @Override
             public void onClick(CardModel model) {
-                if (model.slug != null && model.slug.startsWith("anilib:")) {
-                    int aid = 0;
-                    try { aid = Integer.parseInt(model.slug.substring(7)); } catch (Exception ignored) { }
-                    Integer ay = anilibYears.get(model.slug);
-                    DetailActivity.openAnilib(requireContext(), aid, model.title,
-                            anilibOriginals.get(model.slug), ay == null ? 0 : ay, model.poster);
-                    return;
-                }
-                if (model.slug != null && model.slug.startsWith("shiki:")) {
-                    int id = 0;
-                    try { id = Integer.parseInt(model.slug.substring(6)); } catch (Exception ignored) { }
-                    Integer y = shikiYears.get(model.slug);
-                    DetailActivity.openShiki(requireContext(), id, model.title,
-                            shikiOriginals.get(model.slug), y == null ? 0 : y, model.poster);
-                    return;
-                }
                 DetailActivity.openWith(requireContext(), model.slug, model.title, model.poster);
             }
 
@@ -535,34 +513,6 @@ public class CatalogFragment extends Fragment {
     }
 
     
-    private static String hGet(String url) throws java.io.IOException {
-        okhttp3.Request req = new okhttp3.Request.Builder()
-                .url(url)
-                .header("User-Agent", ru.kelemnfno.anime.data.resolver.Net.CHROME)
-                .build();
-        try (okhttp3.Response res = new okhttp3.OkHttpClient.Builder()
-                .connectTimeout(10, java.util.concurrent.TimeUnit.SECONDS)
-                .readTimeout(20, java.util.concurrent.TimeUnit.SECONDS)
-                .followRedirects(true).followSslRedirects(true).build().newCall(req).execute()) {
-            if (!res.isSuccessful() || res.body() == null) throw new java.io.IOException("HTTP " + res.code());
-            return res.body().string();
-        }
-    }
-
-    private boolean anilibAvailable(String ru, String en) {
-        if (anilibNames.isEmpty()) return false;
-        String a = ru == null ? "" : ru.toLowerCase();
-        String b2 = en == null ? "" : en.toLowerCase();
-        for (String n : anilibNames) {
-            if (n.isEmpty()) continue;
-            if ((!a.isEmpty() && (n.contains(a) || a.contains(n)))
-                    || (!b2.isEmpty() && (n.contains(b2) || b2.contains(n)))) return true;
-        }
-        return false;
-    }
-
-
-
     private boolean matches(Genre g, String q) {
         if (g.title != null && g.title.toLowerCase().contains(q)) return true;
         if (g.moreTitles != null) {

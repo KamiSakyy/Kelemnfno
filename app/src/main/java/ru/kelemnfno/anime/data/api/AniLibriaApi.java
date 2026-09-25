@@ -64,6 +64,7 @@ public final class AniLibriaApi {
     }
 
     
+    
     /** Ответ каталога v1: { data: [ { name:{ru,en}, poster/posters:{small:{url}} } ] }. */
     private static List<Title> parseCatalog(String body, String host) {
         List<Title> out = new ArrayList<>();
@@ -79,9 +80,8 @@ public final class AniLibriaApi {
             Title t = new Title();
             if (o.has("name") && o.get("name").isJsonObject()) {
                 JsonObject n = o.getAsJsonObject("name");
-                t.name = str(n, "main");
-                if (t.name.isEmpty()) t.name = str(n, "ru");
-                if (t.name.isEmpty()) t.name = str(n, "english");
+                t.name = str(n, "ru");
+                if (t.name.isEmpty()) t.name = str(n, "en");
                 if (t.name.isEmpty()) t.name = str(n, "alternative");
             } else if (o.has("name") && o.get("name").isJsonPrimitive()) {
                 t.name = o.get("name").getAsString();
@@ -92,20 +92,15 @@ public final class AniLibriaApi {
             else if (o.has("poster") && o.get("poster").isJsonObject())
                 p = o.getAsJsonObject("poster");
             if (p != null) {
-                String u = str(p, "thumbnail");
-                if (u.isEmpty()) u = str(p, "preview");
-                if (u.isEmpty()) u = str(p, "src");
-                if (u.isEmpty()) {
-                    for (String key : new String[]{"small", "medium", "original"}) {
-                        if (p.has(key) && p.get(key).isJsonObject()) {
-                            u = str(p.getAsJsonObject(key), "url");
-                            if (!u.isEmpty()) break;
+                for (String key : new String[]{"small", "medium", "original"}) {
+                    if (p.has(key) && p.get(key).isJsonObject()) {
+                        String u = str(p.getAsJsonObject(key), "url");
+                        if (!u.isEmpty()) {
+                            t.poster = u.startsWith("http") ? u
+                                    : host.replace("/api/v1", "") + (u.startsWith("/") ? u : "/" + u);
+                            break;
                         }
                     }
-                }
-                if (!u.isEmpty()) {
-                    t.poster = u.startsWith("http") ? u
-                            : host.replace("/api/v1", "") + (u.startsWith("/") ? u : "/" + u);
                 }
             }
             if (!t.name.isEmpty()) out.add(t);

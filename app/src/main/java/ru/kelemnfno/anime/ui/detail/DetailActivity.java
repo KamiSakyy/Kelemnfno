@@ -1,10 +1,5 @@
 package ru.kelemnfno.anime.ui.detail;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-
 import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
@@ -87,7 +82,6 @@ public class DetailActivity extends AppCompatActivity {
 
     private static final String EXTRA_TITLE = "title";
     private static final String EXTRA_POSTER = "poster";
-    private static final String EXTRA_SHIKI = "shiki_id";
 
     public static void open(Context context, String slug) {
         context.startActivity(new Intent(context, DetailActivity.class).putExtra(EXTRA_SLUG, slug));
@@ -99,26 +93,6 @@ public class DetailActivity extends AppCompatActivity {
                 .putExtra(EXTRA_SLUG, slug)
                 .putExtra(EXTRA_TITLE, title)
                 .putExtra(EXTRA_POSTER, poster));
-    }
-
-    /** Карточка AniLibria: всё (описание, обложка, серии) — из API v1 anilibria.top. */
-    public static void openAnilib(Context context, int anilibId, String title, String en, int year, String poster) {
-        context.startActivity(new Intent(context, DetailActivity.class)
-                .putExtra(EXTRA_ANILIB, anilibId)
-                .putExtra("anilib_title", title)
-                .putExtra("anilib_en", en)
-                .putExtra("anilib_year", year)
-                .putExtra("anilib_poster", poster));
-    }
-
-    /** Карточка для хентай-раздела: данные Shikimori, серии и видео — AniLibria API v1. */
-    public static void openShiki(Context context, int shikiId, String ru, String en, int year, String poster) {
-        context.startActivity(new Intent(context, DetailActivity.class)
-                .putExtra(EXTRA_SHIKI, shikiId)
-                .putExtra("shiki_ru", ru)
-                .putExtra("shiki_en", en)
-                .putExtra("shiki_year", year)
-                .putExtra("shiki_poster", poster));
     }
 
     public static void open(Context context, String slug, String episode, String dubbing) {
@@ -134,20 +108,6 @@ public class DetailActivity extends AppCompatActivity {
         b = ActivityDetailBinding.inflate(getLayoutInflater());
         setContentView(b.getRoot());
         slug = getIntent().getStringExtra(EXTRA_SLUG);
-        shikiMode = getIntent().getIntExtra(EXTRA_SHIKI, 0) > 0;
-        anilibMode = getIntent().getIntExtra(EXTRA_ANILIB, 0) > 0;
-        if (anilibMode) {
-            String at = getIntent().getStringExtra("anilib_title");
-            if (at != null && !at.isEmpty()) b.title.setText(at);
-            String ap = getIntent().getStringExtra("anilib_poster");
-            if (ap != null && !ap.isEmpty()) Ui.poster(b.poster, ap, 12);
-        }
-        if (shikiMode) {
-            String st = getIntent().getStringExtra("shiki_ru");
-            if (st != null && !st.isEmpty()) b.title.setText(st);
-            String sp = getIntent().getStringExtra("shiki_poster");
-            if (sp != null && !sp.isEmpty()) Ui.poster(b.poster, sp, 12);
-        }
 
         // Пока грузится полная карточка, показываем то, что уже известно из каталога.
         String knownTitle = getIntent().getStringExtra(EXTRA_TITLE);
@@ -181,10 +141,6 @@ public class DetailActivity extends AppCompatActivity {
         observeDownloads();
     }
 
-    private boolean shikiMode;
-    private boolean anilibMode;
-    private static final String EXTRA_ANILIB = "anilib_id";
-    private final java.util.Map<Integer, java.util.Map<Integer, String>> shikiEpQ = new java.util.TreeMap<>();
     private boolean sideLoadsStarted;
 
     private static boolean changed(ru.kelemnfno.anime.data.model.AnimeFull a,
@@ -195,24 +151,6 @@ public class DetailActivity extends AppCompatActivity {
     }
 
     private void load() {
-        if (anilibMode) {
-            b.loading.setVisibility(View.VISIBLE);
-            AppExecutors.get().run(this::buildAnilibFull, (value, error) -> {
-                b.loading.setVisibility(View.GONE);
-                if (value != null) show(value);
-                else if (anime == null) b.title.setText("Не удалось загрузить");
-            });
-            return;
-        }
-        if (shikiMode) {
-            b.loading.setVisibility(View.VISIBLE);
-            AppExecutors.get().run(this::buildShikiFull, (value, error) -> {
-                b.loading.setVisibility(View.GONE);
-                if (value != null) show(value);
-                else if (anime == null) b.title.setText("Не удалось загрузить");
-            });
-            return;
-        }
         // Карточка из кэша показывается сразу — без ожидания сети.
         ru.kelemnfno.anime.data.model.AnimeFull cached =
                 AnimeRepository.get(this).animeCached(slug);
@@ -230,309 +168,6 @@ public class DetailActivity extends AppCompatActivity {
             }
             show(value);
         });
-    }
-
-    private static volatile okhttp3.OkHttpClient shikiClient;
-
-    private static okhttp3.OkHttpClient shikiHttp() {
-        if (shikiClient == null) {
-            synchronized (DetailActivity.class) {
-                if (shikiClient == null) {
-                    shikiClient = new okhttp3.OkHttpClient.Builder()
-                            .connectTimeout(10, java.util.concurrent.TimeUnit.SECONDS)
-                            .readTimeout(20, java.util.concurrent.TimeUnit.SECONDS)
-                            .followRedirects(true)
-                            .followSslRedirects(true)
-                            .build();
-                }
-            }
-        }
-        return shikiClient;
-    }
-
-    private static String shikiGet(String url) throws java.io.IOException {
-        okhttp3.Request req = new okhttp3.Request.Builder()
-                .url(url)
-                .header("User-Agent", ru.kelemnfno.anime.data.resolver.Net.CHROME)
-                .build();
-        try (okhttp3.Response res = shikiHttp().newCall(req).execute()) {
-            if (!res.isSuccessful() || res.body() == null)
-                throw new java.io.IOException("HTTP " + res.code());
-            return res.body().string();
-        }
-    }
-
-    /** Shikimori с запасными доменами: основной может быть заблокирован у провайдера. */
-    private static String shikiAny(String path) throws java.io.IOException {
-        java.io.IOException last = null;
-        for (String h : new String[]{"https://shikimori.io/api", "https://shikimori.tv/api", "https://shikimori.one/api"}) {
-            try {
-                return shikiGet(h + path);
-            } catch (java.io.IOException e) {
-                last = e;
-            }
-        }
-        throw last != null ? last : new java.io.IOException("shikimori");
-    }
-
-    /** Полная карточка из Shikimori + серии/видео из AniLibria API v1. */
-    /** Полная карточка AniLibria: описание, обложка, серии и HLS — только anilibria.top. */
-    private ru.kelemnfno.anime.data.model.AnimeFull buildAnilibFull() {
-        int id = getIntent().getIntExtra(EXTRA_ANILIB, 0);
-        String title = getIntent().getStringExtra("anilib_title");
-        String en = getIntent().getStringExtra("anilib_en");
-        int year = getIntent().getIntExtra("anilib_year", 0);
-        String posterUrl = getIntent().getStringExtra("anilib_poster");
-        ru.kelemnfno.anime.data.model.AnimeFull a = new ru.kelemnfno.anime.data.model.AnimeFull();
-        a.animeId = id;
-        a.animeUrl = "anilib:" + id;
-        a.title = title == null ? "" : title;
-        a.original = en;
-        a.otherTitles = new java.util.ArrayList<>();
-        if (en != null && !en.isEmpty()) a.otherTitles.add(en);
-        a.year = year;
-        a.poster = new ru.kelemnfno.anime.data.model.Poster();
-        a.poster.fullsize = posterUrl;
-        a.poster.huge = posterUrl;
-        a.poster.mega = posterUrl;
-        a.poster.big = posterUrl;
-        a.poster.medium = posterUrl;
-        a.poster.small = posterUrl;
-        a.remoteIds = new ru.kelemnfno.anime.data.model.RemoteIds();
-        a.minAge = new ru.kelemnfno.anime.data.model.MinAge();
-        a.minAge.value = 18;
-        a.minAge.title = "18+";
-        a.genres = new java.util.ArrayList<>();
-        shikiEpQ.clear();
-        try {
-            JsonObject o = JsonParser.parseString(shikiGet("https://anilibria.top/api/v1/anime/releases/" + id)).getAsJsonObject();
-            if (o.has("data") && o.get("data").isJsonObject()) o = o.getAsJsonObject("data");
-            if (o.has("name") && o.get("name").isJsonObject()) {
-                JsonObject n = o.getAsJsonObject("name");
-                if (a.title.isEmpty() && n.has("main") && n.get("main").isJsonPrimitive())
-                    a.title = n.get("main").getAsString();
-                if ((en == null || en.isEmpty()) && n.has("english") && n.get("english").isJsonPrimitive()) {
-                    a.original = n.get("english").getAsString();
-                    if (!a.original.isEmpty()) a.otherTitles.add(a.original);
-                }
-            }
-            if (a.year <= 0 && o.has("year") && o.get("year").isJsonPrimitive()) a.year = o.get("year").getAsInt();
-            if (o.has("description") && o.get("description").isJsonPrimitive())
-                a.description = o.get("description").getAsString();
-            if (o.has("type") && o.get("type").isJsonObject()) {
-                JsonObject t = o.getAsJsonObject("type");
-                a.type = new ru.kelemnfno.anime.data.model.AnimeType();
-                a.type.name = t.has("description") && t.get("description").isJsonPrimitive()
-                        ? t.get("description").getAsString() : "";
-            }
-            if (o.has("genres") && o.get("genres").isJsonArray()) {
-                for (JsonElement e : o.getAsJsonArray("genres")) {
-                    if (!e.isJsonObject()) continue;
-                    JsonObject g = e.getAsJsonObject();
-                    if (g.has("name") && g.get("name").isJsonPrimitive()) {
-                        ru.kelemnfno.anime.data.model.GenreShort gs = new ru.kelemnfno.anime.data.model.GenreShort();
-                        gs.title = g.get("name").getAsString();
-                        a.genres.add(gs);
-                    }
-                }
-            }
-            if (o.has("shikimori") && o.get("shikimori").isJsonObject()) {
-                JsonObject sh = o.getAsJsonObject("shikimori");
-                if (sh.has("rating") && sh.get("rating").isJsonPrimitive() && !sh.get("rating").isJsonNull()
-                        && sh.get("rating").getAsDouble() > 0) {
-                    a.rating = new ru.kelemnfno.anime.data.model.Rating();
-                    a.rating.shikimoriRating = sh.get("rating").getAsDouble();
-                    a.rating.average = sh.get("rating").getAsDouble();
-                }
-                if (sh.has("id") && sh.get("id").isJsonPrimitive() && !sh.get("id").isJsonNull())
-                    a.remoteIds.shikimoriId = sh.get("id").getAsInt();
-            }
-            if ((posterUrl == null || posterUrl.isEmpty()) && o.has("poster") && o.get("poster").isJsonObject()) {
-                JsonObject ps = o.getAsJsonObject("poster");
-                String src = ps.has("src") && ps.get("src").isJsonPrimitive() ? ps.get("src").getAsString() : "";
-                if (!src.isEmpty()) {
-                    if (!src.startsWith("http")) src = "https://anilibria.top" + src;
-                    a.poster.fullsize = src;
-                    a.poster.huge = src;
-                    a.poster.mega = src;
-                    a.poster.big = src;
-                    a.poster.medium = src;
-                    a.poster.small = src;
-                }
-            }
-            if (o.has("episodes") && o.get("episodes").isJsonArray()) {
-                for (JsonElement e : o.getAsJsonArray("episodes")) {
-                    if (!e.isJsonObject()) continue;
-                    JsonObject ep = e.getAsJsonObject();
-                    int ord = ep.has("ordinal") && ep.get("ordinal").isJsonPrimitive()
-                            ? (int) ep.get("ordinal").getAsDouble() : 0;
-                    if (ord <= 0) continue;
-                    java.util.Map<Integer, String> qmap = new java.util.LinkedHashMap<>();
-                    String[][] keys = {{"480", "hls_480"}, {"720", "hls_720"}, {"1080", "hls_1080"},
-                            {"1440", "hls_1440"}, {"2160", "hls_2160"}};
-                    for (String[] kv : keys) {
-                        String u = ep.has(kv[1]) && ep.get(kv[1]).isJsonPrimitive()
-                                ? ep.get(kv[1]).getAsString() : "";
-                        if (u.isEmpty()) continue;
-                        if (!u.startsWith("http")) {
-                            // Видео AniLibria живёт на cache.libria.fun — не на anilibria.top!
-                            u = u.startsWith("/videos/") ? "https://cache.libria.fun" + u
-                                    : (u.startsWith("/") ? "https://anilibria.top" + u : "");
-                        }
-                        if (!u.isEmpty()) qmap.put(Integer.parseInt(kv[0]), u);
-                    }
-                    if (!qmap.isEmpty()) shikiEpQ.put(ord, qmap);
-                }
-            }
-        } catch (Exception ignored) {
-        }
-        a.videos = new java.util.ArrayList<>();
-        for (int ord : shikiEpQ.keySet()) {
-            ru.kelemnfno.anime.data.model.VideoItem v = new ru.kelemnfno.anime.data.model.VideoItem();
-            v.number = String.valueOf(ord);
-            a.videos.add(v);
-        }
-        return a;
-    }
-
-    private ru.kelemnfno.anime.data.model.AnimeFull buildShikiFull() {
-        int id = getIntent().getIntExtra(EXTRA_SHIKI, 0);
-        String ru = getIntent().getStringExtra("shiki_ru");
-        String en = getIntent().getStringExtra("shiki_en");
-        int year = getIntent().getIntExtra("shiki_year", 0);
-        String posterUrl = getIntent().getStringExtra("shiki_poster");
-        ru.kelemnfno.anime.data.model.AnimeFull a = new ru.kelemnfno.anime.data.model.AnimeFull();
-        a.animeId = id;
-        a.animeUrl = "shiki:" + id;
-        a.title = ru == null || ru.isEmpty() ? en : ru;
-        a.original = en;
-        a.otherTitles = new java.util.ArrayList<>();
-        if (en != null && !en.isEmpty()) a.otherTitles.add(en);
-        a.year = year;
-        a.poster = new ru.kelemnfno.anime.data.model.Poster();
-        a.poster.fullsize = posterUrl;
-        a.poster.huge = posterUrl;
-        a.poster.mega = posterUrl;
-        a.poster.big = posterUrl;
-        a.poster.medium = posterUrl;
-        a.poster.small = posterUrl;
-        a.remoteIds = new ru.kelemnfno.anime.data.model.RemoteIds();
-        a.remoteIds.shikimoriId = id;
-        a.minAge = new ru.kelemnfno.anime.data.model.MinAge();
-        a.minAge.value = 18;
-        a.minAge.title = "18+";
-        a.genres = new java.util.ArrayList<>();
-        try {
-            JsonObject o = JsonParser.parseString(shikiAny("/animes/" + id)).getAsJsonObject();
-            if (o.has("score") && o.get("score").isJsonPrimitive() && o.get("score").getAsDouble() > 0) {
-                a.rating = new ru.kelemnfno.anime.data.model.Rating();
-                a.rating.shikimoriRating = o.get("score").getAsDouble();
-                a.rating.average = o.get("score").getAsDouble();
-            }
-            if (o.has("description") && o.get("description").isJsonPrimitive())
-                a.description = o.get("description").getAsString();
-            if (o.has("kind") && o.get("kind").isJsonPrimitive()) {
-                a.type = new ru.kelemnfno.anime.data.model.AnimeType();
-                a.type.name = o.get("kind").getAsString();
-            }
-            if (o.has("status") && o.get("status").isJsonPrimitive()) {
-                a.animeStatus = new ru.kelemnfno.anime.data.model.AnimeStatus();
-                a.animeStatus.title = o.get("status").getAsString();
-            }
-            if (year <= 0 && o.has("aired_on") && o.get("aired_on").isJsonPrimitive()) {
-                String iso = o.get("aired_on").getAsString();
-                if (iso.length() >= 4) try { a.year = Integer.parseInt(iso.substring(0, 4)); } catch (Exception ignored) { }
-            }
-            if (o.has("genres") && o.get("genres").isJsonArray()) {
-                for (JsonElement e : o.getAsJsonArray("genres")) {
-                    if (!e.isJsonObject()) continue;
-                    JsonObject g = e.getAsJsonObject();
-                    String name = g.has("russian") && g.get("russian").isJsonPrimitive()
-                            ? g.get("russian").getAsString()
-                            : (g.has("name") && g.get("name").isJsonPrimitive() ? g.get("name").getAsString() : "");
-                    if (!name.isEmpty()) {
-                        ru.kelemnfno.anime.data.model.GenreShort gs = new ru.kelemnfno.anime.data.model.GenreShort();
-                        gs.title = name;
-                        a.genres.add(gs);
-                    }
-                }
-            }
-        } catch (Exception ignored) {
-        }
-        // Серии и потоки — AniLibria API v1.
-        shikiEpQ.clear();
-        for (String q : new String[]{en, ru}) {
-            if (q == null || q.isEmpty()) continue;
-            try {
-                JsonElement se = JsonParser.parseString(shikiGet(
-                        "https://anilibria.top/api/v1/app/search/releases?query="
-                        + Net.enc(q) + "&limit=6"));
-                JsonArray arr = null;
-                if (se.isJsonArray()) arr = se.getAsJsonArray();
-                else if (se.isJsonObject() && se.getAsJsonObject().has("data"))
-                    arr = se.getAsJsonObject().getAsJsonArray("data");
-                if (arr == null) continue;
-                JsonObject bestRel = null;
-                String ql = q == null ? "" : q.toLowerCase();
-                for (JsonElement rel : arr) {
-                    if (!rel.isJsonObject()) continue;
-                    JsonObject ro = rel.getAsJsonObject();
-                    if (!ro.has("id") || ro.get("id").getAsInt() <= 0) continue;
-                    if (bestRel == null) bestRel = ro;
-                    if (!ql.isEmpty() && ro.has("name") && ro.get("name").isJsonObject()) {
-                        JsonObject nm = ro.getAsJsonObject("name");
-                        String main = nm.has("main") && nm.get("main").isJsonPrimitive()
-                                ? nm.get("main").getAsString().toLowerCase() : "";
-                        String eng = nm.has("english") && nm.get("english").isJsonPrimitive()
-                                ? nm.get("english").getAsString().toLowerCase() : "";
-                        if ((!main.isEmpty() && (main.contains(ql) || ql.contains(main)))
-                                || (!eng.isEmpty() && (eng.contains(ql) || ql.contains(eng)))) {
-                            bestRel = ro;
-                            break;
-                        }
-                    }
-                }
-                if (bestRel == null) continue;
-                for (int attempt = 0; attempt < arr.size(); attempt++) {
-                    JsonObject cand = attempt == 0 ? bestRel
-                            : (arr.get(attempt).isJsonObject() ? arr.get(attempt).getAsJsonObject() : null);
-                    if (cand == null || !cand.has("id") || cand.get("id").getAsInt() <= 0) continue;
-                    int rid = cand.get("id").getAsInt();
-                    JsonObject full = JsonParser.parseString(
-                            shikiGet("https://anilibria.top/api/v1/anime/releases/" + rid)).getAsJsonObject();
-                    if (!full.has("episodes") || !full.get("episodes").isJsonArray()) continue;
-                    for (JsonElement e : full.getAsJsonArray("episodes")) {
-                        if (!e.isJsonObject()) continue;
-                        JsonObject ep = e.getAsJsonObject();
-                        int ord = ep.has("ordinal") ? (int) ep.get("ordinal").getAsDouble() : 0;
-                        if (ord <= 0) continue;
-                        java.util.Map<Integer, String> qmap = new java.util.LinkedHashMap<>();
-                        String[][] keys = {{"480", "hls_480"}, {"720", "hls_720"}, {"1080", "hls_1080"},
-                                {"1440", "hls_1440"}, {"2160", "hls_2160"}};
-                        for (String[] kv : keys) {
-                            String u = ep.has(kv[1]) && ep.get(kv[1]).isJsonPrimitive()
-                                    ? ep.get(kv[1]).getAsString() : "";
-                            if (!u.isEmpty()) {
-                                if (!u.startsWith("http")) u = u.startsWith("/videos/") ? "https://cache.libria.fun" + u
-                                        : (u.startsWith("/") ? "https://anilibria.top" + u : "");
-                            }
-                            if (!u.isEmpty()) qmap.put(Integer.parseInt(kv[0]), u);
-                        }
-                        if (!qmap.isEmpty()) shikiEpQ.put(ord, qmap);
-                    }
-                    if (!shikiEpQ.isEmpty()) break;
-                }
-            } catch (Exception ignored) {
-            }
-            if (!shikiEpQ.isEmpty()) break;
-        }
-        a.videos = new java.util.ArrayList<>();
-        for (int ord : shikiEpQ.keySet()) {
-            ru.kelemnfno.anime.data.model.VideoItem v = new ru.kelemnfno.anime.data.model.VideoItem();
-            v.number = String.valueOf(ord);
-            a.videos.add(v);
-        }
-        return a;
     }
 
     /** Рисует карточку; тяжёлые запросы запускаются один раз. */
@@ -684,12 +319,6 @@ public class DetailActivity extends AppCompatActivity {
             } catch (Throwable t) {
                 result = new ArrayList<>();
             }
-            if ((shikiMode || anilibMode) && !shikiEpQ.isEmpty()) {
-                try {
-                    result.add(0, ru.kelemnfno.anime.data.api.DirectHentai.publish(shikiEpQ));
-                } catch (Throwable ignored) {
-                }
-            }
             final List<Track> tracks = result;
             AppExecutors.get().post(() -> {
                 if (b == null || isFinishing()) return;
@@ -830,16 +459,16 @@ public class DetailActivity extends AppCompatActivity {
     private void toggleFavorite() {
         if (anime == null) return;
         final FavoriteEntity draft = new FavoriteEntity();
-        draft.slug = slug != null ? slug : (anime.animeUrl == null ? "" : anime.animeUrl);
+        draft.slug = slug;
         draft.animeId = anime.animeId;
         draft.title = anime.title;
         draft.poster = Fmt.posterUrl(anime, "big");
         draft.year = anime.year;
-        draft.type = (anime.type == null || anime.type.shortname == null) ? "" : anime.type.shortname;
+        draft.type = anime.type == null ? "" : anime.type.shortname;
         draft.addedAt = System.currentTimeMillis();
         draft.episodeCount = quickEpisodes().size();
         draft.dubbing = currentTrack == null ? "" : currentTrack.voice;
-        draft.status = (anime.animeStatus == null || anime.animeStatus.alias == null) ? "" : anime.animeStatus.alias;
+        draft.status = anime.animeStatus == null ? "" : anime.animeStatus.alias;
         draft.nextDate = nextEpisodeTs;
         AppExecutors.get().run(() -> AppDatabase.get(this).favoriteDao().bySlug(slug), (existing, error) -> {
             if (b == null || isFinishing()) return;
@@ -982,10 +611,8 @@ public class DetailActivity extends AppCompatActivity {
         AppDatabase.get(this).downloadDao().observeAll().observe(this, rows -> {
             downloadedEpisodes.clear();
             if (rows != null) {
-                String eff = slug != null ? slug : (anime != null ? anime.animeUrl : null);
                 for (DownloadEntity d : rows) {
-                    if (d.status == DownloadEntity.DONE && eff != null && eff.equals(d.slug))
-                        downloadedEpisodes.add(d.episode);
+                    if (d.status == DownloadEntity.DONE && slug.equals(d.slug)) downloadedEpisodes.add(d.episode);
                 }
             }
             if (episodeAdapter != null) episodeAdapter.notifyDataSetChanged();

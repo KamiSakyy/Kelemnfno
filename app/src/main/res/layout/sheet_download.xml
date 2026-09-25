@@ -154,8 +154,7 @@
             android:layout_height="wrap_content"
             android:background="@drawable/bg_chip_accent"
             android:padding="14dp"
-            android:textColor="@color/on_accent"
-            android:textStyle="bold"
+            android:textColor="@color/text"
             android:textSize="13sp"
             tools:text="HLS · 720p" />
 

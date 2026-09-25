@@ -82,6 +82,7 @@ public final class Sources {
         ALL.add(simple(Cfg.s(220), false, Sources::animedia));
         ALL.add(simple(Cfg.s(224), false, Sources::animetka));
         ALL.add(simple(Cfg.s(207), false, Sources::anidub));
+        ALL.add(simple(Cfg.s(286), true, Sources::hanime));
     }
 
     private interface Runner {
@@ -363,8 +364,6 @@ public final class Sources {
         String slug = "";
         Map<String, String> h = Net.baseHeaders(null, null);
         h.put(Cfg.s(129), Cfg.s(236));
-        h.put("Origin", "https://animelib.org");
-        h.put("Referer", "https://animelib.org/");
 
         for (String term : searchTerms(l.title, l.original)) {
             try {
@@ -417,8 +416,6 @@ public final class Sources {
                     try {
                         Map<String, String> hh = Net.baseHeaders(null, null);
                         hh.put(Cfg.s(129), Cfg.s(236));
-                        hh.put("Origin", "https://animelib.org");
-                        hh.put("Referer", "https://animelib.org/");
                         JsonObject detail = Net.getJson(
                                 Cfg.s(24) + Net.enc(str(e, "id")), hh);
                         for (JsonObject p : J.list(J.obj(detail, Cfg.s(262)), Cfg.s(354))) {
@@ -784,61 +781,43 @@ public final class Sources {
                 + Cfg.s(91);
         Map<String, String> h = Net.baseHeaders(Cfg.s(31), Cfg.s(32));
         h.put(Cfg.s(129), Cfg.s(236));
-        String root = null;
+        String root;
         try {
             root = Net.postJson(Cfg.s(46), body, h);
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            return done(Cfg.s(286), map);
         }
         List<JsonObject> hits = new ArrayList<>();
-        if (root != null) {
-            try {
-                JsonObject parsed = Net.parse(root);
-                String hitsRaw = J.str(parsed, Cfg.s(290));
-                if (!hitsRaw.isEmpty()) {
-                    hits = J.list(parseArray(hitsRaw));
-                }
-            } catch (Exception ignored) {
+        try {
+            JsonObject parsed = Net.parse(root);
+            String hitsRaw = J.str(parsed, Cfg.s(290));
+            if (!hitsRaw.isEmpty()) {
+                hits = J.list(parseArray(hitsRaw));
+            }
+        } catch (Exception e) {
+            return done(Cfg.s(286), map);
+        }
+        JsonObject best = choose(hits, l, row -> new Match.Candidate(str(row, Cfg.s(337)), str(row, Cfg.s(401))));
+        if (best == null) return done(Cfg.s(286), map);
+        String slug = str(best, Cfg.s(377));
+        if (slug.isEmpty()) return done(Cfg.s(286), map);
+
+        JsonObject detail;
+        try {
+            detail = Net.getJson(Cfg.s(33) + Net.enc(slug), h);
+        } catch (Exception e) {
+            return done(Cfg.s(286), map);
+        }
+        Map<Integer, String> streams = new LinkedHashMap<>();
+        for (JsonObject s : J.list(J.obj(detail, Cfg.s(424)), Cfg.s(372))) {
+            for (JsonObject st : J.list(s, Cfg.s(387))) {
+                String u = safeUrl(str(st, Cfg.s(411)));
+                if (u.isEmpty()) continue;
+                int height = J.firstNum(st, Cfg.s(288), Cfg.s(430));
+                streams.put(height > 0 ? height : 720, u);
             }
         }
-        String slug = "";
-        if (!hits.isEmpty()) {
-            JsonObject best = choose(hits, l, row -> new Match.Candidate(str(row, Cfg.s(337)), str(row, Cfg.s(401))));
-            if (best != null) slug = str(best, Cfg.s(377));
-        }
-        java.util.List<String> slugs = new ArrayList<>();
-        if (!slug.isEmpty()) slugs.add(slug);
-        for (String name : new String[]{l.original, l.title}) {
-            String base = name == null ? "" : name.toLowerCase(java.util.Locale.US)
-                    .replaceAll("[^a-z0-9]+", "-").replaceAll("^-+|-+$", "");
-            if (base.isEmpty()) continue;
-            String[] parts = base.split("-");
-            slugs.add(base);
-            if (parts.length > 3) slugs.add(parts[0] + "-" + parts[1] + "-" + parts[2]);
-            if (parts.length > 2) slugs.add(parts[0] + "-" + parts[1]);
-        }
-        for (String cand : slugs) {
-            JsonObject detail;
-            try {
-                detail = Net.getJson(Cfg.s(33) + Net.enc(cand), h);
-            } catch (Exception e) {
-                continue;
-            }
-            Map<Integer, String> streams = new LinkedHashMap<>();
-            for (JsonObject srv : J.list(J.obj(detail, Cfg.s(424)), Cfg.s(372))) {
-                for (JsonObject st : J.list(srv, Cfg.s(387))) {
-                    String u = safeUrl(str(st, Cfg.s(411)));
-                    if (u.isEmpty()) continue;
-                    int height = J.firstNum(st, Cfg.s(288), Cfg.s(430));
-                    streams.put(height > 0 ? height : 720, u);
-                }
-            }
-            if (!streams.isEmpty()) {
-                push(map, 1, variant(Cfg.s(438), Cfg.s(286), streams));
-                return done(Cfg.s(286), map);
-            }
-        }
+        if (!streams.isEmpty()) push(map, 1, variant(Cfg.s(438), Cfg.s(286), streams));
         return done(Cfg.s(286), map);
     }
 }
-
-// 1.6.8

@@ -105,8 +105,7 @@ public final class DownloadSheet {
             List<StreamSource> found;
             String error = null;
             try {
-                found = ru.kelemnfno.anime.data.api.DirectHentai.streams(track.id, episode);
-                if (found == null) found = SourceEngine.streams(track.id, episode);
+                found = SourceEngine.streams(track.id, episode);
             } catch (Throwable t) {
                 found = new ArrayList<>();
                 error = t.getMessage() == null ? "Источник недоступен" : t.getMessage();
