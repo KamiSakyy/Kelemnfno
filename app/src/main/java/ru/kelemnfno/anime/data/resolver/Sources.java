@@ -82,7 +82,6 @@ public final class Sources {
         ALL.add(simple(Cfg.s(220), false, Sources::animedia));
         ALL.add(simple(Cfg.s(224), false, Sources::animetka));
         ALL.add(simple(Cfg.s(207), false, Sources::anidub));
-        ALL.add(simple(Cfg.s(286), true, Sources::hanime));
     }
 
     private interface Runner {

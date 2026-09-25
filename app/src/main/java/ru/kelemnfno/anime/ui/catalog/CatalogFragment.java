@@ -62,8 +62,6 @@ public class CatalogFragment extends Fragment {
 
     private FragmentCatalogBinding b;
     private AnimeCardAdapter adapter;
-    private boolean hentaiMode;
-    private int hentaiPage = 1;
     private final java.util.Set<String> anilibNames = new java.util.HashSet<>();
     private boolean anilibNamesLoaded;
     private final java.util.Map<String, Integer> shikiYears = new java.util.HashMap<>();
@@ -345,7 +343,6 @@ public class CatalogFragment extends Fragment {
 
     private void loadMore() {
         if (loading || !hasMore) return;
-        if (hentaiMode) { loadHentaiMore(); return; }
         if (renderFromCache()) return;
         loading = true;
         final int from = offset;
@@ -493,8 +490,6 @@ public class CatalogFragment extends Fragment {
         Runnable renderGenres = () -> {
             s.genreGroup.removeAllViews();
             s.adultGroup.removeAllViews();
-            // отдельный настоящий жанр «хентай» — каталог из AniLibria, вход через 18+
-            Chips.add(s.adultGroup, "Хентай", hentaiMode, v -> openHentaiGate());
             String q = s.genreQuery.getText() == null ? "" : s.genreQuery.getText().toString().trim().toLowerCase();
             boolean adultAllowed = Prefs.get(requireContext()).settings().showAdult;
             for (Genre g : genres) {
@@ -539,17 +534,7 @@ public class CatalogFragment extends Fragment {
         dialog.show();
     }
 
-    private void toggleHentaiMode(boolean on) {
-        hentaiMode = on;
-        hentaiPage = 1;
-        items.clear();
-        adapter.submit(new ArrayList<>());
-        hasMore = true;
-        offset = 0;
-        renderQuickFilters();
-        loadMore();
-    }
-
+    
     private static String hGet(String url) throws java.io.IOException {
         okhttp3.Request req = new okhttp3.Request.Builder()
                 .url(url)
@@ -576,143 +561,7 @@ public class CatalogFragment extends Fragment {
         return false;
     }
 
-    /** Хентай-фильтр: тот же каталог, карточки Shikimori, «доступно на AniLibria» сверху. */
-    private void loadHentaiMore() {
-        loading = true;
-        final int page = hentaiPage;
-        AppExecutors.get().run(() -> {
-            com.google.gson.JsonElement se = com.google.gson.JsonParser.parseString(hGet(
-                    "https://anilibria.top/api/v1/anime/catalog/releases?f%5Bage_ratings%5D=R18_PLUS&page="
-                            + page + "&limit=50"));
-            com.google.gson.JsonArray arr = se.isJsonObject() && se.getAsJsonObject().has("data")
-                    ? se.getAsJsonObject().getAsJsonArray("data")
-                    : (se.isJsonArray() ? se.getAsJsonArray() : null);
-            if (arr == null) throw new java.io.IOException("AniLibria: нет данных");
-            List<CardModel> out = new ArrayList<>();
-            for (com.google.gson.JsonElement e : arr) {
-                if (!e.isJsonObject()) continue;
-                com.google.gson.JsonObject o = e.getAsJsonObject();
-                int id = o.has("id") && o.get("id").isJsonPrimitive() ? o.get("id").getAsInt() : 0;
-                if (id <= 0) continue;
-                String title = "";
-                String en = "";
-                if (o.has("name") && o.get("name").isJsonObject()) {
-                    com.google.gson.JsonObject n = o.getAsJsonObject("name");
-                    title = n.has("main") && n.get("main").isJsonPrimitive() ? n.get("main").getAsString() : "";
-                    en = n.has("english") && n.get("english").isJsonPrimitive() ? n.get("english").getAsString() : "";
-                }
-                if (title.isEmpty()) title = en;
-                if (title.isEmpty()) continue;
-                String poster = "";
-                if (o.has("poster") && o.get("poster").isJsonObject()) {
-                    com.google.gson.JsonObject ps = o.getAsJsonObject("poster");
-                    poster = ps.has("src") && ps.get("src").isJsonPrimitive() ? ps.get("src").getAsString() : "";
-                    if (!poster.isEmpty() && !poster.startsWith("http")) poster = "https://anilibria.top" + poster;
-                }
-                int year = o.has("year") && o.get("year").isJsonPrimitive() ? o.get("year").getAsInt() : 0;
-                int eps = o.has("episodes_total") && o.get("episodes_total").isJsonPrimitive()
-                        ? o.get("episodes_total").getAsInt() : 0;
-                double score = 0;
-                if (o.has("shikimori") && o.get("shikimori").isJsonObject()) {
-                    com.google.gson.JsonObject sh = o.getAsJsonObject("shikimori");
-                    score = sh.has("rating") && sh.get("rating").isJsonPrimitive() && !sh.get("rating").isJsonNull()
-                            ? sh.get("rating").getAsDouble() : 0;
-                }
-                String slug = "anilib:" + id;
-                anilibYears.put(slug, year);
-                anilibOriginals.put(slug, en);
-                CardModel m = new CardModel(slug, title, poster);
-                m.animeId = id;
-                m.rating = score;
-                m.subtitle = (year > 0 ? year + " · " : "") + "18+" + (eps > 0 ? " · " + eps + " сер." : "");
-                m.badge = "AniLibria";
-                out.add(m);
-            }
-            // Карточки Shikimori (жанр «Хентай», без цензуры) — как в скриншотах.
-            java.util.Set<String> taken = new java.util.HashSet<>();
-            for (CardModel m : out) taken.add(String.valueOf(m.title).toLowerCase());
-            for (String host : new String[]{"https://shikimori.io/api", "https://shikimori.tv/api", "https://shikimori.one/api"}) {
-                try {
-                    com.google.gson.JsonElement r = com.google.gson.JsonParser.parseString(hGet(
-                            host + "/animes?genre=12&is_censored=false&order=popularity&limit=30&page=" + page));
-                    if (!r.isJsonArray()) continue;
-                    for (com.google.gson.JsonElement e : r.getAsJsonArray()) {
-                        if (!e.isJsonObject()) continue;
-                        com.google.gson.JsonObject o = e.getAsJsonObject();
-                        int sid = o.has("id") ? o.get("id").getAsInt() : 0;
-                        String ru = o.has("russian") && o.get("russian").isJsonPrimitive() ? o.get("russian").getAsString() : "";
-                        String en = o.has("name") && o.get("name").isJsonPrimitive() ? o.get("name").getAsString() : "";
-                        String title = ru.isEmpty() ? en : ru;
-                        if (title.isEmpty() || !taken.add(title.toLowerCase())) continue;
-                        String poster = "";
-                        if (o.has("image") && o.get("image").isJsonObject()) {
-                            com.google.gson.JsonObject img = o.getAsJsonObject("image");
-                            poster = img.has("original") && img.get("original").isJsonPrimitive()
-                                    ? img.get("original").getAsString() : "";
-                            if (!poster.isEmpty() && !poster.startsWith("http")) poster = "https://shikimori.io" + poster;
-                        }
-                        int year = 0;
-                        String iso = o.has("aired_on") && o.get("aired_on").isJsonPrimitive()
-                                ? o.get("aired_on").getAsString() : "";
-                        if (iso.length() >= 4) try { year = Integer.parseInt(iso.substring(0, 4)); } catch (Exception ignored) { }
-                        double score = o.has("score") && o.get("score").isJsonPrimitive() ? o.get("score").getAsDouble() : 0;
-                        String slug = "shiki:" + sid;
-                        shikiYears.put(slug, year);
-                        shikiOriginals.put(slug, en);
-                        CardModel m = new CardModel(slug, title, poster);
-                        m.animeId = sid;
-                        m.rating = score;
-                        m.subtitle = (year > 0 ? year + " · " : "") + "18+";
-                        m.badge = "";
-                        out.add(m);
-                    }
-                    if (r.getAsJsonArray().size() > 0) break;
-                } catch (Exception ignored) {
-                }
-            }
-            // «Доступно на AniLibria» — сверху.
-            out.sort((x, y) -> Boolean.compare(y.badge != null && !y.badge.isEmpty(),
-                    x.badge != null && !x.badge.isEmpty()));
-            List<Object> res = new ArrayList<>();
-            res.add(out);
-            res.add(out.size() >= 50);
-            return res;
-        }, (value, error) -> {
-            loading = false;
-            if (b == null) return;
-            if (error != null || value == null) {
-                hasMore = false;
-                return;
-            }
-            @SuppressWarnings("unchecked")
-            List<CardModel> models = (List<CardModel>) value.get(0);
-            boolean more = (Boolean) value.get(1);
-            if (models.isEmpty() || !more) hasMore = false;
-            hentaiPage++;
-            adapter.addAll(models);
-            b.empty.getRoot().setVisibility(adapter.current().isEmpty() && !hasMore ? View.VISIBLE : View.GONE);
-        });
-    }
 
-    /** Диалог возраста: «Тебе есть 18 лет?» Да — открыть каталог, Нет — закрыть. */
-    private void openHentaiGate() {
-        ru.kelemnfno.anime.data.prefs.Prefs prefs = ru.kelemnfno.anime.data.prefs.Prefs.get(requireContext());
-        if (prefs.settings().adultConfirmed) {
-            toggleHentaiMode(!hentaiMode);
-            return;
-        }
-        new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
-                .setTitle("Тебе есть 18 лет?")
-                .setMessage("Раздел «Хентай» доступен только взрослым.")
-                .setPositiveButton("Да", (d, w) -> {
-                    ru.kelemnfno.anime.data.model.AppSettings st = prefs.settings();
-                    st.adultConfirmed = true;
-                    prefs.saveSettings(st);
-                    toggleHentaiMode(true);
-                })
-                .setNegativeButton("Нет", null)
-                .show();
-    }
 
     private boolean matches(Genre g, String q) {
         if (g.title != null && g.title.toLowerCase().contains(q)) return true;
