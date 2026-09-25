@@ -71,8 +71,8 @@ public class CalendarFragment extends Fragment {
 
         b.onlyFav.setOnClickListener(v -> {
             onlyFav = !onlyFav;
-            b.onlyFav.setBackgroundResource(onlyFav ? R.drawable.bg_pill_white : R.drawable.bg_chip);
-            b.onlyFav.setTextColor(requireContext().getColor(onlyFav ? R.color.bg : R.color.text));
+            b.onlyFav.setCompoundDrawablesRelativeWithIntrinsicBounds(
+                    onlyFav ? R.drawable.ic_heart_filled : R.drawable.ic_heart, 0, 0, 0);
             renderWeekdays();
         });
 
